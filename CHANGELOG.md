@@ -1,5 +1,4 @@
 # _4.1.0_ (2026-04-03)
-- **(Feature)** Internal infrastructure update: repository separation and architectural migration. No user-facing changes or breaking API modifications.
 - **(Feature)** Added support for JetBrains 2026.1 stable release
 
 # _4.0_ (2026-03-20)
