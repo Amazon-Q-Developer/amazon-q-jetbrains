@@ -1,11 +1,10 @@
 {
-  "date" : "2026-04-03",
-  "version" : "4.1.0",
-  "entries" : [ {
-    "type" : "feature",
-    "description" : "Internal infrastructure update: repository separation and architectural migration. No user-facing changes or breaking API modifications."
-  }, {
-    "type" : "feature",
-    "description" : "Added support for JetBrains 2026.1 stable release"
-  } ]
+    "date": "2026-04-03",
+    "version": "4.1.0",
+    "entries": [
+        {
+            "type": "feature",
+            "description": "Added support for JetBrains 2026.1 stable release"
+        }
+    ]
 }
