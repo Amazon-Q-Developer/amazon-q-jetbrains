@@ -13,6 +13,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_CREATE_PROMPT
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FEEDBACK
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FILE_CLICK
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FILTER_CONTEXT_COMMANDS
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FOLLOW_UP_CLICK
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_INFO_LINK_CLICK
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_INSERT_TO_CURSOR_NOTIFICATION
@@ -263,5 +264,11 @@ object AmazonQChatServer : JsonRpcMethodProvider {
         LIST_AVAILABLE_MODELS,
         ListAvailableModelsParams::class.java,
         ListAvailableModelsResult::class.java
+    )
+
+    val filterContextCommands = JsonRpcRequest(
+        CHAT_FILTER_CONTEXT_COMMANDS,
+        LSPAny::class.java,
+        LSPAny::class.java
     )
 }

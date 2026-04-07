@@ -65,4 +65,5 @@ const val OPEN_FILE_DIALOG_REQUEST_METHOD = "aws/chat/openFileDialog"
 const val LIST_RULES_REQUEST_METHOD = "aws/chat/listRules"
 const val RULE_CLICK_REQUEST_METHOD = "aws/chat/ruleClick"
 
+const val CHAT_FILTER_CONTEXT_COMMANDS = "aws/chat/filterContextCommands"
 const val LIST_AVAILABLE_MODELS = "aws/chat/listAvailableModels"

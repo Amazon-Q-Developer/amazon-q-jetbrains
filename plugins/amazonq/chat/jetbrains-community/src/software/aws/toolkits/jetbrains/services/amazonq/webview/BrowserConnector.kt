@@ -61,6 +61,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_DISCLAIMER_ACKNOWLEDGED
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FEEDBACK
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FILE_CLICK
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FILTER_CONTEXT_COMMANDS
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_FOLLOW_UP_CLICK
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_INFO_LINK_CLICK
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.CHAT_INSERT_TO_CURSOR
@@ -561,6 +562,17 @@ class BrowserConnector(
                         browser.postChat(
                             FlareUiMessage(
                                 command = RULE_CLICK_REQUEST_METHOD,
+                                params = response
+                            )
+                        )
+                    }
+            }
+            CHAT_FILTER_CONTEXT_COMMANDS -> {
+                handleChat(AmazonQChatServer.filterContextCommands, node)
+                    .whenComplete { response, _ ->
+                        browser.postChat(
+                            FlareUiMessage(
+                                command = CHAT_FILTER_CONTEXT_COMMANDS,
                                 params = response
                             )
                         )
