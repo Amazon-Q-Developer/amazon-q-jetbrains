@@ -1,6 +1,3 @@
-# _4.1.0_ (2026-04-03)
-- **(Feature)** Added support for JetBrains 2026.1 stable release
-
 # _4.0_ (2026-03-20)
 
 # _3.106_ (2026-03-13)

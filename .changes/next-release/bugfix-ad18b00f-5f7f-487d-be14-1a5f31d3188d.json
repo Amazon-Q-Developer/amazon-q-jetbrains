@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Chat panel unresponsive when users open up a large repo"
+}
