@@ -60,8 +60,10 @@ class CodeWhispererSettings : PersistentStateComponent<CodeWhispererConfiguratio
 
     fun isWorkspaceContextEnabled() = state.value.getOrDefault(CodeWhispererConfigurationType.IsWorkspaceContextEnabled, true)
 
+    @Suppress("FunctionOnlyReturningConstant")
     fun isProjectContextEnabled() = false
 
+    @Suppress("UnusedParameter")
     fun toggleProjectContextEnabled(value: Boolean, passive: Boolean = false) {
         // no-op: workspace index settings removed
     }
