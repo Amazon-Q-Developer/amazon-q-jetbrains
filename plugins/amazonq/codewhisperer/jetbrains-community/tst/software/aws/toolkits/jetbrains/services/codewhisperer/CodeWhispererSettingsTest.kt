@@ -188,5 +188,4 @@ class CodeWhispererSettingsTest : CodeWhispererTestBase() {
         assertThat(actual.autoBuildSetting).hasSize(1)
         assertThat(actual.autoBuildSetting["project1"]).isTrue()
     }
-
 }

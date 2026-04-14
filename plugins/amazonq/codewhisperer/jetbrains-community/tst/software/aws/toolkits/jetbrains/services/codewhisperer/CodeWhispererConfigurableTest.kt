@@ -35,7 +35,7 @@ class CodeWhispererConfigurableTest : CodeWhispererTestBase() {
 
         val checkboxes = panel.components.filterIsInstance<JCheckBox>()
 
-        assertThat(checkboxes.size).isEqualTo(6)
+        assertThat(checkboxes.size).isEqualTo(4)
         assertThat(checkboxes.map { it.text }).containsExactlyInAnyOrder(
             message("aws.settings.codewhisperer.include_code_with_reference"),
             message("aws.settings.codewhisperer.configurable.opt_out.title"),

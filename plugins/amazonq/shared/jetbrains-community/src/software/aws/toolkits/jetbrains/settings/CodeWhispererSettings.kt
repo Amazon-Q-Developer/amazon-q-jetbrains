@@ -157,4 +157,3 @@ enum class CodeWhispererStringConfigurationType {
 }
 
 enum class CodeWhispererIntConfigurationType
-
