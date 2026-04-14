@@ -41,8 +41,6 @@ class CodeWhispererConfigurableTest : CodeWhispererTestBase() {
             message("aws.settings.codewhisperer.configurable.opt_out.title"),
             message("aws.settings.codewhisperer.automatic_import_adder"),
             "Server-side context",
-            message("aws.settings.codewhisperer.project_context"),
-            message("aws.settings.codewhisperer.project_context_gpu")
         )
 
         val comments = panel.components.filterIsInstance<DslLabel>()
