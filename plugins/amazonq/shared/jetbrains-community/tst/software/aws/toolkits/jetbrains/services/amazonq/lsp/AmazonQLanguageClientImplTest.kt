@@ -442,7 +442,7 @@ class AmazonQLanguageClientImplTest {
         val telemetryEnabled = Random.nextBoolean()
         val customizationArn = aString()
 
-        val mockQSettings = mockk<CodeWhispererSettings> {
+        val mockQSettings = mockk<CodeWhispererSettings>(relaxed = true) {
             every { isProjectContextEnabled() } returns false
         }
         mockkObject(CodeWhispererSettings.Companion)
