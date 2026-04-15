@@ -467,6 +467,14 @@ class AmazonQLanguageClientImplTest {
                 AmazonQLspConfiguration(
                     optOutTelemetry = !telemetryEnabled,
                     customization = customizationArn,
+                    projectContext = ProjectContextConfiguration(
+                        enableLocalIndexing = false,
+                        enableGpuAcceleration = false,
+                        indexWorkerThreads = 0,
+                        localIndexing = LocalIndexingConfiguration(
+                            maxIndexSizeMB = 0,
+                        )
+                    )
                 )
             )
     }
