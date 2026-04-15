@@ -35,12 +35,16 @@ class CodeWhispererConfigurableTest : CodeWhispererTestBase() {
 
         val checkboxes = panel.components.filterIsInstance<JCheckBox>()
 
-        assertThat(checkboxes.size).isEqualTo(4)
-        assertThat(checkboxes.map { it.text }).containsExactlyInAnyOrder(
+        // Verify workspace index settings are not present
+        val checkboxTexts = checkboxes.map { it.text }
+        assertThat(checkboxTexts).doesNotContain(
+            "Amazon Q: Workspace Index",
+            "Amazon Q: Workspace Index Use GPU"
+        )
+        assertThat(checkboxTexts).contains(
             message("aws.settings.codewhisperer.include_code_with_reference"),
             message("aws.settings.codewhisperer.configurable.opt_out.title"),
             message("aws.settings.codewhisperer.automatic_import_adder"),
-            "Server-side context",
         )
 
         val comments = panel.components.filterIsInstance<DslLabel>()
