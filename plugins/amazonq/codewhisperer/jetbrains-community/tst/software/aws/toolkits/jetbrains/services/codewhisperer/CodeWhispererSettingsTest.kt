@@ -189,4 +189,3 @@ class CodeWhispererSettingsTest : CodeWhispererTestBase() {
         assertThat(actual.autoBuildSetting["project1"]).isTrue()
     }
 }
-}
