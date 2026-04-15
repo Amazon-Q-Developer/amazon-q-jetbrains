@@ -54,7 +54,7 @@ class CodeWhispererSettings : PersistentStateComponent<CodeWhispererConfiguratio
         true
     )
 
-    fun toggleProjectContextEnabled(value: Boolean, passive: Boolean = false) {
+    fun toggleProjectContextEnabled(value: Boolean) {
         state.value[CodeWhispererConfigurationType.IsProjectContextEnabled] = value
     }
 
