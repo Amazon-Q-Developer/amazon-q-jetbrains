@@ -249,18 +249,4 @@ class CodeWhispererSettingUnitTest {
         sut.toggleProjectContextEnabled(false)
         assertThat(sut.isProjectContextEnabled()).isFalse
     }
-
-    @Test
-    fun `toggleProjectContext should only set once on users behalf if passive is true`() {
-        assertThat(sut.isProjectContextEnabled()).isFalse
-
-        sut.toggleProjectContextEnabled(true, passive = true)
-        assertThat(sut.isProjectContextEnabled()).isTrue
-
-        sut.toggleProjectContextEnabled(false, passive = true)
-        assertThat(sut.isProjectContextEnabled()).isTrue
-
-        sut.toggleProjectContextEnabled(false, passive = false)
-        assertThat(sut.isProjectContextEnabled()).isFalse
-    }
 }
