@@ -54,7 +54,7 @@ class CodeWhispererSettings : PersistentStateComponent<CodeWhispererConfiguratio
         true
     )
 
-    fun toggleProjectContextEnabled(value: Boolean, passive: Boolean = false) {
+    fun toggleProjectContextEnabled(value: Boolean) {
         state.value[CodeWhispererConfigurationType.IsProjectContextEnabled] = value
     }
 
@@ -64,12 +64,6 @@ class CodeWhispererSettings : PersistentStateComponent<CodeWhispererConfiguratio
 
     fun isWorkspaceContextEnabled() = state.value.getOrDefault(CodeWhispererConfigurationType.IsWorkspaceContextEnabled, true)
     fun isProjectContextEnabled() = state.value.getOrDefault(CodeWhispererConfigurationType.IsProjectContextEnabled, false)
-
-    private fun hasEnabledProjectContextOnce() = state.value.getOrDefault(CodeWhispererConfigurationType.HasEnabledProjectContextOnce, false)
-
-    private fun toggleEnabledProjectContextOnce(value: Boolean) {
-        state.value[CodeWhispererConfigurationType.HasEnabledProjectContextOnce] = value
-    }
 
     fun isProjectContextGpu() = state.value.getOrDefault(CodeWhispererConfigurationType.IsProjectContextGpu, false)
 

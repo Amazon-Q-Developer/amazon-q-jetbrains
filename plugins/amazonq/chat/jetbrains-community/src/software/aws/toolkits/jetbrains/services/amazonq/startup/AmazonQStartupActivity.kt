@@ -30,7 +30,7 @@ class AmazonQStartupActivity : ProjectActivity {
 
         ToolkitConnectionManager.getInstance(project).activeConnectionForFeature(QConnection.getInstance())?.let {
             if (it is AwsBearerTokenConnection && CodeWhispererFeatureConfigService.getInstance().getChatWSContext()) {
-                CodeWhispererSettings.getInstance().toggleProjectContextEnabled(value = true, passive = true)
+                CodeWhispererSettings.getInstance().toggleProjectContextEnabled(value = true)
             }
         }
 
