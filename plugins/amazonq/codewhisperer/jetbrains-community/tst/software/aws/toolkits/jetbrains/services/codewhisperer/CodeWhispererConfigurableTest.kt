@@ -4,7 +4,6 @@
 package software.aws.toolkits.jetbrains.services.codewhisperer
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.ui.dsl.builder.components.DslLabel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.kotlin.doNothing
@@ -45,8 +44,6 @@ class CodeWhispererConfigurableTest : CodeWhispererTestBase() {
             message("aws.settings.codewhisperer.configurable.opt_out.title"),
             message("aws.settings.codewhisperer.automatic_import_adder"),
         )
-
-        val comments = panel.components.filterIsInstance<DslLabel>()
 
         mockCodeWhispererEnabledStatus(false)
         ApplicationManager.getApplication().messageBus.syncPublisher(ToolkitConnectionManagerListener.TOPIC)
