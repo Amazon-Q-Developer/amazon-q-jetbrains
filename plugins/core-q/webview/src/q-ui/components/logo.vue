@@ -32,8 +32,8 @@ export default defineComponent({
 
         <svg
             v-if="app === 'AMAZONQ' && !this.isConnected"
-            width="100"
-            height="100"
+            width="56"
+            height="56"
             viewBox="0 0 71 71"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -73,8 +73,8 @@ export default defineComponent({
         </svg>
         <svg
             v-if="app === 'TOOLKIT' && !this.isConnected"
-            width="100"
-            height="100"
+            width="72"
+            height="72"
             viewBox="0 0 54 54"
             fill="none"
             id="Layer_1"
@@ -106,7 +106,7 @@ export default defineComponent({
     flex-direction: row;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 75px;
+    padding-top: 65px;
     height: auto;
 }
 
