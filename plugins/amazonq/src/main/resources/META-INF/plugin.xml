@@ -135,7 +135,7 @@
         <registryKey key="aws.toolkit.developerMode" description="Enables features to facilitate development of the toolkit" restartRequired="false"
                      defaultValue="false" overrides="true"/>
         <registryKey key="aws.toolkit.notification.endpoint" description="Endpoint for AWS Toolkit notifications"
-                     defaultValue="https://idetoolkits-hostedfiles.amazonaws.com/Notifications/Jetbrains/combined/2.x.json" restartRequired="true"
+                     defaultValue="https://idetoolkits-hostedfiles.amazonaws.com/Notifications/integ/Jetbrains/combined/2.x.json" restartRequired="true"
                      overrides="true"/>
 
         <webHelpProvider implementation="software.amazon.q.jetbrains.core.help.HelpIdTranslator"/>
