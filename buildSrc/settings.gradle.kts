@@ -35,6 +35,11 @@ dependencyResolutionManagement {
     repositories {
         codeArtifactMavenRepo()
         mavenCentral()
+        // GCS-backed Maven Central mirror; Sonatype-official, bypasses the Cloudflare edge that
+        // intermittently returns 403 to GitHub Actions runner IP ranges.
+        maven {
+            url = uri("https://maven-central.storage-download.googleapis.com/maven2/")
+        }
         gradlePluginPortal()
         maven {
             url = uri("https://oss.sonatype.org/content/repositories/snapshots/")

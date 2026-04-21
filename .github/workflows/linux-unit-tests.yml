@@ -46,10 +46,18 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        run: |
-          Xvfb :99 -screen 0 1920x1080x24 &
-          export DISPLAY=:99
-          ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport -x gitSecrets --info --stacktrace --console plain --continue
+        # Retries the whole step once on failure. Primary motivation is transient Maven Central
+        # 403s from Cloudflare against GitHub Actions runner IPs; retry also rescues the rare
+        # flaky test without having to re-run the entire matrix by hand.
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 40
+          max_attempts: 2
+          retry_on: error
+          command: |
+            Xvfb :99 -screen 0 1920x1080x24 &
+            export DISPLAY=:99
+            ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport -x gitSecrets --info --stacktrace --console plain --continue
 
       - name: Build plugin
         if: success()
