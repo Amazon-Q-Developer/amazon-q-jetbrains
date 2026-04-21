@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.emptyText
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
@@ -182,6 +183,26 @@ class CodeWhispererConfigurable(private val project: Project) :
         }
 
         val autoBuildSetting = codeWhispererSettings.getAutoBuildSetting()
+
+        group(message("aws.settings.codewhisperer.group.q_chat")) {
+            row(message("aws.settings.codewhisperer.project_context_index_max_size")) {
+                intTextField(
+                    range = CodeWhispererSettings.CONTEXT_INDEX_SIZE
+                ).bindIntText(codeWhispererSettings::getProjectContextIndexMaxSize, codeWhispererSettings::setProjectContextIndexMaxSize)
+                    .apply {
+                        connect.subscribe(
+                            ToolkitConnectionManagerListener.TOPIC,
+                            object : ToolkitConnectionManagerListener {
+                                override fun activeConnectionChanged(newConnection: ToolkitConnection?) {
+                                    enabled(isCodeWhispererEnabled(project))
+                                }
+                            }
+                        )
+                        enabled(invoke)
+                    }.comment(message("aws.settings.codewhisperer.project_context_index_max_size.tooltip"))
+            }
+        }
+
         if (autoBuildSetting.isNotEmpty()) {
             group(message("aws.settings.codewhisperer.feature_development")) {
                 row {

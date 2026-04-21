@@ -40,6 +40,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.customization.Code
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
 import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
 import kotlin.random.Random
+import kotlin.random.nextInt
 
 @ExtendWith(ApplicationExtension::class)
 class AmazonQLanguageClientImplTest {
@@ -442,8 +443,11 @@ class AmazonQLanguageClientImplTest {
         val telemetryEnabled = Random.nextBoolean()
         val customizationArn = aString()
 
+        val indexSize = Random.nextInt(CodeWhispererSettings.CONTEXT_INDEX_SIZE)
+
         val mockQSettings = mockk<CodeWhispererSettings> {
             every { isProjectContextEnabled() } returns false
+            every { getProjectContextIndexMaxSize() } returns indexSize
         }
         mockkObject(CodeWhispererSettings.Companion)
         every { CodeWhispererSettings.getInstance() } returns mockQSettings
@@ -467,6 +471,11 @@ class AmazonQLanguageClientImplTest {
                 AmazonQLspConfiguration(
                     optOutTelemetry = !telemetryEnabled,
                     customization = customizationArn,
+                    projectContext = ProjectContextConfiguration(
+                        localIndexing = LocalIndexingConfiguration(
+                            maxIndexSizeMB = indexSize,
+                        )
+                    )
                 )
             )
     }

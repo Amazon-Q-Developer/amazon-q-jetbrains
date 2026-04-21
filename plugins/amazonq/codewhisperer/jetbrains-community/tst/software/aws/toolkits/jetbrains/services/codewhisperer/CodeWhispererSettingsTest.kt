@@ -167,6 +167,24 @@ class CodeWhispererSettingsTest : CodeWhispererTestBase() {
     }
 
     @Test
+    fun `context index size is returned in range`() {
+        val sut = CodeWhispererSettings.getInstance()
+
+        mapOf(
+            1 to 1,
+            0 to 1,
+            -1 to 1,
+            123 to 123,
+            2047 to 2047,
+            4096 to 4096,
+            4097 to 4096,
+        ).forEach { s, expected ->
+            sut.setProjectContextIndexMaxSize(s)
+            assertThat(sut.getProjectContextIndexMaxSize()).isEqualTo(expected)
+        }
+    }
+
+    @Test
     fun `deserialize existing settings to ensure backwards compatibility`() {
         val element = xmlElement(
             """

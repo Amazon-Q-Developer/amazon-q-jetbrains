@@ -68,6 +68,15 @@ class CodeWhispererSettings : PersistentStateComponent<CodeWhispererConfiguratio
         // no-op: workspace index settings removed
     }
 
+    fun getProjectContextIndexMaxSize(): Int = state.intValue.getOrDefault(
+        CodeWhispererIntConfigurationType.ProjectContextIndexMaxSize,
+        250
+    ).coerceIn(CONTEXT_INDEX_SIZE)
+
+    fun setProjectContextIndexMaxSize(value: Int) {
+        state.intValue[CodeWhispererIntConfigurationType.ProjectContextIndexMaxSize] = value
+    }
+
     fun getIgnoredCodeReviewIssues(): String = state.stringValue.getOrDefault(
         CodeWhispererStringConfigurationType.IgnoredCodeReviewIssues,
         ""
@@ -123,6 +132,8 @@ class CodeWhispererSettings : PersistentStateComponent<CodeWhispererConfiguratio
 
     companion object {
         fun getInstance(): CodeWhispererSettings = service()
+
+        val CONTEXT_INDEX_SIZE = IntRange(1, 4096)
     }
 }
 
@@ -156,4 +167,6 @@ enum class CodeWhispererStringConfigurationType {
     IgnoredCodeReviewIssues,
 }
 
-enum class CodeWhispererIntConfigurationType
+enum class CodeWhispererIntConfigurationType {
+    ProjectContextIndexMaxSize,
+}

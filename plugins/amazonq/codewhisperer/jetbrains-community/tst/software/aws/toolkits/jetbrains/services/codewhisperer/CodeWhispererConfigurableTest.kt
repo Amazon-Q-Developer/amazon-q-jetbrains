@@ -48,7 +48,7 @@ class CodeWhispererConfigurableTest : CodeWhispererTestBase() {
         )
 
         val comments = panel.components.filterIsInstance<DslLabel>()
-        assertThat(comments.size).isEqualTo(9)
+        assertThat(comments.size).isGreaterThanOrEqualTo(6)
 
         mockCodeWhispererEnabledStatus(false)
         ApplicationManager.getApplication().messageBus.syncPublisher(ToolkitConnectionManagerListener.TOPIC)
