@@ -25,10 +25,6 @@ val Q_SCOPES = listOf(
     "codewhisperer:analysis",
 )
 
-val CODECATALYST_SCOPES = listOf(
-    "codecatalyst:read_write"
-)
-
 fun ToolkitConnection?.isSono() = if (this == null) {
     false
 } else {

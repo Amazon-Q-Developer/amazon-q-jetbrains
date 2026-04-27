@@ -4,7 +4,6 @@
 package software.amazon.q.jetbrains.core.webview
 
 import com.intellij.openapi.util.registry.Registry
-import software.amazon.q.jetbrains.core.credentials.sono.CODECATALYST_SCOPES
 import software.amazon.q.jetbrains.core.credentials.sono.Q_SCOPES
 import software.aws.toolkits.telemetry.AuthType
 import software.aws.toolkits.telemetry.FeatureId
@@ -21,8 +20,6 @@ fun getAuthType(region: String): AuthType {
 fun getFeatureId(scopes: List<String>): FeatureId =
     if (scopes.intersect(Q_SCOPES.toSet()).isNotEmpty()) {
         FeatureId.AmazonQ
-    } else if (scopes.intersect(CODECATALYST_SCOPES.toSet()).isNotEmpty()) {
-        FeatureId.Codecatalyst
     } else {
         FeatureId.AwsExplorer
     }

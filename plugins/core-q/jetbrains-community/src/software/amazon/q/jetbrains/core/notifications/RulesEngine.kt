@@ -75,7 +75,6 @@ object RulesEngine {
         return notificationAuth.all { feature ->
             val actualConnection = when (feature.feature) {
                 "q" -> getConnectionDetailsForFeature(project, BearerTokenFeatureSet.Q)
-                "codeCatalyst" -> getConnectionDetailsForFeature(project, BearerTokenFeatureSet.CODECATALYST)
                 "toolkit" -> getConnectionDetailsForToolkit(project)
                 else -> return true
             }

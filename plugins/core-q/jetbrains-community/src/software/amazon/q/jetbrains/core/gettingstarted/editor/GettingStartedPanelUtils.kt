@@ -14,7 +14,6 @@ import software.amazon.q.jetbrains.core.credentials.CredentialManager
 import software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
 import software.amazon.q.jetbrains.core.credentials.lazyIsUnauthedBearerConnection
-import software.amazon.q.jetbrains.core.credentials.pinning.CodeCatalystConnection
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.profiles.SsoSessionConstants
 import software.amazon.q.jetbrains.core.credentials.sono.SONO_URL
@@ -29,7 +28,6 @@ enum class ActiveConnectionType {
 }
 
 enum class BearerTokenFeatureSet {
-    CODECATALYST,
     Q,
 }
 
@@ -84,9 +82,6 @@ fun checkBearerConnectionValidity(project: Project, source: BearerTokenFeatureSe
     if (connections.isEmpty()) return ActiveConnection.NotConnected
 
     val activeConnection = when (source) {
-        BearerTokenFeatureSet.CODECATALYST -> ToolkitConnectionManager.getInstance(project).activeConnectionForFeature(
-            CodeCatalystConnection.getInstance()
-        )
         BearerTokenFeatureSet.Q -> ToolkitConnectionManager.getInstance(project).activeConnectionForFeature(
             QConnection.getInstance()
         )
@@ -134,7 +129,6 @@ fun checkIamProfileByCredentialType(project: Project): ActiveConnection {
  */
 fun checkConnectionValidity(project: Project): ActiveConnection {
     val tokenFeatureSets = listOf(
-        BearerTokenFeatureSet.CODECATALYST,
         BearerTokenFeatureSet.Q,
     )
     var result = checkIamConnectionValidity(project)
@@ -185,7 +179,6 @@ fun getSourceOfEntry(
 
 enum class SourceOfEntry {
     RESOURCE_EXPLORER,
-    CODECATALYST,
     CODEWHISPERER,
     EXPLORER,
     FIRST_STARTUP,

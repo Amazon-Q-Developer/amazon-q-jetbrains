@@ -33,13 +33,6 @@ fun getEnabledConnectionsForTelemetry(project: Project?): Set<AuthFormId> {
     )
 
     addConnectionInfoToSet(
-        checkBearerConnectionValidity(project, BearerTokenFeatureSet.CODECATALYST),
-        enabledConnections,
-        AuthFormId.IDENTITYCENTER_CODECATALYST,
-        AuthFormId.BUILDERID_CODECATALYST
-    )
-
-    addConnectionInfoToSet(
         checkBearerConnectionValidity(project, BearerTokenFeatureSet.Q),
         enabledConnections,
         AuthFormId.IDENTITYCENTER_Q,
@@ -59,11 +52,6 @@ fun getAuthScopesForTelemetry(project: Project?): Set<String> {
     if (explorerConnection !is ActiveConnection.NotConnected && explorerConnection.connectionType == ActiveConnectionType.IAM_IDC) {
         scopes.add(IDENTITY_CENTER_ROLE_ACCESS_SCOPE)
     }
-
-    addConnectionInfoToSet(
-        checkBearerConnectionValidity(project, BearerTokenFeatureSet.CODECATALYST),
-        dataSet = scopes
-    )
 
     addConnectionInfoToSet(
         checkBearerConnectionValidity(project, BearerTokenFeatureSet.Q),
@@ -128,8 +116,6 @@ fun addConnectionInfoToSet(
 enum class AuthFormId {
     IAMCREDENTIALS_EXPLORER,
     IDENTITYCENTER_EXPLORER,
-    BUILDERID_CODECATALYST,
-    IDENTITYCENTER_CODECATALYST,
     BUILDERID_Q,
     IDENTITYCENTER_Q,
     UNKNOWN,
