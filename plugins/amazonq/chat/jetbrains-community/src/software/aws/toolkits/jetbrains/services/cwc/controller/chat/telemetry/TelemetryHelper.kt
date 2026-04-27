@@ -22,10 +22,10 @@ import software.amazon.q.jetbrains.utils.notifyError
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererCustomization
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
+import software.aws.toolkits.jetbrains.services.cwc.CwcObjectMapper
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.ChatRequestData
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.TriggerType
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.v1.ChatSessionV1
-import software.aws.toolkits.jetbrains.services.cwc.CwcObjectMapper
 import software.aws.toolkits.jetbrains.services.cwc.messages.ChatMessage
 import software.aws.toolkits.jetbrains.services.cwc.messages.IncomingCwcMessage
 import software.aws.toolkits.jetbrains.services.cwc.messages.LinkType

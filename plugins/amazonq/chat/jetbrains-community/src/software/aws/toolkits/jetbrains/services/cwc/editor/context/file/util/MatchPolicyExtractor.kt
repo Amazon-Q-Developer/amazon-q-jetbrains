@@ -7,8 +7,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.warn
 import software.aws.toolkits.jetbrains.services.amazonq.webview.FqnWebviewAdapter
-import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.MatchPolicy
 import software.aws.toolkits.jetbrains.services.cwc.CwcObjectMapper
+import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.MatchPolicy
 
 object MatchPolicyExtractor {
     suspend fun extractMatchPolicyFromCurrentFile(

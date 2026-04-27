@@ -233,5 +233,3 @@ data class ChatMessage(
     tabId = tabId,
     type = "chatMessage",
 )
-
-
