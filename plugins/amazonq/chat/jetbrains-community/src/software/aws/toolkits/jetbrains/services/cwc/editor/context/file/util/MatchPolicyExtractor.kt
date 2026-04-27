@@ -8,7 +8,7 @@ import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.warn
 import software.aws.toolkits.jetbrains.services.amazonq.webview.FqnWebviewAdapter
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.MatchPolicy
-import software.aws.toolkits.jetbrains.services.cwc.controller.ChatController
+import software.aws.toolkits.jetbrains.services.cwc.CwcObjectMapper
 
 object MatchPolicyExtractor {
     suspend fun extractMatchPolicyFromCurrentFile(
@@ -26,11 +26,11 @@ object MatchPolicyExtractor {
         if (isCodeSelected) must.add(fileLanguage) else should.add(fileLanguage)
 
         val readImportsRequest = ReadImportsRequest(fileText, fileLanguage)
-        val requestString = ChatController.objectMapper.writeValueAsString(readImportsRequest)
+        val requestString = CwcObjectMapper.objectMapper.writeValueAsString(readImportsRequest)
 
         return try {
             val importsString = fqnWebviewAdapter?.readImports(requestString) ?: "[]"
-            val imports = ChatController.objectMapper.readValue<List<String>>(importsString)
+            val imports = CwcObjectMapper.objectMapper.readValue<List<String>>(importsString)
 
             imports
                 .filterIndexed { index, elem -> index == imports.indexOf(elem) && elem != fileLanguage }

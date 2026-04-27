@@ -21,10 +21,6 @@
         <actionPromoter order="last" implementation="software.aws.toolkits.jetbrains.services.cwc.inline.InlineChatActionPromoter"/>
     </extensions>
 
-    <extensions defaultExtensionNs="amazon.q">
-        <appFactory implementation="software.aws.toolkits.jetbrains.services.cwc.AppFactory" />
-    </extensions>
-
     <actions>
         <action id="aws.toolkit.open.q.window" class="software.aws.toolkits.jetbrains.services.amazonq.QRefreshPanelAction"/>
         <group id="aws.q.toolwindow.titleBar" popup="false" compact="true">

@@ -5,8 +5,6 @@ package software.aws.toolkits.jetbrains.services.cwc.commands
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.flareChat.ChatCommunicationManager
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.flareChat.FlareUiMessage
@@ -15,15 +13,11 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.Gener
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.SEND_TO_PROMPT
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.SendToPromptParams
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.TriggerType
-import software.aws.toolkits.jetbrains.services.amazonq.messages.AmazonQMessage
 import software.aws.toolkits.jetbrains.services.cwc.editor.context.ActiveFileContextExtractor
 import software.aws.toolkits.jetbrains.services.cwc.editor.context.ExtractionTriggerType
 
 // Register Editor Actions in the Editor Context Menu
 class ActionRegistrar {
-
-    private val _messages by lazy { MutableSharedFlow<AmazonQMessage>(extraBufferCapacity = 10) }
-    val flow = _messages.asSharedFlow()
 
     fun reportMessageClick(command: EditorContextCommand, project: Project) {
         // new agentic chat route

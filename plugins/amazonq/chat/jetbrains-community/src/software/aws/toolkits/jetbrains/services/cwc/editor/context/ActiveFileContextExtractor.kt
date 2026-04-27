@@ -23,14 +23,12 @@ class ActiveFileContextExtractor(
         ExtractionTriggerType.ChatMessage -> focusAreaContextExtractor.extract()
         ExtractionTriggerType.ContextMenu -> focusAreaContextExtractor.extract()
         ExtractionTriggerType.CodeScanButton -> focusAreaContextExtractor.extract()
-        ExtractionTriggerType.OnboardingPageInteraction -> null
     }
 
     private suspend fun extractActiveFileContext(triggerType: ExtractionTriggerType) = when (triggerType) {
         ExtractionTriggerType.ChatMessage -> fileContextExtractor.extract()
         ExtractionTriggerType.ContextMenu -> fileContextExtractor.extract()
         ExtractionTriggerType.CodeScanButton -> fileContextExtractor.extract()
-        ExtractionTriggerType.OnboardingPageInteraction -> null
     }
 
     companion object {

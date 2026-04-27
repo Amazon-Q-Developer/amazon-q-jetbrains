@@ -25,7 +25,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.customization.Code
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.ChatRequestData
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.TriggerType
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.v1.ChatSessionV1
-import software.aws.toolkits.jetbrains.services.cwc.controller.ChatController
+import software.aws.toolkits.jetbrains.services.cwc.CwcObjectMapper
 import software.aws.toolkits.jetbrains.services.cwc.messages.ChatMessage
 import software.aws.toolkits.jetbrains.services.cwc.messages.IncomingCwcMessage
 import software.aws.toolkits.jetbrains.services.cwc.messages.LinkType
@@ -339,7 +339,7 @@ class TelemetryHelper(private val project: Project, private val sessionStorage: 
         try {
             TelemetryService.getInstance().sendFeedback(
                 sentiment = Sentiment.NEGATIVE,
-                comment = ChatController.objectMapper.writeValueAsString(comment),
+                comment = CwcObjectMapper.objectMapper.writeValueAsString(comment),
             )
             logger.info { "CodeWhispererChat answer feedback sent: \"Negative\"" }
             recordFeedbackResult(true)
