@@ -14,7 +14,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import software.amazon.q.core.lambda.LambdaManifestValidator
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -158,18 +157,22 @@ class RemoteResourceResolverTest {
             override val initialValue = initialValue?.let { { it } }
         }
 
+        val alwaysFailsParser = object : RemoteResolveParser {
+            override fun canBeParsed(data: InputStream): Boolean = false
+        }
+
         fun xmlResource(
             name: String = "resource",
             urls: List<String> = listOf(PRIMARY_URL),
             ttl: Duration? = Duration.ofMillis(1000),
             initialValue: InputStream? = null,
-            remoteResolveParser: RemoteResolveParser? = LambdaManifestValidator,
+            remoteResolveParser: RemoteResolveParser? = alwaysFailsParser,
         ) = object : RemoteResource {
             override val urls: List<String> = urls
             override val name: String = name
             override val ttl: Duration? = ttl
             override val initialValue = initialValue?.let { { it } }
-            override val remoteResolveParser: RemoteResolveParser = remoteResolveParser as LambdaManifestValidator
+            override val remoteResolveParser: RemoteResolveParser = remoteResolveParser!!
         }
 
         fun writeDataToFile(data: String): (InvocationOnMock) -> Unit = { invocation ->
