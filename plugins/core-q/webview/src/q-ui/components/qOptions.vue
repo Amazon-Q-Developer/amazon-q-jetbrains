@@ -14,7 +14,8 @@
                 </svg>
             </span>
             <span class="maintenance-banner__text">
-                Amazon Q Developer IDE plugins will reach end of support on April 30, 2027. New accounts will no longer available starting 5/15, but existing users can still sign-in below.
+                <!-- TODO: finalize banner text and Learn more URL with product team -->
+                Amazon Q Developer IDE plugins will reach end of support on April 30, 2027. New accounts will no longer be available starting 5/15, but existing users can still sign-in below.
                 <a class="maintenance-banner__link" href="#" @click.prevent="handleLearnMoreClick">Learn more</a>
             </span>
         </div>
