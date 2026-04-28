@@ -376,11 +376,7 @@ class AmazonQLanguageClientImpl(private val project: Project) : AmazonQLanguageC
                                 AmazonQLspConfiguration(
                                     optOutTelemetry = !AwsSettings.getInstance().isTelemetryEnabled,
                                     customization = CodeWhispererModelConfigurator.getInstance().activeCustomization(project)?.arn,
-                                    // local context
                                     projectContext = ProjectContextConfiguration(
-                                        enableLocalIndexing = qSettings.isProjectContextEnabled(),
-                                        indexWorkerThreads = qSettings.getProjectContextIndexThreadCount(),
-                                        enableGpuAcceleration = qSettings.isProjectContextGpu(),
                                         localIndexing = LocalIndexingConfiguration(
                                             maxIndexSizeMB = qSettings.getProjectContextIndexMaxSize()
                                         )

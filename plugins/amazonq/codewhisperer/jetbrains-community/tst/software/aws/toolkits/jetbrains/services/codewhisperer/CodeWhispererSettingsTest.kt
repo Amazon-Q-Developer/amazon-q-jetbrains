@@ -167,6 +167,24 @@ class CodeWhispererSettingsTest : CodeWhispererTestBase() {
     }
 
     @Test
+    fun `context index size is returned in range`() {
+        val sut = CodeWhispererSettings.getInstance()
+
+        mapOf(
+            1 to 1,
+            0 to 1,
+            -1 to 1,
+            123 to 123,
+            2047 to 2047,
+            4096 to 4096,
+            4097 to 4096,
+        ).forEach { s, expected ->
+            sut.setProjectContextIndexMaxSize(s)
+            assertThat(sut.getProjectContextIndexMaxSize()).isEqualTo(expected)
+        }
+    }
+
+    @Test
     fun `deserialize existing settings to ensure backwards compatibility`() {
         val element = xmlElement(
             """
@@ -187,80 +205,5 @@ class CodeWhispererSettingsTest : CodeWhispererTestBase() {
         val actual = XmlSerializer.deserialize(element, CodeWhispererConfiguration::class.java)
         assertThat(actual.autoBuildSetting).hasSize(1)
         assertThat(actual.autoBuildSetting["project1"]).isTrue()
-    }
-
-    @Test
-    fun `context thread count is returned in range`() {
-        val sut = CodeWhispererSettings.getInstance()
-
-        mapOf(
-            1 to 1,
-            0 to 0,
-            -1 to 0,
-            123 to 50,
-            50 to 50,
-            51 to 50,
-        ).forEach { s, expected ->
-            sut.setProjectContextIndexThreadCount(s)
-            assertThat(sut.getProjectContextIndexThreadCount()).isEqualTo(expected)
-        }
-    }
-
-    @Test
-    fun `context index size is returned in range`() {
-        val sut = CodeWhispererSettings.getInstance()
-
-        mapOf(
-            1 to 1,
-            0 to 1,
-            -1 to 1,
-            123 to 123,
-            2047 to 2047,
-            4096 to 4096,
-            4097 to 4096,
-        ).forEach { s, expected ->
-            sut.setProjectContextIndexMaxSize(s)
-            assertThat(sut.getProjectContextIndexMaxSize()).isEqualTo(expected)
-        }
-    }
-}
-
-class CodeWhispererSettingUnitTest {
-    private lateinit var sut: CodeWhispererSettings
-
-    @Before
-    fun setUp() {
-        sut = CodeWhispererSettings()
-        sut.loadState(CodeWhispererConfiguration())
-    }
-
-    @Test
-    fun `projectContext is disabled by default`() {
-        assertThat(sut.isProjectContextEnabled()).isFalse
-    }
-
-    @Test
-    fun `toggleProjectContext should set the value correct`() {
-        assertThat(sut.isProjectContextEnabled()).isFalse
-
-        sut.toggleProjectContextEnabled(true)
-        assertThat(sut.isProjectContextEnabled()).isTrue
-
-        sut.toggleProjectContextEnabled(false)
-        assertThat(sut.isProjectContextEnabled()).isFalse
-    }
-
-    @Test
-    fun `toggleProjectContext should only set once on users behalf if passive is true`() {
-        assertThat(sut.isProjectContextEnabled()).isFalse
-
-        sut.toggleProjectContextEnabled(true, passive = true)
-        assertThat(sut.isProjectContextEnabled()).isTrue
-
-        sut.toggleProjectContextEnabled(false, passive = true)
-        assertThat(sut.isProjectContextEnabled()).isTrue
-
-        sut.toggleProjectContextEnabled(false, passive = false)
-        assertThat(sut.isProjectContextEnabled()).isFalse
     }
 }

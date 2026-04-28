@@ -19,12 +19,6 @@ data class AmazonQLspConfiguration(
 )
 
 data class ProjectContextConfiguration(
-    val enableLocalIndexing: Boolean? = null,
-
-    val enableGpuAcceleration: Boolean? = null,
-
-    val indexWorkerThreads: Int? = null,
-
     val localIndexing: LocalIndexingConfiguration? = null,
 )
 
@@ -32,5 +26,4 @@ data class LocalIndexingConfiguration(
     val ignoreFilePatterns: List<String>? = null,
     val maxFileSizeMB: Int? = null,
     val maxIndexSizeMB: Int? = null,
-    val indexCacheDirPath: String? = null,
 )

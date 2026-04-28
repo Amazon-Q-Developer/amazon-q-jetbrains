@@ -182,39 +182,9 @@ class CodeWhispererConfigurable(private val project: Project) :
             }
         }
 
+        val autoBuildSetting = codeWhispererSettings.getAutoBuildSetting()
+
         group(message("aws.settings.codewhisperer.group.q_chat")) {
-            row {
-                checkBox(message("aws.settings.codewhisperer.project_context")).apply {
-                    connect.subscribe(
-                        ToolkitConnectionManagerListener.TOPIC,
-                        object : ToolkitConnectionManagerListener {
-                            override fun activeConnectionChanged(newConnection: ToolkitConnection?) {
-                                enabled(isCodeWhispererEnabled(project))
-                            }
-                        }
-                    )
-                    enabled(invoke)
-                    bindSelected(codeWhispererSettings::isProjectContextEnabled, codeWhispererSettings::toggleProjectContextEnabled)
-                }.comment(message("aws.settings.codewhisperer.project_context.tooltip"))
-            }
-
-            row(message("aws.settings.codewhisperer.project_context_index_thread")) {
-                intTextField(
-                    range = CodeWhispererSettings.CONTEXT_INDEX_THREADS
-                ).bindIntText(codeWhispererSettings::getProjectContextIndexThreadCount, codeWhispererSettings::setProjectContextIndexThreadCount)
-                    .apply {
-                        connect.subscribe(
-                            ToolkitConnectionManagerListener.TOPIC,
-                            object : ToolkitConnectionManagerListener {
-                                override fun activeConnectionChanged(newConnection: ToolkitConnection?) {
-                                    enabled(isCodeWhispererEnabled(project))
-                                }
-                            }
-                        )
-                        enabled(invoke)
-                    }.comment(message("aws.settings.codewhisperer.project_context_index_thread.tooltip"))
-            }
-
             row(message("aws.settings.codewhisperer.project_context_index_max_size")) {
                 intTextField(
                     range = CodeWhispererSettings.CONTEXT_INDEX_SIZE
@@ -231,24 +201,8 @@ class CodeWhispererConfigurable(private val project: Project) :
                         enabled(invoke)
                     }.comment(message("aws.settings.codewhisperer.project_context_index_max_size.tooltip"))
             }
-
-            row {
-                checkBox(message("aws.settings.codewhisperer.project_context_gpu")).apply {
-                    connect.subscribe(
-                        ToolkitConnectionManagerListener.TOPIC,
-                        object : ToolkitConnectionManagerListener {
-                            override fun activeConnectionChanged(newConnection: ToolkitConnection?) {
-                                enabled(isCodeWhispererEnabled(project))
-                            }
-                        }
-                    )
-                    enabled(invoke)
-                    bindSelected(codeWhispererSettings::isProjectContextGpu, codeWhispererSettings::toggleProjectContextGpu)
-                }.comment(message("aws.settings.codewhisperer.project_context_gpu.tooltip"))
-            }
         }
 
-        val autoBuildSetting = codeWhispererSettings.getAutoBuildSetting()
         if (autoBuildSetting.isNotEmpty()) {
             group(message("aws.settings.codewhisperer.feature_development")) {
                 row {

@@ -39,8 +39,6 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credential
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererCustomization
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
 import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
-import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings.Companion.CONTEXT_INDEX_SIZE
-import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings.Companion.CONTEXT_INDEX_THREADS
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -444,16 +442,12 @@ class AmazonQLanguageClientImplTest {
 
         val telemetryEnabled = Random.nextBoolean()
         val customizationArn = aString()
-        val workerThreads = Random.nextInt(CONTEXT_INDEX_THREADS)
-        val indexSize = Random.nextInt(CONTEXT_INDEX_SIZE)
-        val enableIndexing = Random.nextBoolean()
-        val enableGpu = Random.nextBoolean()
+
+        val indexSize = Random.nextInt(CodeWhispererSettings.CONTEXT_INDEX_SIZE)
 
         val mockQSettings = mockk<CodeWhispererSettings> {
-            every { getProjectContextIndexThreadCount() } returns workerThreads
+            every { isProjectContextEnabled() } returns false
             every { getProjectContextIndexMaxSize() } returns indexSize
-            every { isProjectContextEnabled() } returns enableIndexing
-            every { isProjectContextGpu() } returns enableGpu
         }
         mockkObject(CodeWhispererSettings.Companion)
         every { CodeWhispererSettings.getInstance() } returns mockQSettings
@@ -478,9 +472,6 @@ class AmazonQLanguageClientImplTest {
                     optOutTelemetry = !telemetryEnabled,
                     customization = customizationArn,
                     projectContext = ProjectContextConfiguration(
-                        enableLocalIndexing = enableIndexing,
-                        enableGpuAcceleration = enableGpu,
-                        indexWorkerThreads = workerThreads,
                         localIndexing = LocalIndexingConfiguration(
                             maxIndexSizeMB = indexSize,
                         )
@@ -495,17 +486,6 @@ class AmazonQLanguageClientImplTest {
             optOutTelemetry = true,
             enableTelemetryEvents = true,
             customization = "arn",
-            projectContext = ProjectContextConfiguration(
-                enableLocalIndexing = true,
-                enableGpuAcceleration = true,
-                indexWorkerThreads = 123,
-                localIndexing = LocalIndexingConfiguration(
-                    maxFileSizeMB = 789,
-                    maxIndexSizeMB = 456,
-                    indexCacheDirPath = "/a/path",
-                    ignoreFilePatterns = listOf("ignore", "patterns")
-                )
-            )
         )
 
         assertThat(Gson().toJson(sut)).isEqualToIgnoringWhitespace(
@@ -514,21 +494,7 @@ class AmazonQLanguageClientImplTest {
             {
                 "optOutTelemetry": true,
                 "enableTelemetryEventsToDestination": true,
-                "customization": "arn",
-                "projectContext": {
-                    "enableLocalIndexing": true,
-                    "enableGpuAcceleration": true,
-                    "indexWorkerThreads": 123,
-                    "localIndexing": {
-                        "ignoreFilePatterns": [
-                            "ignore",
-                            "patterns"
-                        ],
-                        "maxFileSizeMB": 789,
-                        "maxIndexSizeMB": 456,
-                        "indexCacheDirPath": "/a/path"
-                    }
-                }
+                "customization": "arn"
             }
             """.trimIndent()
         )
