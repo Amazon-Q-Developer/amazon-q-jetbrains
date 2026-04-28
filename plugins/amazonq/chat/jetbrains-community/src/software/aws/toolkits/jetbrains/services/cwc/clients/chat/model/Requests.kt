@@ -47,10 +47,6 @@ data class MatchPolicy(
     fun withMustNot(mn: String) = copy(mustNot = mustNot + mn)
 }
 
-data class Context(
-    val matchPolicy: MatchPolicy?,
-)
-
 data class FullyQualifiedNames(
     val used: List<FullyQualifiedName>?,
 )

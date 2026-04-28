@@ -6,6 +6,5 @@ package software.aws.toolkits.jetbrains.services.cwc.editor.context
 enum class ExtractionTriggerType {
     ChatMessage,
     ContextMenu,
-    OnboardingPageInteraction,
     CodeScanButton,
 }

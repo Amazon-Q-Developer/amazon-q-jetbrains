@@ -14,10 +14,10 @@ import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.utils.computeOnEdt
 import software.amazon.q.jetbrains.utils.isRunningOnRemoteBackend
 import software.aws.toolkits.jetbrains.services.amazonq.webview.FqnWebviewAdapter
+import software.aws.toolkits.jetbrains.services.cwc.CwcObjectMapper
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.CodeNames
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.CodeNamesImpl
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.FullyQualifiedNames
-import software.aws.toolkits.jetbrains.services.cwc.controller.ChatController
 import software.aws.toolkits.jetbrains.services.cwc.editor.context.file.util.LanguageExtractor
 import java.awt.Point
 import kotlin.math.min
@@ -143,11 +143,11 @@ class FocusAreaContextExtractor(private val fqnWebviewAdapter: FqnWebviewAdapter
                     ),
                 ),
             )
-            val requestString = ChatController.objectMapper.writeValueAsString(extractNamesRequest)
+            val requestString = CwcObjectMapper.objectMapper.writeValueAsString(extractNamesRequest)
 
             codeNames = try {
                 fqnWebviewAdapter?.let {
-                    ChatController.objectMapper.readValue(it.extractNames(requestString), CodeNamesImpl::class.java)
+                    CwcObjectMapper.objectMapper.readValue(it.extractNames(requestString), CodeNamesImpl::class.java)
                 } ?: CodeNamesImpl(simpleNames = emptyList(), fullyQualifiedNames = FullyQualifiedNames(used = emptyList()))
             } catch (e: Exception) {
                 getLogger<FocusAreaContextExtractor>().warn(e) { "Failed to extract names from file" }

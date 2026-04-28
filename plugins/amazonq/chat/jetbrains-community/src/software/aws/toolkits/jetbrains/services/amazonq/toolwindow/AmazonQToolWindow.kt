@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.CoroutineScope
-import software.aws.toolkits.jetbrains.services.amazonqCodeScan.runCodeScanMessage
 
 @Service(Service.Level.PROJECT)
 class AmazonQToolWindow private constructor(
@@ -38,12 +37,6 @@ class AmazonQToolWindow private constructor(
         fun getStarted(project: Project) {
             // Make sure the window is shown
             showChatWindow(project)
-        }
-
-        fun openScanTab(project: Project) {
-            showChatWindow(project)
-            val window = getInstance(project)
-            window.chatPanel.sendMessageAppToUi(runCodeScanMessage, tabType = "codescan")
         }
     }
 

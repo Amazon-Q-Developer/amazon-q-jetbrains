@@ -16,8 +16,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import software.amazon.awssdk.services.codewhispererstreaming.model.UserIntent
 import software.aws.toolkits.jetbrains.services.amazonq.auth.AuthFollowUpType
 import software.aws.toolkits.jetbrains.services.amazonq.messages.AmazonQMessage
-import software.aws.toolkits.jetbrains.services.amazonq.onboarding.OnboardingPageInteractionType
-import software.aws.toolkits.jetbrains.services.amazonq.util.HighlightCommand
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.model.FollowUpType
 import java.time.Instant
 
@@ -217,7 +215,7 @@ data class Suggestion(
     val context: List<String>,
 )
 
-// === App -> UI messages ===
+// === App -> UI message ===
 
 data class ChatMessage(
     @JsonProperty("tabID") override val tabId: String,
@@ -234,65 +232,4 @@ data class ChatMessage(
 ) : UiMessage(
     tabId = tabId,
     type = "chatMessage",
-)
-
-data class EditorContextCommandMessage(
-    val message: String?,
-    @JsonProperty("triggerID") val triggerId: String?,
-    val command: String?,
-) : UiMessage(
-    tabId = null,
-    type = "editorContextCommandMessage",
-)
-
-data class AuthNeededException(
-    @JsonProperty("tabID") override val tabId: String,
-    @JsonProperty("triggerID") val triggerId: String,
-    val authType: AuthFollowUpType,
-    val message: String,
-) : UiMessage(
-    tabId = tabId,
-    type = "authNeededException",
-)
-
-data class ErrorMessage(
-    @JsonProperty("tabID") override val tabId: String,
-    val title: String,
-    val message: String,
-    val messageId: String?,
-) : UiMessage(
-    tabId = tabId,
-    type = "errorMessage",
-)
-
-data class FeatureConfigsAvailableMessage(
-    val highlightCommand: HighlightCommand?,
-
-) : UiMessage(
-    null,
-    type = "featureConfigsAvailableMessage",
-)
-
-data class QuickActionMessage(
-    val message: String,
-    @JsonProperty("triggerID") val triggerId: String,
-) : UiMessage(
-    tabId = null,
-    type = "editorContextCommandMessage",
-)
-
-data class OnboardingPageInteractionMessage(
-    val message: String,
-    val interactionType: OnboardingPageInteractionType,
-    @JsonProperty("triggerID") val triggerId: String,
-) : UiMessage(
-    tabId = null,
-    type = "editorContextCommandMessage",
-)
-
-data class OpenSettingsMessage(
-    @JsonProperty("tabID") override val tabId: String,
-) : UiMessage(
-    tabId = tabId,
-    type = "openSettingsMessage",
 )
