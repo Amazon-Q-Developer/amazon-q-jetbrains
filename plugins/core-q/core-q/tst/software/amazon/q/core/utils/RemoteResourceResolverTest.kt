@@ -166,13 +166,13 @@ class RemoteResourceResolverTest {
             urls: List<String> = listOf(PRIMARY_URL),
             ttl: Duration? = Duration.ofMillis(1000),
             initialValue: InputStream? = null,
-            remoteResolveParser: RemoteResolveParser? = alwaysFailsParser,
+            remoteResolveParser: RemoteResolveParser = alwaysFailsParser,
         ) = object : RemoteResource {
             override val urls: List<String> = urls
             override val name: String = name
             override val ttl: Duration? = ttl
             override val initialValue = initialValue?.let { { it } }
-            override val remoteResolveParser: RemoteResolveParser = remoteResolveParser!!
+            override val remoteResolveParser: RemoteResolveParser = remoteResolveParser
         }
 
         fun writeDataToFile(data: String): (InvocationOnMock) -> Unit = { invocation ->
