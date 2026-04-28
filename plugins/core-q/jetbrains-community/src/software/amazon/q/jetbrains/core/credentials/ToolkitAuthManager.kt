@@ -349,7 +349,6 @@ enum class ReauthSource {
     Q_CHAT,
     LOGIN_BROWSER,
     CODEWHISPERER_STATUSBAR,
-    CODECATALYST,
     COMMON_LOGIN,
     FRESH_AUTH,
 }

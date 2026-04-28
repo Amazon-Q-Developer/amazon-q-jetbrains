@@ -14,13 +14,11 @@ import com.intellij.openapi.module.WebModuleTypeBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.text.SemVer
 import com.intellij.xdebugger.XDebuggerUtil
@@ -110,42 +108,6 @@ fun Project.setNodeJsInterpreterVersion(version: SemVer) {
 fun Project.setJsLanguageLevel(languageLevel: JSLanguageLevel) {
     JSRootConfiguration.getInstance(this)
         .storeLanguageLevelAndUpdateCaches(languageLevel)
-}
-
-fun CodeInsightTestFixture.addLambdaHandler(
-    subPath: String = ".",
-    fileName: String = "app",
-    handlerName: String = "lambdaHandler",
-    @Language("JS") fileContent: String =
-        """
-        exports.$handlerName = function (event, context, callback) {
-            return 'HelloWorld'
-        };
-        """.trimIndent(),
-): PsiElement {
-    val psiFile = this.addFileToProject("$subPath/$fileName.js", fileContent) as JSFile
-
-    return runInEdtAndGet {
-        psiFile.findElementAt(fileContent.indexOf(handlerName))!!
-    }
-}
-
-fun CodeInsightTestFixture.addTypeScriptLambdaHandler(
-    subPath: String = ".",
-    fileName: String = "app",
-    handlerName: String = "lambdaHandler",
-    @Language("TS") fileContent: String =
-        """
-        export const $handlerName = (event: APIGatewayProxyEvent, context: Context, callback: Callback<APIGatewayProxyResult>): APIGatewayProxyResult => {
-            return { statusCode: 200 }
-        }
-        """.trimIndent(),
-): PsiElement {
-    val psiFile = this.addFileToProject("$subPath/$fileName.ts", fileContent) as JSFile
-
-    return runInEdtAndGet {
-        psiFile.findElementAt(fileContent.indexOf(handlerName))!!
-    }
 }
 
 fun CodeInsightTestFixture.addPackageJsonFile(

@@ -16,11 +16,6 @@ import java.nio.file.Paths
 fun isRunningOnRemoteBackend() = AppMode.isRemoteDevHost()
 
 /**
- * @return true if running in a codecatalyst remote environment
- */
-fun isCodeCatalystDevEnv() = System.getenv("__DEV_ENVIRONMENT_ID") != null
-
-/**
  * @return low fidelity "is internal compute". is not exact and may fail at any time
  */
 private val isInternalAmznLinuxCompute by lazy {

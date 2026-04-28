@@ -30,10 +30,8 @@ import software.amazon.q.jetbrains.core.credentials.Login
 import software.amazon.q.jetbrains.core.credentials.ReauthSource
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
-import software.amazon.q.jetbrains.core.credentials.pinning.CodeCatalystConnection
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.reauthConnectionIfNeeded
-import software.amazon.q.jetbrains.core.credentials.sono.CODECATALYST_SCOPES
 import software.amazon.q.jetbrains.core.credentials.sono.IDENTITY_CENTER_ROLE_ACCESS_SCOPE
 import software.amazon.q.jetbrains.core.credentials.sono.Q_SCOPES
 import software.amazon.q.jetbrains.core.credentials.sono.SONO_REGION
@@ -169,17 +167,13 @@ abstract class LoginBrowser(
     private fun isReAuth(scopes: List<String>, requestedStartUrl: String): Boolean = ToolkitConnectionManager.getInstance(project)
         .let {
             val qConnection = it.activeConnectionForFeature(QConnection.getInstance()) as AwsBearerTokenConnection?
-            val codeCatalystConnection = it.activeConnectionForFeature(CodeCatalystConnection.getInstance()) as AwsBearerTokenConnection?
             if (scopes.toSet().intersect(Q_SCOPES.toSet()).isNotEmpty()) {
                 qConnection != null && qConnection.startUrl == requestedStartUrl
-            } else if (scopes.toSet().intersect(CODECATALYST_SCOPES.toSet()).isNotEmpty()) {
-                codeCatalystConnection != null && codeCatalystConnection.startUrl == requestedStartUrl
             } else {
                 if (it.activeConnection() is AwsBearerTokenConnection) {
                     val activeCon = it.activeConnection() as? AwsBearerTokenConnection
                     return activeCon?.scopes?.toSet()?.intersect(IDENTITY_CENTER_ROLE_ACCESS_SCOPE.toSet())?.isNotEmpty() == true &&
-                        activeCon != qConnection &&
-                        activeCon != codeCatalystConnection
+                        activeCon != qConnection
                 } else {
                     return false
                 }
