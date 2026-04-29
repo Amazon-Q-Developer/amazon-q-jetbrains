@@ -122,7 +122,7 @@ export default defineComponent({
             this.$emit('emitUiClickTelemetry', 'maintenanceLearnMoreLink')
             window.ideApi.postMessage({
                 command: 'openUrl',
-                externalLink: 'https://kiro.dev/'
+                externalLink: 'https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/'
             })
         },
         async handleContinueClick() {
