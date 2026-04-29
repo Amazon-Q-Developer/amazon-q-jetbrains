@@ -161,6 +161,17 @@ enum class CodeWhispererConfigurationType {
     IsQPrioritizedForTabAccept,
     IsTabAcceptPriorityNotificationShownOnce,
     IsWorkspaceContextEnabled,
+
+    // Deprecated: retained for backwards-compatible deserialization of amazonq.xml from older plugin versions.
+    // Removing enum values causes NPE during XML map deserialization when upgrading.
+    @Deprecated("No longer used. Retained to prevent deserialization crash on upgrade.")
+    IsProjectContextEnabled,
+
+    @Deprecated("No longer used. Retained to prevent deserialization crash on upgrade.")
+    IsProjectContextGpu,
+
+    @Deprecated("No longer used. Retained to prevent deserialization crash on upgrade.")
+    HasEnabledProjectContextOnce,
 }
 
 enum class CodeWhispererStringConfigurationType {
@@ -169,4 +180,8 @@ enum class CodeWhispererStringConfigurationType {
 
 enum class CodeWhispererIntConfigurationType {
     ProjectContextIndexMaxSize,
+
+    // Deprecated: retained for backwards-compatible deserialization of amazonq.xml from older plugin versions.
+    @Deprecated("No longer used. Retained to prevent deserialization crash on upgrade.")
+    ProjectContextIndexThreadCount,
 }
