@@ -1,0 +1,14 @@
+{
+  "date" : "2026-04-30",
+  "version" : "4.2",
+  "entries" : [ {
+    "type" : "bugfix",
+    "description" : "fix: properly send folder context when calling @folder"
+  }, {
+    "type" : "deprecation",
+    "description" : "deprecate: remove @workspace indexing functionality"
+  }, {
+    "type" : "removal",
+    "description" : "Add UI surfacing Amazon Q Developer plugins end-of-support notice to users"
+  } ]
+}

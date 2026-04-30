@@ -1,3 +1,8 @@
+# _4.2_ (2026-04-30)
+- **(Bug Fix)** fix: properly send folder context when calling @folder
+- **(Deprecation)** deprecate: remove @workspace indexing functionality
+- **(Removal)** Add UI surfacing Amazon Q Developer plugins end-of-support notice to users
+
 # _4.1_ (2026-04-09)
 - **(Feature)** Add support for Jetbrains 2026.1 stable release
 - **(Bug Fix)** Chat panel unresponsive when users open up a large repo
