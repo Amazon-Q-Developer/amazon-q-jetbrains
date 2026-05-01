@@ -71,7 +71,7 @@ object NotificationManager {
                         project,
                         message,
                         title,
-                        AwsCoreBundle.message(AwsCoreBundle.message("notification.learn_more")),
+                        AwsCoreBundle.message("notification.learn_more"),
                         AwsCoreBundle.message("general.cancel"),
                         AllIcons.General.Error
                     )
