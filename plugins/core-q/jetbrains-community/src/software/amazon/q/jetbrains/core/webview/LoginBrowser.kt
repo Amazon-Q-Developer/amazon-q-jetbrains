@@ -97,14 +97,14 @@ abstract class LoginBrowser(
                     AwsTelemetry.loginWithBrowser(
                         project = null,
                         credentialStartUrl = startUrl,
-                        result = Result.Failed,
+                        result = Result.Cancelled,
                         reason = "Browser authentication idle for more than 15min",
                         credentialSourceId = if (startUrl == SONO_URL) CredentialSourceId.AwsId else CredentialSourceId.IamIdentityCenter,
                         authType = getAuthType(ssoRegion),
                         source = SourceOfEntry.LOGIN_BROWSER.toString(),
                     )
                     Telemetry.auth.addConnection.use {
-                        it.result(MetricResult.Failed)
+                        it.result(MetricResult.Cancelled)
                             .reason("Browser authentication idle for more than 15min")
                             .credentialSourceId(if (startUrl == SONO_URL) CredentialSourceId.AwsId else CredentialSourceId.IamIdentityCenter)
                             .isAggregated(false)
@@ -191,11 +191,11 @@ abstract class LoginBrowser(
         val featureId = getFeatureId(scopes)
         val onError: (Exception) -> Unit = { e ->
             stopAndClearBrowserOpenTimer()
-            isUserCancellation(e)
+            val result = if (!isUserCancellation(e)) Result.Failed else Result.Cancelled
             AwsTelemetry.loginWithBrowser(
                 project = null,
                 credentialStartUrl = SONO_URL,
-                result = Result.Failed,
+                result = result,
                 reason = e.message,
                 credentialSourceId = CredentialSourceId.AwsId,
                 isReAuth = isReauth,
@@ -203,7 +203,7 @@ abstract class LoginBrowser(
                 source = SourceOfEntry.LOGIN_BROWSER.toString(),
             )
             Telemetry.auth.addConnection.use {
-                it.result(MetricResult.Failed)
+                it.result(result)
                     .credentialSourceId(CredentialSourceId.AwsId)
                     .reason(e.message)
                     .isReAuth(isReauth)

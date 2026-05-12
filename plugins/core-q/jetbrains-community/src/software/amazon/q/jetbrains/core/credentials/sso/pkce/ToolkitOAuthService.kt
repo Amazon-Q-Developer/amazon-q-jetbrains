@@ -32,13 +32,9 @@ import software.amazon.q.jetbrains.core.credentials.sso.AccessToken
 import software.amazon.q.jetbrains.core.credentials.sso.PKCEAuthorizationGrantToken
 import software.amazon.q.jetbrains.core.credentials.sso.PKCEClientRegistration
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.buildUnmanagedSsoOidcClient
-import software.amazon.q.jetbrains.core.gettingstarted.editor.SourceOfEntry
 import software.amazon.q.jetbrains.services.telemetry.scrubNames
 import software.amazon.q.resources.AwsCoreBundle
 import software.aws.toolkits.telemetry.AuthTelemetry
-import software.aws.toolkits.telemetry.AuthType
-import software.aws.toolkits.telemetry.AwsTelemetry
-import software.aws.toolkits.telemetry.MetricResult
 import software.aws.toolkits.telemetry.Result
 import java.math.BigInteger
 import java.time.Instant
@@ -226,16 +222,6 @@ internal class ToolkitOAuthCallbackHandler : OAuthCallbackHandlerBase() {
             } else {
                 errorDescription ?: error ?: AwsCoreBundle.message("general.unknown_error")
             }
-
-            AwsTelemetry.loginWithBrowser(
-                project = null,
-                credentialStartUrl = toolkitRequest?.registration?.issuerUrl,
-                result = MetricResult.Failed,
-                reason = error,
-                reasonDesc = errorDescription,
-                authType = AuthType.PKCE,
-                source = SourceOfEntry.UNKNOWN.toString(),
-            )
 
             mapOf(
                 "error" to errorString
