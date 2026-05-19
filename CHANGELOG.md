@@ -1,3 +1,5 @@
+# _4.3_ (2026-05-19)
+
 # _4.2_ (2026-04-30)
 - **(Bug Fix)** fix: properly send folder context when calling @folder
 - **(Deprecation)** deprecate: remove @workspace indexing functionality
