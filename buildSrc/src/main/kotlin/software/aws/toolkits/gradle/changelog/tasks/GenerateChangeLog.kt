@@ -5,7 +5,6 @@ package software.aws.toolkits.gradle.changelog.tasks
 
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
@@ -18,7 +17,7 @@ import software.aws.toolkits.gradle.changelog.JetBrainsWriter
 abstract class GenerateChangeLog(private val shouldStage: Boolean) : ChangeLogTask() {
     @Input
     @Optional
-    val repoUrl: Provider<String?> = project.objects.property(String::class.java).convention("https://github.com/aws/amazon-q-jetbrains")
+    val repoUrl: Property<String> = project.objects.property(String::class.java).convention("https://github.com/aws/amazon-q-jetbrains")
 
     @Input
     val includeUnreleased: Property<Boolean> = project.objects.property(Boolean::class.java).convention(false)

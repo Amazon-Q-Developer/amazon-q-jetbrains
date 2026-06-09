@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import software.aws.toolkits.gradle.findFolders
 import software.aws.toolkits.gradle.intellij.IdeVersions
 
@@ -61,11 +62,10 @@ dependencies {
     intellijPlatform {
         val version = ideProfile.community.sdkVersion
         // Use unified IntelliJ IDEA for 2025.3+, Community for older versions
-        val useInstaller = false
         if (version.startsWith("2025.3") || version.startsWith("2026.")) {
-            intellijIdeaUltimate(version, useInstaller)
+            intellijIdeaUltimate(version, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
         } else {
-            intellijIdeaCommunity(version, useInstaller)
+            intellijIdeaCommunity(version, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
         }
 
         testImplementation(project(":plugin-core-q:core-q"))

@@ -95,7 +95,7 @@ class PluginUpdateManager : Disposable {
                 id = SOURCE_AUTO_UPDATE_FINISH_NOTIFY,
                 source = SOURCE_AUTO_UPDATE_FINISH_NOTIFY,
                 component = Component.Filesystem,
-                reason = e.message
+                reason = e.message.orEmpty()
             )
             return
         } catch (e: Error) {
@@ -108,7 +108,7 @@ class PluginUpdateManager : Disposable {
                 id = SOURCE_AUTO_UPDATE_FINISH_NOTIFY,
                 source = SOURCE_AUTO_UPDATE_FINISH_NOTIFY,
                 component = Component.Filesystem,
-                reason = e.message
+                reason = e.message.orEmpty()
             )
             return
         }
@@ -191,7 +191,7 @@ class PluginUpdateManager : Disposable {
         fun getUpdate(pluginDescriptor: IdeaPluginDescriptor): PluginDownloader? =
             getUpdateInfo().firstOrNull {
                 it.id == pluginDescriptor.pluginId &&
-                    PluginDownloader.compareVersionsSkipBrokenAndIncompatible(it.pluginVersion, pluginDescriptor) > 0
+                    PluginDownloader.compareVersionsSkipBrokenAndIncompatible(it.pluginVersion.orEmpty(), pluginDescriptor) > 0
             }
 
         // TODO: Optimize this to only search the result for AWS plugins

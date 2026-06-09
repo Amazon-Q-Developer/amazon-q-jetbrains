@@ -3,8 +3,10 @@
 
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 import software.aws.toolkits.gradle.findFolders
+import software.aws.toolkits.gradle.intellij.IdeFlavor
 import software.aws.toolkits.gradle.intellij.IdeVersions
 import software.aws.toolkits.gradle.intellij.toolkitIntelliJ
 
@@ -56,8 +58,14 @@ configurations {
 
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
-                useVersion(versionCatalog.findVersion("kotlinCoroutines").get().toString())
-                because("resolve kotlinx-coroutines version conflicts in favor of local version catalog")
+                // Don't override coroutines version for Kotlin compiler configs - they resolve from Maven Central
+                // and the intellij-flavored versions aren't available there
+                if (!name.startsWith("kotlinCompiler") && !name.startsWith("kotlin-build")) {
+                    val intellijVersion = versionCatalog.findVersion("kotlinxCoroutines").orElse(null)?.toString()
+                        ?: versionCatalog.findVersion("kotlinCoroutines").get().toString()
+                    useVersion(intellijVersion)
+                    because("resolve kotlinx-coroutines version conflicts in favor of intellij-platform version")
+                }
             }
 
             if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin")) {
@@ -87,15 +95,17 @@ intellijPlatform {
 
 dependencies {
     intellijPlatform {
-        val version = toolkitIntelliJ.version()
+        val sdkVersion = toolkitIntelliJ.version().get()
 
         // annoying resolution issue that we don't want to bother fixing
         if (!project.name.contains("jetbrains-gateway")) {
-            val type = toolkitIntelliJ.ideFlavor.map { IntelliJPlatformType.fromCode(it.toString()) }
-
-            create(type, version, useInstaller = false)
+            when (toolkitIntelliJ.ideFlavor.get()) {
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                IdeFlavor.RD -> rider(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+            }
         } else {
-            create(IntelliJPlatformType.Gateway, version)
+            create(IntelliJPlatformType.Gateway, sdkVersion)
         }
 
         bundledPlugins(toolkitIntelliJ.productProfile().map { it.bundledPlugins })

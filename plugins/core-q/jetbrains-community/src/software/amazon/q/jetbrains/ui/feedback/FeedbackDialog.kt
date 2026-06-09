@@ -1,6 +1,8 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+@file:Suppress("INLINE_FROM_HIGHER_PLATFORM")
+
 package software.amazon.q.jetbrains.ui.feedback
 
 import com.intellij.icons.AllIcons

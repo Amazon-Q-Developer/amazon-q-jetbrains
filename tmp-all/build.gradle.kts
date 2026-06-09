@@ -3,6 +3,7 @@
 
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import software.aws.toolkits.gradle.intellij.IdeFlavor
 import software.aws.toolkits.gradle.intellij.toolkitIntelliJ
 
@@ -18,10 +19,9 @@ intellijToolkit {
 
 dependencies {
     intellijPlatform {
-        val type = toolkitIntelliJ.ideFlavor.map { IntelliJPlatformType.fromCode(it.toString()) }
-        val version = toolkitIntelliJ.version()
+        val sdkVersion = toolkitIntelliJ.version().get()
 
-        create(type, version, useInstaller = false)
+        create(IntelliJPlatformType.IntellijIdeaCommunity, sdkVersion)
         jetbrainsRuntime()
 
         localPlugin(project(":plugin-amazonq"))

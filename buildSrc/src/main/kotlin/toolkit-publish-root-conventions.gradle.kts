@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import org.jetbrains.intellij.platform.gradle.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.platform.gradle.tasks.aware.SplitModeAware
 import software.aws.toolkits.gradle.intellij.IdeFlavor
@@ -26,11 +27,11 @@ intellijPlatform {
             // recommended() appears to resolve latest EAP for a product?
             // Starting with 2025.3, IntelliJ IDEA is unified (no separate Community edition)
             val version = toolkitIntelliJ.version().get()
-            if (version.startsWith("2025.3")) {
-                ide(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
+            if (version.startsWith("2025.3") || version.startsWith("2026.")) {
+                create(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
             } else {
-                ide(provider { IntelliJPlatformType.IntellijIdeaCommunity }, toolkitIntelliJ.version())
-                ide(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
+                create(provider { IntelliJPlatformType.IntellijIdeaCommunity }, toolkitIntelliJ.version())
+                create(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
             }
         }
     }
@@ -52,31 +53,23 @@ dependencies {
             }
         } else {
             val runIdeVariant = providers.gradleProperty("runIdeVariant")
+            val sdkVersion = toolkitIntelliJ.version().get()
 
             // prefer versions declared in IdeVersions
             toolkitIntelliJ.apply {
-                val defaultFlavor = if (version().get().startsWith("2025.3")) {
+                val defaultFlavor = if (sdkVersion.startsWith("2025.3") || sdkVersion.startsWith("2026.")) {
                     IdeFlavor.IU  // Use unified IntelliJ IDEA for 2025.3+
                 } else {
                     IdeFlavor.IC  // Use Community for older versions
                 }
                 ideFlavor.convention(IdeFlavor.values().firstOrNull { it.name == runIdeVariant.orNull } ?: defaultFlavor)
             }
-            val (type, version) = if (runIdeVariant.isPresent) {
-                val type = toolkitIntelliJ.ideFlavor.map { IntelliJPlatformType.fromCode(it.toString()) }
-                val version = toolkitIntelliJ.version()
 
-                type to version
-            } else {
-                val defaultType = if (toolkitIntelliJ.version().get().startsWith("2025.3")) {
-                    provider { IntelliJPlatformType.IntellijIdeaUltimate }
-                } else {
-                    provider { IntelliJPlatformType.IntellijIdeaCommunity }
-                }
-                defaultType to toolkitIntelliJ.version()
+            val flavor = toolkitIntelliJ.ideFlavor.get()
+            when (flavor) {
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
             }
-
-            create(type, version, useInstaller = false)
             jetbrainsRuntime()
         }
     }
