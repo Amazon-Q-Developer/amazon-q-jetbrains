@@ -10,8 +10,12 @@ dependencyResolutionManagement {
                     "1.8.0-intellij-11"
                 }
 
-                "2025.2", "2025.3", "2026.1" -> {
+                "2025.2", "2025.3" -> {
                     "1.10.1-intellij-5"
+                }
+
+                "2026.1", "2026.2" -> {
+                    "1.10.2-intellij-1"
                 }
 
                 else -> { error("not set") }
