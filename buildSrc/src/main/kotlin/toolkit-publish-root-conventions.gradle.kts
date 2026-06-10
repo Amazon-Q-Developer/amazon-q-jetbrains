@@ -67,8 +67,8 @@ dependencies {
 
             val flavor = toolkitIntelliJ.ideFlavor.get()
             when (flavor) {
-                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
-                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion) { useInstaller.set(false) }
+                else -> intellijIdeaCommunity(sdkVersion) { useInstaller.set(false) }
             }
             jetbrainsRuntime()
         }

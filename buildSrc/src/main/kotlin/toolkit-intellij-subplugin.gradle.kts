@@ -98,9 +98,9 @@ dependencies {
         // annoying resolution issue that we don't want to bother fixing
         if (!project.name.contains("jetbrains-gateway")) {
             when (toolkitIntelliJ.ideFlavor.get()) {
-                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
-                IdeFlavor.RD -> rider(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
-                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion) { useInstaller.set(false) }
+                IdeFlavor.RD -> rider(sdkVersion) { useInstaller.set(false) }
+                else -> intellijIdeaCommunity(sdkVersion) { useInstaller.set(false) }
             }
         } else {
             create(IntelliJPlatformType.Gateway, sdkVersion)
