@@ -1,6 +1,10 @@
 // Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// 262 SDK is compiled with Java 25; we target Java 21. This suppresses the
+// resulting error on inline function call sites. Remove when JVM target >= 25.
+@file:Suppress("INLINE_FROM_HIGHER_PLATFORM")
+
 package software.amazon.q.jetbrains.utils.rules
 
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder
