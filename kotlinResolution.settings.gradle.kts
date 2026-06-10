@@ -14,6 +14,9 @@ dependencyResolutionManagement {
                     "1.10.1-intellij-5"
                 }
 
+                // 2026.1 (261) also ships 1.10.2-intellij-1 per
+                // https://github.com/JetBrains/intellij-community/blob/261/.idea/libraries/kotlinx_coroutines_core.xml
+                // This is an intentional bump, not a side effect of adding 2026.2.
                 "2026.1", "2026.2" -> {
                     "1.10.2-intellij-1"
                 }

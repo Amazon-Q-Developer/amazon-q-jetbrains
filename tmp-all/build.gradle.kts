@@ -21,6 +21,10 @@ dependencies {
     intellijPlatform {
         val sdkVersion = toolkitIntelliJ.version().get()
 
+        // tmp-all is intentionally locked to IC — this module exists only for local all-plugin
+        // sandbox testing and doesn't need to support alternate flavors. The intellijToolkit block
+        // above sets ideFlavor=IC as the default; we hardcode it here to avoid the useInstaller
+        // API complexity of the type-aware pattern used in toolkit-intellij-subplugin.
         create(IntelliJPlatformType.IntellijIdeaCommunity, sdkVersion)
         jetbrainsRuntime()
 

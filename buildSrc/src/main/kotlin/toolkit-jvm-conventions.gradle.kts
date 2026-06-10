@@ -18,9 +18,6 @@ val javaVersionInt = javaVersion.majorVersion.toInt()
 java {
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(javaVersionInt))
-    }
 }
 
 kotlin {
@@ -32,5 +29,9 @@ kotlin {
         // Allow compiling against SDK jars built with newer Kotlin (e.g. 262 SDK uses Kotlin 2.4.0)
         freeCompilerArgs.add("-Xskip-metadata-version-check")
     }
+    // jvmToolchain sets both the Java and Kotlin toolchain in one call.
+    // We pin to Java 21 to prevent the IntelliJ Platform Gradle Plugin from
+    // auto-detecting the platform's bundled JBR (Java 25 for 262) and requiring
+    // it as the build JDK.
     jvmToolchain(javaVersionInt)
 }
