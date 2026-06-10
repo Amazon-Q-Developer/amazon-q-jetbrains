@@ -104,7 +104,7 @@ tasks.jacocoTestReport.configure {
 
 // Share the coverage data to be aggregated for the whole product
 // this can be removed once we're using jvm-test-suites properly
-configurations.register("coverageDataElements") {
+val coverageDataElements = configurations.register("coverageDataElements") {
     isVisible = false
     isCanBeResolved = false
     isCanBeConsumed = true
@@ -114,7 +114,14 @@ configurations.register("coverageDataElements") {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
         attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("jacoco-coverage-data"))
     }
-    tasks.withType<Test>().configureEach {
-        outgoing.artifact(extensions.getByType<JacocoTaskExtension>().destinationFile!!)
+}
+
+// Register jacoco coverage artifacts lazily to avoid mutating the configuration after it has been consumed (Gradle 9)
+tasks.withType<Test>().configureEach {
+    val execFile = extensions.getByType<JacocoTaskExtension>().destinationFile!!
+    coverageDataElements.configure {
+        outgoing.artifact(execFile) {
+            builtBy(this@configureEach)
+        }
     }
 }
