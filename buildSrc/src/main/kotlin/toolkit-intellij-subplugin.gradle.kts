@@ -58,13 +58,11 @@ configurations {
 
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
-                // Don't override coroutines version for Kotlin compiler configs - they resolve from Maven Central
-                // and the intellij-flavored versions aren't available there
+                // Skip Kotlin compiler internal configs — they resolve from Maven Central
+                // and the intellij-flavored coroutines versions aren't available there.
                 if (!name.startsWith("kotlinCompiler") && !name.startsWith("kotlin-build")) {
-                    val intellijVersion = versionCatalog.findVersion("kotlinxCoroutines").orElse(null)?.toString()
-                        ?: versionCatalog.findVersion("kotlinCoroutines").get().toString()
-                    useVersion(intellijVersion)
-                    because("resolve kotlinx-coroutines version conflicts in favor of intellij-platform version")
+                    useVersion(versionCatalog.findVersion("kotlinCoroutines").get().toString())
+                    because("resolve kotlinx-coroutines version conflicts in favor of local version catalog")
                 }
             }
 

@@ -16,9 +16,6 @@ val downloadGitSecrets = tasks.register<Download>("downloadGitSecrets") {
 }
 
 // Gradle 9 removed exec {} inside doLast, requiring separate Exec tasks.
-// registerGitSecrets and registerAwsPatterns run in parallel (they share only
-// the downloadGitSecrets dependency and don't need to be ordered relative to
-// each other — git config and --register-aws are independent operations).
 val registerGitSecrets = tasks.register<Exec>("registerGitSecrets") {
     onlyIf { !DefaultNativePlatform.getCurrentOperatingSystem().isWindows }
     dependsOn(downloadGitSecrets)
