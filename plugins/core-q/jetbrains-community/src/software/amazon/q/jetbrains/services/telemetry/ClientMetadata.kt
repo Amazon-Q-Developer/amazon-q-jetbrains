@@ -21,6 +21,10 @@ data class ClientMetadata(
     val osVersion: String = SystemInfo.OS_VERSION,
 ) {
     companion object {
-        val DEFAULT_METADATA = ClientMetadata()
+        // lazy so the default field values (which read application services like AwsSettings and
+        // ApplicationInfo) are only resolved on first use, not at class load. Eager init broke tests
+        // that merely reference this class in a JVM where those services aren't initialized yet,
+        // failing with ExceptionInInitializerError / NoClassDefFoundError.
+        val DEFAULT_METADATA by lazy { ClientMetadata() }
     }
 }

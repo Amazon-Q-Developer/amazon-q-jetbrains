@@ -13,7 +13,6 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.stub
 import org.mockito.kotlin.whenever
@@ -37,7 +36,6 @@ import software.amazon.q.jetbrains.core.credentials.sono.SONO_URL
 import software.amazon.q.jetbrains.core.gettingstarted.editor.SourceOfEntry
 import software.amazon.q.jetbrains.core.region.MockRegionProviderExtension
 import software.amazon.q.jetbrains.utils.satisfiesKt
-import software.amazon.q.resources.AwsCoreBundle
 import software.aws.toolkits.telemetry.FeatureId
 
 class SetupAuthenticationDialogTest : HeavyPlatformTestCase() {
@@ -264,7 +262,6 @@ class SetupAuthenticationDialogTest : HeavyPlatformTestCase() {
         }
     }
 
-    // TODO: Fix StsClient mock exception throwing in 2025.3 migration - this test expects an exception but mock doesn't throw
     fun `test validate IAM tab fails if credentials are invalid`() {
         val state = SetupAuthenticationDialogState().apply {
             selectedTab.set(SetupAuthenticationTabs.IAM_LONG_LIVED)
@@ -282,16 +279,28 @@ class SetupAuthenticationDialogTest : HeavyPlatformTestCase() {
             whenever(it.getCallerIdentity(any<GetCallerIdentityRequest>())).thenThrow(StsException.builder().message("Some service exception message").build())
         }
 
-        runInEdtAndWait {
-            val sut = SetupAuthenticationDialog(
-                project,
-                state = state,
-                sourceOfEntry = SourceOfEntry.UNKNOWN,
-                featureId = FeatureId.Unknown
-            )
-            val exception = assertThrows<Exception> { sut.doOKAction() }
-            assertThat(exception.message).isEqualTo(AwsCoreBundle.message("gettingstarted.setup.iam.profile.invalid_credentials"))
+        // doOKAction no longer throws on a failed getCallerIdentity: it swallows the STS exception
+        // (tryOrNull), shows an error dialog, and returns without appending a profile. Assert the
+        // early-return behavior (no profile written) instead of the old assertThrows expectation.
+        // TestDialog.OK auto-dismisses the error dialog so the headless test doesn't block.
+        TestDialogManager.setTestDialog(TestDialog.OK)
+        val configFacade = mockk<ConfigFilesFacade>(relaxed = true)
+
+        try {
+            runInEdtAndWait {
+                SetupAuthenticationDialog(
+                    project,
+                    state = state,
+                    configFilesFacade = configFacade,
+                    sourceOfEntry = SourceOfEntry.UNKNOWN,
+                    featureId = FeatureId.Unknown
+                ).doOKAction()
+            }
+        } finally {
+            TestDialogManager.setTestDialog(TestDialog.OK)
         }
+
+        verify(exactly = 0) { configFacade.appendProfileToCredentials(any()) }
     }
 
     fun `test validate IAM tab succeeds if credentials are invalid`() {

@@ -1,5 +1,7 @@
 version: 1.0
-linter: jetbrains/qodana-jvm-community:latest
+# Pinned to 2025.1 (JBR 21) to match qodana-action@v2025.1.1. The :latest tag drifted to a
+# 2026.1-based image bundling JBR 25, which Gradle 8.13 cannot run on (fails the bootstrap step).
+linter: jetbrains/qodana-jvm-community:2025.1
 projectJDK: "21"
 bootstrap: ./gradlew :plugin-core-q:sdk-codegen:generateSdks :plugin-core-q:jetbrains-community:generateTelemetry
 exclude:
