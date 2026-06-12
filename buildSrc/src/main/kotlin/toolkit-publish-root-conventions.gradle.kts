@@ -38,9 +38,11 @@ intellijPlatform {
     pluginVerification {
         ides {
             // recommended() appears to resolve latest EAP for a product?
-            // Starting with 2025.3, IntelliJ IDEA is unified (no separate Community edition)
+            // Starting with 2025.3, IntelliJ IDEA is unified (no separate Community edition).
+            // Use >= so every later version (2026.1, 2026.2, ...) is also treated as unified;
+            // a startsWith("2025.3") check wrongly excluded 2026.x and pulled Community.
             val version = toolkitIntelliJ.version().get()
-            if (version.startsWith("2025.3")) {
+            if (version >= "2025.3") {
                 ide(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
             } else {
                 ide(provider { IntelliJPlatformType.IntellijIdeaCommunity }, toolkitIntelliJ.version())
@@ -69,8 +71,8 @@ dependencies {
 
             // prefer versions declared in IdeVersions
             toolkitIntelliJ.apply {
-                val defaultFlavor = if (version().get().startsWith("2025.3")) {
-                    IdeFlavor.IU  // Use unified IntelliJ IDEA for 2025.3+
+                val defaultFlavor = if (version().get() >= "2025.3") {
+                    IdeFlavor.IU  // Use unified IntelliJ IDEA for 2025.3+ (incl. 2026.x)
                 } else {
                     IdeFlavor.IC  // Use Community for older versions
                 }
@@ -82,7 +84,7 @@ dependencies {
 
                 type to version
             } else {
-                val defaultType = if (toolkitIntelliJ.version().get().startsWith("2025.3")) {
+                val defaultType = if (toolkitIntelliJ.version().get() >= "2025.3") {
                     provider { IntelliJPlatformType.IntellijIdeaUltimate }
                 } else {
                     provider { IntelliJPlatformType.IntellijIdeaCommunity }
