@@ -176,6 +176,7 @@ object IdeVersions {
                 bundledPlugins = commonPlugins + listOf(
                     "JavaScript",
                     "JavaScriptDebugger",
+                    "NodeJS",
                     "com.intellij.database"
                 ),
                 marketplacePlugins = listOf(
