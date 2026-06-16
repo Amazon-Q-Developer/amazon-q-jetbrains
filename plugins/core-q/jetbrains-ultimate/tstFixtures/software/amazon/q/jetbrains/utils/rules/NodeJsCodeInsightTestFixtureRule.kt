@@ -10,6 +10,7 @@ import com.intellij.javascript.nodejs.interpreter.local.NodeJsLocalInterpreterMa
 import com.intellij.lang.javascript.dialects.JSLanguageLevel
 import com.intellij.lang.javascript.psi.JSFile
 import com.intellij.lang.javascript.settings.JSRootConfiguration
+import com.intellij.openapi.module.WebModuleTypeBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Ref
@@ -59,11 +60,7 @@ class NodeJsCodeInsightTestFixtureRule : CodeInsightTestFixtureRule(NodeJsLightP
 class NodeJsLightProjectDescriptor : LightProjectDescriptor() {
     override fun getSdk(): Sdk? = null
 
-    // Return the stable WEB_MODULE id string directly instead of WebModuleTypeBase.getInstance().id. On the 2026.1
-    // headless test sandbox, getInstance() can resolve to UnknownModuleType, and the platform's internal cast to
-    // WebModuleTypeBase then throws ClassCastException during LightPlatformTestCase.initProject. The id string is
-    // stable across versions, so this works for 2025.x and 2026.1+ alike.
-    override fun getModuleTypeId(): String = "WEB_MODULE"
+    override fun getModuleTypeId(): String = WebModuleTypeBase.getInstance().id
 }
 
 class MockNodeJsInterpreter(private var version: SemVer) : NodeJsLocalInterpreter("/path/to/$version/mock/node") {
