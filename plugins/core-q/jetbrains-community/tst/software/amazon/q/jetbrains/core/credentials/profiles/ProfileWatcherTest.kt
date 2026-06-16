@@ -5,7 +5,9 @@ package software.amazon.q.jetbrains.core.credentials.profiles
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -19,11 +21,13 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.opentest4j.AssertionFailedError
+import software.amazon.awssdk.profiles.ProfileFileLocation
 import software.amazon.q.core.rules.SystemPropertyHelper
 import software.amazon.q.jetbrains.utils.spinUntil
 import java.io.File
 import java.io.IOException
 import java.time.Duration
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -157,6 +161,19 @@ class ProfileWatcherTest {
         val updateCalled = Ref.create(false)
         sut.addListener { updateCalled.set(true) }
 
+        val watchedPaths = setOf(
+            FileUtil.normalize(ProfileFileLocation.configurationFilePath().toAbsolutePath().toString()),
+            FileUtil.normalize(ProfileFileLocation.credentialsFilePath().toAbsolutePath().toString())
+        )
+        val observedEventPaths = CopyOnWriteArrayList<String>()
+        VirtualFileManager.getInstance().addAsyncFileListener(
+            { events ->
+                events.forEach { observedEventPaths.add(it.path) }
+                null
+            },
+            disposableRule.disposable
+        )
+
         block()
 
         // Wait for fsnotify to see the change
@@ -174,6 +191,8 @@ class ProfileWatcherTest {
         if (updateCalled.get() == false) {
             Thread.sleep(2000)
         }
-        assertThat(updateCalled.get()).describedAs("ProfileWatcher is triggered").isTrue
+        assertThat(updateCalled.get()).describedAs(
+            "ProfileWatcher is triggered. watchedPaths=$watchedPaths observedEventPaths=${observedEventPaths.toList()}"
+        ).isTrue
     }
 }
