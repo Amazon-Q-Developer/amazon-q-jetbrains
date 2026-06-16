@@ -56,7 +56,8 @@ class ProfileWatcherTest {
 
     @Before
     fun setUp() {
-        awsFolder = File(temporaryFolder.root, ".aws")
+        // canonicalize the root: GitHub CI's tmpdir resolves to an 8.3 short name (RUNNER~1) but VFS events use the long name
+        awsFolder = File(temporaryFolder.root.canonicalFile, ".aws")
         profileFile = File(awsFolder, "config")
         credentialsFile = File(awsFolder, "credentials")
 
