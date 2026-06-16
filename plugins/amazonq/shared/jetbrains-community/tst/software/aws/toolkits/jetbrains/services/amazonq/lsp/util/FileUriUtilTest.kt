@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.ExtendWith
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 
 @ExtendWith(ApplicationExtension::class)
 class FileUriUtilTest {
@@ -23,19 +24,6 @@ class FileUriUtilTest {
             every { url } returns path
             every { isDirectory } returns mockIsDirectory
         }
-
-    private fun normalizeFileUri(uri: String): String {
-        if (!System.getProperty("os.name").lowercase().contains("windows")) {
-            return uri
-        }
-
-        if (!uri.startsWith("file:///")) {
-            return uri
-        }
-
-        val path = uri.substringAfter("file:///")
-        return "file:///C:/$path"
-    }
 
     @Test
     fun `test basic unix path`() {

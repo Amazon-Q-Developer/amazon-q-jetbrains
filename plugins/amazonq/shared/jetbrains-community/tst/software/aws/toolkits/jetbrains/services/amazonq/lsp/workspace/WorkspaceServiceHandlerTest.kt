@@ -57,6 +57,7 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 
 class WorkspaceServiceHandlerTest {
     private lateinit var project: Project
@@ -815,19 +816,5 @@ class WorkspaceServiceHandlerTest {
             every { this@apply.newParent } returns newParent
             every { newChildName } returns fileName
         }
-    }
-
-    // for windows unit tests
-    private fun normalizeFileUri(uri: String): String {
-        if (!System.getProperty("os.name").lowercase().contains("windows")) {
-            return uri
-        }
-
-        if (!uri.startsWith("file:///")) {
-            return uri
-        }
-
-        val path = uri.substringAfter("file:///")
-        return "file:///C:/$path"
     }
 }

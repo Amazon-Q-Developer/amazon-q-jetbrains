@@ -14,6 +14,7 @@ import io.mockk.mockkStatic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.net.URI
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 
 class WorkspaceFolderUtilTest {
 
@@ -95,16 +96,4 @@ class WorkspaceFolderUtilTest {
                 every { protocol } returns "file"
             }
         }
-
-    // for windows unit tests
-    private fun normalizeFileUri(uri: String): String {
-        if (!System.getProperty("os.name").lowercase().contains("windows")) {
-            return uri
-        }
-        if (!uri.startsWith("file:///")) {
-            return uri
-        }
-        val path = uri.substringAfter("file:///")
-        return "file:///C:/$path"
-    }
 }

@@ -53,6 +53,7 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.first
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 
 class TextDocumentServiceHandlerTest {
     private lateinit var mockLanguageServer: AmazonQLanguageServer
@@ -363,23 +364,5 @@ class TextDocumentServiceHandlerTest {
             every { fileType } returns mockFileType
             every { this@spyk.modificationStamp } returns modificationStamp
         }
-    }
-
-    private fun normalizeFileUri(uri: String): String {
-        if (!System.getProperty("os.name").lowercase().contains("windows")) {
-            return uri
-        }
-
-        if (!uri.startsWith("file:///")) {
-            return uri
-        }
-
-        if (uri.startsWith("file://C:/")) {
-            val path = uri.substringAfter("file://C:/")
-            return "file:///C:/$path"
-        }
-
-        val path = uri.substringAfter("file:///")
-        return "file:///C:/$path"
     }
 }
