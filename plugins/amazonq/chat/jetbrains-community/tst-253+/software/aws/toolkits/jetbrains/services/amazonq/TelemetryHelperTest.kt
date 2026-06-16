@@ -111,7 +111,7 @@ class TelemetryHelperTest {
         @BeforeAll
         fun allowWindowsPythonPaths() {
             if (SystemInfo.isWindows) {
-                VfsRootAccess.allowRootAccess(Disposer.newDisposable(), "C:/Program Files")
+                VfsRootAccess.allowRootAccess(Disposer.newDisposable(), "C:/Program Files", "C:/hostedtoolcache/windows/Python")
             }
         }
         private val data = ChatRequestData(

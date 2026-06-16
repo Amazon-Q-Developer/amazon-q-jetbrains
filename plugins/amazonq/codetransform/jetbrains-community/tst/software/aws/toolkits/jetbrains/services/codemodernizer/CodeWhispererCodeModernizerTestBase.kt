@@ -248,7 +248,11 @@ open class CodeWhispererCodeModernizerTestBase(
     open fun setup() {
         // Allow Python paths for test environment (Python plugin scans for interpreters)
         if (com.intellij.openapi.util.SystemInfo.isWindows) {
-            com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.allowRootAccess(disposableRule.disposable, "C:/Program Files")
+            com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.allowRootAccess(
+                disposableRule.disposable,
+                "C:/Program Files",
+                "C:/hostedtoolcache/windows/Python"
+            )
         } else {
             com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.allowRootAccess(disposableRule.disposable, "/usr/bin", "/usr/local/bin")
         }

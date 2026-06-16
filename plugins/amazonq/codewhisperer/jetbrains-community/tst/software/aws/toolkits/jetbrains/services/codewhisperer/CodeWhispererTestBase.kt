@@ -122,7 +122,8 @@ open class CodeWhispererTestBase {
             "/usr/bin",
             "/usr/local/bin",
             "C:/Program Files/pypy3.10-v7.3.17-win64",
-            "C:/Program Files/pypy3.11-v7.3.20-win64"
+            "C:/Program Files/pypy3.11-v7.3.20-win64",
+            "C:/hostedtoolcache/windows/Python"
         )
         val starter = object : AmazonQServerInstanceStarter {
             override fun start(
