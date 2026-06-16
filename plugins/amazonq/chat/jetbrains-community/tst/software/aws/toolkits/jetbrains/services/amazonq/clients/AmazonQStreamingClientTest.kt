@@ -61,7 +61,7 @@ class AmazonQStreamingClientTest : AmazonQTestBase() {
 
         // Allow Python paths for test environment (Python plugin scans for interpreters)
         if (SystemInfo.isWindows) {
-            VfsRootAccess.allowRootAccess(disposableRule.disposable, "C:/Program Files")
+            VfsRootAccess.allowRootAccess(disposableRule.disposable, "C:/Program Files", "C:/hostedtoolcache/windows/Python")
         } else {
             VfsRootAccess.allowRootAccess(disposableRule.disposable, "/usr/bin", "/usr/local/bin")
         }
@@ -250,7 +250,7 @@ class AmazonQStreamingClientTest : AmazonQTestBase() {
         fun allowPythonPaths() {
             // Allow Python paths for test environment (Python plugin scans for interpreters)
             if (SystemInfo.isWindows) {
-                VfsRootAccess.allowRootAccess(Disposer.newDisposable(), "C:/Program Files")
+                VfsRootAccess.allowRootAccess(Disposer.newDisposable(), "C:/Program Files", "C:/hostedtoolcache/windows/Python")
             } else {
                 VfsRootAccess.allowRootAccess(Disposer.newDisposable(), "/usr/bin", "/usr/local/bin")
             }
