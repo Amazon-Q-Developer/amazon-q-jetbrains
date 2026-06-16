@@ -44,6 +44,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import software.amazon.q.jetbrains.core.coroutines.EDT
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 import software.amazon.q.jetbrains.utils.rules.CodeInsightTestFixtureRule
 import software.amazon.q.jetbrains.utils.satisfiesKt
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLanguageServer
@@ -53,7 +54,6 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.first
-import software.amazon.q.jetbrains.utils.normalizeFileUri
 
 class TextDocumentServiceHandlerTest {
     private lateinit var mockLanguageServer: AmazonQLanguageServer

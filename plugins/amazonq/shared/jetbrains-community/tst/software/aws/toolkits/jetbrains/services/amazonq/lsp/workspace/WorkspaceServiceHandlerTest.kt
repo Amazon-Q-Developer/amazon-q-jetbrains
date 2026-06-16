@@ -50,6 +50,7 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLanguageServer
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLspService
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.WorkspaceFolderUtil
@@ -57,7 +58,6 @@ import java.net.URI
 import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
-import software.amazon.q.jetbrains.utils.normalizeFileUri
 
 class WorkspaceServiceHandlerTest {
     private lateinit var project: Project

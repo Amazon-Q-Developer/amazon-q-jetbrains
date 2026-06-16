@@ -13,8 +13,8 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.net.URI
 import software.amazon.q.jetbrains.utils.normalizeFileUri
+import java.net.URI
 
 class WorkspaceFolderUtilTest {
 
