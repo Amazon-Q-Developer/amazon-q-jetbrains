@@ -46,6 +46,12 @@ dependencies {
     testImplementation(project(":plugin-core-q"))
 }
 
+intellijPlatform {
+    // buildSearchableOptions launches a headless IDE whose main class (com.intellij.idea.Main) was removed from the
+    // platform in 2024.2+, so the launch fails on 2026.1. The searchable-options index is non-essential; disable it.
+    buildSearchableOptions = false
+}
+
 tasks.check {
     val serviceSubdirs = project(":plugin-amazonq").subprojects
     serviceSubdirs.forEach { serviceSubDir ->
