@@ -176,6 +176,9 @@ object IdeVersions {
                 bundledPlugins = commonPlugins + listOf(
                     "JavaScript",
                     "JavaScriptDebugger",
+                    // 2026.1 split the JS plugin so it requires the CSS backend module; without com.intellij.css the
+                    // JavaScript plugin fails to load, which in turn disables NodeJS (NodeJsLocalInterpreterManager null).
+                    "com.intellij.css",
                     "NodeJS",
                     "com.intellij.database"
                 ),
