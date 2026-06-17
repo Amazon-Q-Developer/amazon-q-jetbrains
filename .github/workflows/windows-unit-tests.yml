@@ -41,7 +41,7 @@ jobs:
           "@ | Add-Content -Path "$env:USERPROFILE\.gradle\gradle.properties"
 
       - name: Run tests
-        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" coverageReport --info --console plain
+        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" check coverageReport --stacktrace --console plain --continue
 
       - name: Collect test artifacts
         if: always()

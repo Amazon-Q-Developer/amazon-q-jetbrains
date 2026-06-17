@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.codemodernizer.panels.managers
 
+import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -25,6 +26,8 @@ class CodeModernizerBottomWindowPanelManagerTest : PanelTestBase() {
         codeModernizerBottomWindowPanelManagerMock = spy(CodeModernizerBottomWindowPanelManager(super.project))
         loadingPanelMock = spy(LoadingPanel(super.project))
         codeModernizerBottomWindowPanelManagerMock.fullSizeLoadingPanel = loadingPanelMock
+        // the panel adds its layout constraints inside runInEdt {}; drain the EDT so they are set before tests read them
+        runInEdtAndWait { }
     }
 
     @Test

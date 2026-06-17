@@ -36,8 +36,8 @@ jobs:
           chmod +x gradlew
           ./gradlew \
             -Dorg.gradle.jvmargs=-Xmx4g \
-            coverageReport \
-            --info --stacktrace --console plain --continue
+            check coverageReport \
+            --stacktrace --console plain --continue
 
       - name: Upload test reports
         if: failure()

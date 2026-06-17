@@ -176,6 +176,9 @@ object IdeVersions {
                 bundledPlugins = commonPlugins + listOf(
                     "JavaScript",
                     "JavaScriptDebugger",
+                    // 2026.1 scooped "css" out of the JS plugin (which we depend on) into a separate package
+                    "com.intellij.css",
+                    "NodeJS",
                     "com.intellij.database"
                 ),
                 marketplacePlugins = listOf(

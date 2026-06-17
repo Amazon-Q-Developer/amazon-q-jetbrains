@@ -44,6 +44,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import software.amazon.q.jetbrains.core.coroutines.EDT
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 import software.amazon.q.jetbrains.utils.rules.CodeInsightTestFixtureRule
 import software.amazon.q.jetbrains.utils.satisfiesKt
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLanguageServer
@@ -363,23 +364,5 @@ class TextDocumentServiceHandlerTest {
             every { fileType } returns mockFileType
             every { this@spyk.modificationStamp } returns modificationStamp
         }
-    }
-
-    private fun normalizeFileUri(uri: String): String {
-        if (!System.getProperty("os.name").lowercase().contains("windows")) {
-            return uri
-        }
-
-        if (!uri.startsWith("file:///")) {
-            return uri
-        }
-
-        if (uri.startsWith("file://C:/")) {
-            val path = uri.substringAfter("file://C:/")
-            return "file:///C:/$path"
-        }
-
-        val path = uri.substringAfter("file:///")
-        return "file:///C:/$path"
     }
 }

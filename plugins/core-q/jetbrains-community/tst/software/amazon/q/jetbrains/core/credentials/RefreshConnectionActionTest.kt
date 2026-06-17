@@ -14,6 +14,8 @@ import software.amazon.q.core.region.anAwsRegion
 import software.amazon.q.core.utils.test.aString
 import software.amazon.q.jetbrains.core.MockResourceCacheRule
 import software.amazon.q.jetbrains.core.dummyResource
+import software.amazon.q.jetbrains.utils.spinUntil
+import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -50,7 +52,9 @@ class RefreshConnectionActionTest {
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue
 
-        assertThat(resourceCache.size()).isZero()
+        // the cache clear is launched on a separate coroutine from the state-change notification the latch waits on,
+        // so it may not have run yet; wait for it instead of asserting immediately
+        spinUntil(Duration.ofSeconds(5)) { resourceCache.size() == 0 }
         assertThat(states).hasAtLeastOneElementOfType(ConnectionState.ValidatingConnection::class.java)
     }
 

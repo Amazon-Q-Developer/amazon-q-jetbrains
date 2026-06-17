@@ -8,6 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.atLeast
+import org.mockito.Mockito.timeout
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -107,7 +108,7 @@ class AwsCognitoCredentialsProviderTest {
         provider.resolveCredentials()
 
         // NonBlocking prefetch strategy may trigger additional background refreshes for expired credentials
-        verify(cognitoClient, atLeast(2)).getCredentialsForIdentity(getCredentialsRequestCaptor.capture())
+        verify(cognitoClient, timeout(5000).atLeast(2)).getCredentialsForIdentity(getCredentialsRequestCaptor.capture())
     }
 
     @Test

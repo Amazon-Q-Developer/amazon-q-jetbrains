@@ -78,9 +78,10 @@ tasks.withType<Test>().configureEach {
     testlogger {
         theme = ThemeType.STANDARD_PARALLEL
         showFullStackTraces = true
-        showStandardStreams = true
+        // Only print stdout/stderr for FAILED tests
+        showStandardStreams = false
         showPassedStandardStreams = false
-        showSkippedStandardStreams = true
+        showSkippedStandardStreams = false
         showFailedStandardStreams = true
     }
 

@@ -50,6 +50,7 @@ import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import software.amazon.q.jetbrains.utils.normalizeFileUri
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLanguageServer
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLspService
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.WorkspaceFolderUtil
@@ -815,19 +816,5 @@ class WorkspaceServiceHandlerTest {
             every { this@apply.newParent } returns newParent
             every { newChildName } returns fileName
         }
-    }
-
-    // for windows unit tests
-    private fun normalizeFileUri(uri: String): String {
-        if (!System.getProperty("os.name").lowercase().contains("windows")) {
-            return uri
-        }
-
-        if (!uri.startsWith("file:///")) {
-            return uri
-        }
-
-        val path = uri.substringAfter("file:///")
-        return "file:///C:/$path"
     }
 }
