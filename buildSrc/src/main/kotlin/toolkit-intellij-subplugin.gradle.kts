@@ -3,7 +3,6 @@
 
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 import software.aws.toolkits.gradle.findFolders
 import software.aws.toolkits.gradle.intellij.IdeFlavor
@@ -98,9 +97,9 @@ dependencies {
         // annoying resolution issue that we don't want to bother fixing
         if (!project.name.contains("jetbrains-gateway")) {
             when (toolkitIntelliJ.ideFlavor.get()) {
-                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
-                IdeFlavor.RD -> rider(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
-                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion) { useInstaller.set(false) }
+                IdeFlavor.RD -> rider(sdkVersion) { useInstaller.set(false) }
+                else -> intellijIdeaCommunity(sdkVersion) { useInstaller.set(false) }
             }
         } else {
             create(IntelliJPlatformType.Gateway, sdkVersion)

@@ -49,14 +49,17 @@ jobs:
         # 2026.2 (262) test compilation is blocked by a Java 25 inline-bytecode issue that needs a Kotlin
         # bump (tracked as a fast-follow). Keep its tests non-gating for now; buildPlugin below still gates.
         continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
+        # --no-parallel: the amazonq submodules share one test sandbox (.../plugins-test/plugin-amazonq), so
+        # running their Test tasks concurrently corrupts the shared file index ("Index Trigram. Index will be
+        # rebuilt", "Must be called inside a command"). Gradle 9's stricter sandbox handling makes this fatal.
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &
           export DISPLAY=:99
-          ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport -x gitSecrets ${{ matrix.ideProfileName == '2026.2' && '--no-parallel' || '' }} --stacktrace --console plain --continue
+          ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport -x gitSecrets --no-parallel --stacktrace --console plain --continue
 
       - name: Build plugin
         if: success()
-        run: ./gradlew -PideProfileName=${{ matrix.ideProfileName }} buildPlugin ${{ matrix.ideProfileName == '2026.2' && '--no-parallel' || '' }}
+        run: ./gradlew -PideProfileName=${{ matrix.ideProfileName }} buildPlugin --no-parallel
 
       - name: Collect test artifacts
         if: always()

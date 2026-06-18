@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
-import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import org.jetbrains.intellij.platform.gradle.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.platform.gradle.tasks.aware.CoroutinesJavaAgentAware
 import org.jetbrains.intellij.platform.gradle.tasks.aware.SplitModeAware
@@ -81,8 +80,8 @@ dependencies {
 
             val flavor = toolkitIntelliJ.ideFlavor.get()
             when (flavor) {
-                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
-                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion) { useInstaller.set(false) }
+                else -> intellijIdeaCommunity(sdkVersion) { useInstaller.set(false) }
             }
             jetbrainsRuntime()
         }

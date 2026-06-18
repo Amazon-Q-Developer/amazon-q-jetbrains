@@ -32,12 +32,15 @@ jobs:
         env:
           LOCAL_ENV_RUN: true
           CI: true
+        # --no-parallel: the amazonq submodules share one test sandbox (.../plugins-test/plugin-amazonq), so
+        # running their Test tasks concurrently corrupts the shared file index ("Index Trigram. Index will be
+        # rebuilt", "Must be called inside a command"). Gradle 9's stricter sandbox handling makes this fatal.
         run: |
           chmod +x gradlew
           ./gradlew \
             -Dorg.gradle.jvmargs=-Xmx4g \
             check coverageReport \
-            --stacktrace --console plain --continue
+            --no-parallel --stacktrace --console plain --continue
 
       - name: Upload test reports
         if: failure()
