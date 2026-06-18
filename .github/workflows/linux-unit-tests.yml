@@ -46,12 +46,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        # 2026.2 (262) test compilation is blocked by a Java 25 inline-bytecode issue that needs a Kotlin
-        # bump (tracked as a fast-follow). Keep its tests non-gating for now; buildPlugin below still gates.
+        # 262 test compile is blocked by a Java 25 inline-bytecode issue pending a Kotlin bump; buildPlugin still gates it
         continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
-        # --no-parallel: the amazonq submodules share one test sandbox (.../plugins-test/plugin-amazonq), so
-        # running their Test tasks concurrently corrupts the shared file index ("Index Trigram. Index will be
-        # rebuilt", "Must be called inside a command"). Gradle 9's stricter sandbox handling makes this fatal.
+        # --no-parallel: amazonq submodules share one test sandbox; concurrent Test tasks corrupt the index (fatal on Gradle 9)
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &
           export DISPLAY=:99

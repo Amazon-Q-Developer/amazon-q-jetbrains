@@ -41,16 +41,13 @@ jobs:
           "@ | Add-Content -Path "$env:USERPROFILE\.gradle\gradle.properties"
 
       - name: Run tests
-        # 2026.2 (262) test compilation is blocked by a Java 25 inline-bytecode issue that needs a Kotlin
-        # bump (tracked as a fast-follow). Keep its tests non-gating for now; the buildPlugin step gates 262.
+        # 262 test compile is blocked by a Java 25 inline-bytecode issue pending a Kotlin bump; buildPlugin gates it instead
         continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
-        # --no-parallel: the amazonq submodules share one test sandbox (.../plugins-test/plugin-amazonq), so
-        # running their Test tasks concurrently corrupts the shared file index ("Index Trigram. Index will be
-        # rebuilt", "Must be called inside a command"). Gradle 9's stricter sandbox handling makes this fatal.
+        # --no-parallel: amazonq submodules share one test sandbox; concurrent Test tasks corrupt the index (fatal on Gradle 9)
         run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" check coverageReport --no-parallel --stacktrace --console plain --continue
 
       - name: Build plugin (2026.2 gate)
-        # Until 262 tests are unblocked, validate it via buildPlugin so the job still gates on a real build.
+        # 262 tests are non-gating above, so gate the job on a real buildPlugin instead
         if: matrix.ideProfileName == '2026.2'
         run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" buildPlugin --no-parallel --stacktrace --console plain
 

@@ -62,11 +62,8 @@ artifacts {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
-    // Run each test class in a fresh JVM. Many test classes mockkStatic/mockkObject (e.g. ApplicationManager)
-    // without tearing the mocks down, leaking global state into whatever class runs next in the same JVM.
-    // The 2026.1+ platform turned that latent cross-class pollution fatal (services/dispatchers from a leaked
-    // ApplicationManager break unrelated tests: "Cannot find service", coroutine ClosedSendChannelException,
-    // mockk "was not called"). Forking per class isolates them. forkEvery is ignored when there are no tests.
+    // Fresh JVM per test class: many classes mockkStatic/mockkObject without teardown, leaking global state
+    // into the next class (fatal on 2026.1+: "Cannot find service", ClosedSendChannelException, mockk misses).
     forkEvery = 1
 
     ciOnly {
@@ -122,9 +119,6 @@ configurations.register("coverageDataElements") {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
         attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("jacoco-coverage-data"))
     }
-    // Declare the coverage artifact lazily via a provider. Gradle 9 forbids mutating a
-    // configuration's outgoing artifacts after it has been observed, which the previous
-    // tasks.withType<Test>().configureEach { outgoing.artifact(...) } form did. The aggregating
-    // coverageReport task resolves this leniently and skips missing exec files.
+    // lazy provider: Gradle 9 forbids mutating outgoing artifacts after the config is observed
     outgoing.artifact(tasks.named<Test>("test").map { it.extensions.getByType<JacocoTaskExtension>().destinationFile!! })
 }

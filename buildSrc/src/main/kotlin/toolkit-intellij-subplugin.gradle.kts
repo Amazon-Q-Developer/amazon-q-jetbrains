@@ -39,13 +39,8 @@ configurations {
         exclude(group = "org.jetbrains.kotlinx")
     }
 
-    // IU (jetbrains-ultimate) modules consume the community modules' test fixtures, which under IntelliJ
-    // Platform Gradle Plugin 2.16 drag in the community module's bundled plugins (com.intellij.java /
-    // org.jetbrains.idea.maven / com.intellij.gradle / com.intellij.properties) plus their full transitive
-    // bundledPlugin/bundledModule closure, all tagged for the community SDK (IC-...). An IU module resolves
-    // against the ultimate/unified SDK where those IC-tagged coordinates don't exist, so its test compilation
-    // fails with "Could not find <x>-IC-...jar". Drop these community-only bundled coordinates from the IU
-    // test classpaths; the IU SDK still provides this module's own bundled plugins (JavaScript/NodeJS/etc.).
+    // IU modules inherit the community fixtures' bundled-plugin closure (plugin 2.16), all tagged for the
+    // community SDK (IC-...), which an IU module can't resolve against its own SDK. Drop the community-only coords.
     if (project.name == "jetbrains-ultimate") {
         listOf("testCompileClasspath", "testRuntimeClasspath", "testFixturesApi").forEach { configName ->
             findByName(configName)?.apply {
@@ -76,10 +71,7 @@ configurations {
 
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
-                // Pin coroutines test tooling (-debug/-test/-bom) to the plain upstream version from Maven
-                // Central. -core/-core-jvm are excluded above and come from the platform SDK instead, so the
-                // intellij-flavored coroutines version is not needed here — and its -debug/-test artifacts
-                // are not published, which would break testFixtures resolution.
+                // -debug/-test aren't published at intellij-flavored versions; -core/-core-jvm come from the SDK (excluded above)
                 useVersion(versionCatalog.findVersion("kotlinCoroutines").get().toString())
                 because("resolve kotlinx-coroutines version conflicts in favor of local version catalog")
             }
@@ -104,13 +96,8 @@ tasks.processTestResources {
 
 // Run after the project has been evaluated so that the extension (intellijToolkit) has been configured
 intellijPlatform {
-    // Give each module its own, fully separate test sandbox. All amazonq submodules previously resolved to
-    // the same top-level name ("plugin-amazonq") under one shared sandbox container, so every module's
-    // prepareTestSandbox cleaned and rewrote the shared plugins-test/ directory with only its own plugin
-    // descriptor. When the modules' test tasks interleave or are reordered, a module ends up running against
-    // another's sandbox and its services fail to register ("Cannot find service ..."). Isolating the whole
-    // sandbox container per module removes the shared mutable state entirely, which also resolves Gradle 9's
-    // cross-module producer/consumer validation on the shared directory (no shared dir => no ordering needed).
+    // Give each module its own test sandbox. All amazonq submodules otherwise share one ("plugin-amazonq"),
+    // so their prepareTestSandbox tasks clobber each other's plugin descriptors (Gradle 9 makes this fatal).
     val moduleSandboxName = project.buildTreePath.replace(':', '-').trim('-')
     sandboxContainer.convention(project.layout.buildDirectory.dir("idea-sandbox/$moduleSandboxName"))
     instrumentCode = true

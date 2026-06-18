@@ -19,13 +19,8 @@ tasks.withType<PatchPluginXmlTask>().configureEach {
     untilBuild.set(toolkitIntelliJ.ideProfile().map { it.untilVersion })
 }
 
-// Don't attach the kotlinx-coroutines debug javaagent when launching the IDE headless (buildSearchableOptions,
-// runIde, etc.). The agent we resolve is pinned to our coroutines version (kotlinCoroutines in libs.versions.toml),
-// but the 2026.1 platform ships coroutines that emit debug-metadata v2; the older agent rejects it
-// ("Debug metadata version mismatch. Expected: 1, got 2"), which crashes IDE startup (plugin descriptor loading +
-// Fleet kernel) and hangs the launching task until the CI timeout. The agent only adds coroutine debug stacktraces,
-// which these headless launches don't need. The plugin adds it only when the file property is present, so clearing
-// it drops the -javaagent argument entirely.
+// Drop the coroutines debug javaagent from headless IDE launches: our pinned agent rejects the 2026.1 platform's
+// debug-metadata v2 ("Expected: 1, got 2"), hanging startup until CI timeout. Clearing the file property removes it.
 tasks.withType<Task>().configureEach {
     if (this is CoroutinesJavaAgentAware) {
         coroutinesJavaAgentFile.set(provider { null })

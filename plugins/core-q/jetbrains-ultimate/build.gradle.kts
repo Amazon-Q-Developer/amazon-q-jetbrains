@@ -15,5 +15,4 @@ dependencies {
     compileOnly(project(":plugin-core-q:jetbrains-community"))
     testFixturesApi(testFixtures(project(":plugin-core-q:jetbrains-community")))
 }
-// Note: the IC-tagged community bundled-plugin coordinates that leak into this IU module's test classpath are
-// excluded centrally in the toolkit-intellij-subplugin convention (gated on the jetbrains-ultimate module name).
+// IC-tagged community bundled-plugin coords leaking into this IU test classpath are excluded centrally in toolkit-intellij-subplugin.

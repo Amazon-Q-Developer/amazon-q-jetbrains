@@ -80,11 +80,8 @@ dependencies {
     testPlugins(project(":plugin-amazonq", "pluginZip"))
 }
 
-// This module only needs the community fixtures' own classes for compilation; it gets its IDE platform from
-// the SDK it resolves directly (intellijIdeaUltimate/Community above). IntelliJ Platform Gradle Plugin 2.16
-// pulls the community module's full bundledPlugin/bundledModule closure onto the inherited test classpath,
-// tagged for the community SDK (IC-...), which this module can't resolve against its own SDK. Drop all
-// inherited bundled platform coordinates from the compile classpath.
+// Drop the community fixtures' inherited bundled-plugin closure (plugin 2.16, tagged IC-...); this module gets
+// its platform from the SDK it resolves directly above and can't resolve the IC-tagged coords against it.
 configurations.testCompileClasspath {
     exclude(group = "bundledPlugin")
     exclude(group = "bundledModule")
