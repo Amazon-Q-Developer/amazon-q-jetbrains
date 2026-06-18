@@ -85,8 +85,15 @@ tasks.processTestResources {
 
 // Run after the project has been evaluated so that the extension (intellijToolkit) has been configured
 intellijPlatform {
-    // find the name of first subproject depth, or root if not applied to a subproject hierarchy
-    projectName.convention(generateSequence(project) { it.parent }.first { it.depth <= 1 }.name)
+    // Give each module its own, fully separate test sandbox. All amazonq submodules previously resolved to
+    // the same top-level name ("plugin-amazonq") under one shared sandbox container, so every module's
+    // prepareTestSandbox cleaned and rewrote the shared plugins-test/ directory with only its own plugin
+    // descriptor. When the modules' test tasks interleave or are reordered, a module ends up running against
+    // another's sandbox and its services fail to register ("Cannot find service ..."). Isolating the whole
+    // sandbox container per module removes the shared mutable state entirely, which also resolves Gradle 9's
+    // cross-module producer/consumer validation on the shared directory (no shared dir => no ordering needed).
+    val moduleSandboxName = project.buildTreePath.replace(':', '-').trim('-')
+    sandboxContainer.convention(project.layout.buildDirectory.dir("idea-sandbox/$moduleSandboxName"))
     instrumentCode = true
 }
 
@@ -145,11 +152,6 @@ tasks.withType<Test>().configureEach {
 
     // Ensure enough coroutine scheduler threads for IntelliJ platform Transactor on resource-constrained CI runners (e.g. GitHub Actions with 2 cores)
     systemProperty("kotlinx.coroutines.scheduler.core.pool.size", "4")
-
-    // The amazonq submodules assemble into one shared test sandbox (.../plugins-test/plugin-amazonq), so each
-    // module's prepareTestSandbox writes a directory every sibling's test task reads. Gradle 9 fails the build
-    // on this undeclared producer/consumer relationship; order tests after all sandbox prep so it is explicit.
-    mustRunAfter(rootProject.allprojects.flatMap { it.tasks.withType<PrepareSandboxTask>() })
 }
 
 tasks.withType<JavaExec>().configureEach {
