@@ -115,7 +115,9 @@ configurations.register("coverageDataElements") {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
         attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("jacoco-coverage-data"))
     }
-    tasks.withType<Test>().configureEach {
-        outgoing.artifact(extensions.getByType<JacocoTaskExtension>().destinationFile!!)
-    }
+    // Declare the coverage artifact lazily via a provider. Gradle 9 forbids mutating a
+    // configuration's outgoing artifacts after it has been observed, which the previous
+    // tasks.withType<Test>().configureEach { outgoing.artifact(...) } form did. The aggregating
+    // coverageReport task resolves this leniently and skips missing exec files.
+    outgoing.artifact(tasks.named<Test>("test").map { it.extensions.getByType<JacocoTaskExtension>().destinationFile!! })
 }

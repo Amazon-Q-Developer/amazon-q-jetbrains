@@ -20,6 +20,13 @@ dependencies {
             bundledModule("intellij.platform.collaborationTools.auth.base")
             bundledModule("intellij.platform.collaborationTools.auth")
         }
+
+        // 2026.2 (262) split the patch apply/read APIs (PatchReader, GenericPatchApplier,
+        // ApplyPatch*, ImportToShelfExecutor) into intellij.platform.vcs.impl
+        val profileName = providers.gradleProperty("ideProfileName").get()
+        if (profileName >= "2026.2") {
+            bundledModule("intellij.platform.vcs.impl")
+        }
     }
 
     implementation(project(":plugin-core-q"))

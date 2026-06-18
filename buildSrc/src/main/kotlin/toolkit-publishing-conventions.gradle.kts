@@ -39,7 +39,7 @@ intellijPlatform {
         channels.set(publishChannel.split(",").map { it.trim() })
     }
 
-    verifyPlugin {
+    pluginVerification {
         subsystemsToCheck.set(VerifyPluginTask.Subsystems.WITHOUT_ANDROID)
         // need to tune this
         failureLevel.set(listOf(VerifyPluginTask.FailureLevel.INVALID_PLUGIN))

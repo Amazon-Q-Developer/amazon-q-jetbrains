@@ -3,8 +3,10 @@
 
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.extensions.IntelliJPlatformDependencyConfiguration
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 import software.aws.toolkits.gradle.findFolders
+import software.aws.toolkits.gradle.intellij.IdeFlavor
 import software.aws.toolkits.gradle.intellij.IdeVersions
 import software.aws.toolkits.gradle.intellij.toolkitIntelliJ
 
@@ -56,6 +58,10 @@ configurations {
 
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
+                // Pin coroutines test tooling (-debug/-test/-bom) to the plain upstream version from Maven
+                // Central. -core/-core-jvm are excluded above and come from the platform SDK instead, so the
+                // intellij-flavored coroutines version is not needed here — and its -debug/-test artifacts
+                // are not published, which would break testFixtures resolution.
                 useVersion(versionCatalog.findVersion("kotlinCoroutines").get().toString())
                 because("resolve kotlinx-coroutines version conflicts in favor of local version catalog")
             }
@@ -87,15 +93,17 @@ intellijPlatform {
 
 dependencies {
     intellijPlatform {
-        val version = toolkitIntelliJ.version()
+        val sdkVersion = toolkitIntelliJ.version().get()
 
         // annoying resolution issue that we don't want to bother fixing
         if (!project.name.contains("jetbrains-gateway")) {
-            val type = toolkitIntelliJ.ideFlavor.map { IntelliJPlatformType.fromCode(it.toString()) }
-
-            create(type, version, useInstaller = false)
+            when (toolkitIntelliJ.ideFlavor.get()) {
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                IdeFlavor.RD -> rider(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+                else -> intellijIdeaCommunity(sdkVersion, Action<IntelliJPlatformDependencyConfiguration> { useInstaller.set(false) })
+            }
         } else {
-            create(IntelliJPlatformType.Gateway, version)
+            create(IntelliJPlatformType.Gateway, sdkVersion)
         }
 
         bundledPlugins(toolkitIntelliJ.productProfile().map { it.bundledPlugins })
@@ -138,6 +146,11 @@ tasks.withType<Test>().configureEach {
 
     // Ensure enough coroutine scheduler threads for IntelliJ platform Transactor on resource-constrained CI runners (e.g. GitHub Actions with 2 cores)
     systemProperty("kotlinx.coroutines.scheduler.core.pool.size", "4")
+
+    // The amazonq submodules assemble into one shared test sandbox (.../plugins-test/plugin-amazonq), so each
+    // module's prepareTestSandbox writes a directory every sibling's test task reads. Gradle 9 fails the build
+    // on this undeclared producer/consumer relationship; order tests after all sandbox prep so it is explicit.
+    mustRunAfter(rootProject.allprojects.flatMap { it.tasks.withType<PrepareSandboxTask>() })
 }
 
 tasks.withType<JavaExec>().configureEach {

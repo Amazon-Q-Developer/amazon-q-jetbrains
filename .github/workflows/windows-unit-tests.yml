@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ideProfileName: [ "2025.2", "2025.3", "2026.1" ]
+        ideProfileName: [ "2025.2", "2025.3", "2026.1", "2026.2" ]
     env:
       CI: true
       LOCAL_ENV_RUN: true
@@ -41,7 +41,15 @@ jobs:
           "@ | Add-Content -Path "$env:USERPROFILE\.gradle\gradle.properties"
 
       - name: Run tests
-        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" check coverageReport --stacktrace --console plain --continue
+        # 2026.2 (262) test compilation is blocked by a Java 25 inline-bytecode issue that needs a Kotlin
+        # bump (tracked as a fast-follow). Keep its tests non-gating for now; the buildPlugin step gates 262.
+        continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
+        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" check coverageReport ${{ matrix.ideProfileName == '2026.2' && '--no-parallel' || '' }} --stacktrace --console plain --continue
+
+      - name: Build plugin (2026.2 gate)
+        # Until 262 tests are unblocked, validate it via buildPlugin so the job still gates on a real build.
+        if: matrix.ideProfileName == '2026.2'
+        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" buildPlugin --no-parallel --stacktrace --console plain
 
       - name: Collect test artifacts
         if: always()

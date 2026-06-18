@@ -14,16 +14,23 @@ plugins {
 }
 
 val javaVersion = project.jvmTarget().get()
+val javaVersionInt = javaVersion.majorVersion.toInt()
 java {
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(javaVersionInt))
+    }
 }
 
 kotlin {
     compilerOptions {
-        jvmTarget = JvmTarget.fromTarget("21")
+        jvmTarget = JvmTarget.fromTarget(javaVersionInt.toString())
         languageVersion = KotlinVersion.fromVersion(project.kotlinTarget().get())
         apiVersion = KotlinVersion.fromVersion(project.kotlinTarget().get())
         jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
+        // Allow compiling against SDK jars built with newer Kotlin (e.g. 262 SDK uses Kotlin 2.4.0)
+        freeCompilerArgs.add("-Xskip-metadata-version-check")
     }
+    jvmToolchain(javaVersionInt)
 }

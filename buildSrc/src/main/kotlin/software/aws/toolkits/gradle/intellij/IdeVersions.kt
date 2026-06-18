@@ -194,6 +194,52 @@ object IdeVersions {
                 rdGenVersion = "2026.1.3",
                 nugetVersion = "2026.1.0"
             )
+        ),
+        Profile(
+            name = "2026.2",
+            gateway = ProductProfile(
+                // 2026.2 is still EAP; pinned to the build where compatible marketplace plugins exist
+                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                bundledPlugins = listOf("org.jetbrains.plugins.terminal")
+            ),
+            community = ProductProfile(
+                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                bundledPlugins = commonPlugins + listOf(
+                    "com.intellij.java",
+                    "com.intellij.gradle",
+                    "org.jetbrains.idea.maven",
+                    "com.intellij.properties"
+                ),
+                marketplacePlugins = listOf(
+                    "org.toml.lang:262.7581.3",
+                    "PythonCore:262.7581.18",
+                    "Docker:262.7581.3",
+                    "com.intellij.modules.json:262.7581.18"
+                )
+            ),
+            ultimate = ProductProfile(
+                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                bundledPlugins = commonPlugins + listOf(
+                    "JavaScript",
+                    "JavaScriptDebugger",
+                    // 2026.1 scooped "css" out of the JS plugin (which we depend on) into a separate package
+                    "com.intellij.css",
+                    "NodeJS",
+                    "com.intellij.database"
+                ),
+                marketplacePlugins = listOf(
+                    "Pythonid:262.7581.18",
+                    "org.jetbrains.plugins.go:262.7581.18",
+                    "com.intellij.modules.json:262.7581.18"
+                )
+            ),
+            rider = RiderProfile(
+                sdkVersion = "2026.2-SNAPSHOT",
+                bundledPlugins = commonPlugins,
+                netFrameworkTarget = "net472",
+                rdGenVersion = "2026.2.4",
+                nugetVersion = "2026.2.0-eap06"
+            )
         )
     ).associateBy { it.name }
 
