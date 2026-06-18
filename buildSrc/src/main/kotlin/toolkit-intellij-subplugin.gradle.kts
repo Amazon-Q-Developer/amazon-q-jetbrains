@@ -39,6 +39,25 @@ configurations {
         exclude(group = "org.jetbrains.kotlinx")
     }
 
+    // IU (jetbrains-ultimate) modules consume the community modules' test fixtures, which under IntelliJ
+    // Platform Gradle Plugin 2.16 drag in the community module's bundled plugins (com.intellij.java /
+    // org.jetbrains.idea.maven / com.intellij.gradle / com.intellij.properties) plus their full transitive
+    // bundledPlugin/bundledModule closure, all tagged for the community SDK (IC-...). An IU module resolves
+    // against the ultimate/unified SDK where those IC-tagged coordinates don't exist, so its test compilation
+    // fails with "Could not find <x>-IC-...jar". Drop these community-only bundled coordinates from the IU
+    // test classpaths; the IU SDK still provides this module's own bundled plugins (JavaScript/NodeJS/etc.).
+    if (project.name == "jetbrains-ultimate") {
+        listOf("testCompileClasspath", "testRuntimeClasspath", "testFixturesApi").forEach { configName ->
+            findByName(configName)?.apply {
+                exclude(group = "bundledPlugin", module = "com.intellij.java")
+                exclude(group = "bundledPlugin", module = "org.jetbrains.idea.maven")
+                exclude(group = "bundledPlugin", module = "com.intellij.gradle")
+                exclude(group = "bundledPlugin", module = "com.intellij.properties")
+                exclude(group = "bundledModule")
+            }
+        }
+    }
+
     configureEach {
         // IDE provides netty
         exclude("io.netty")
