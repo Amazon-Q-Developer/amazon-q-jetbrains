@@ -62,6 +62,13 @@ artifacts {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
+    // Run each test class in a fresh JVM. Many test classes mockkStatic/mockkObject (e.g. ApplicationManager)
+    // without tearing the mocks down, leaking global state into whatever class runs next in the same JVM.
+    // The 2026.1+ platform turned that latent cross-class pollution fatal (services/dispatchers from a leaked
+    // ApplicationManager break unrelated tests: "Cannot find service", coroutine ClosedSendChannelException,
+    // mockk "was not called"). Forking per class isolates them. forkEvery is ignored when there are no tests.
+    forkEvery = 1
+
     ciOnly {
         retry {
             failOnPassedAfterRetry.set(false)
