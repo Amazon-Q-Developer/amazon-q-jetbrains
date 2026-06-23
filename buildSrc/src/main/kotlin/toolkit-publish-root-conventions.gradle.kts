@@ -19,13 +19,8 @@ tasks.withType<PatchPluginXmlTask>().configureEach {
     untilBuild.set(toolkitIntelliJ.ideProfile().map { it.untilVersion })
 }
 
-// Don't attach the kotlinx-coroutines debug javaagent when launching the IDE headless (buildSearchableOptions,
-// runIde, etc.). The agent we resolve is pinned to our coroutines version (kotlinCoroutines in libs.versions.toml),
-// but the 2026.1 platform ships coroutines that emit debug-metadata v2; the older agent rejects it
-// ("Debug metadata version mismatch. Expected: 1, got 2"), which crashes IDE startup (plugin descriptor loading +
-// Fleet kernel) and hangs the launching task until the CI timeout. The agent only adds coroutine debug stacktraces,
-// which these headless launches don't need. The plugin adds it only when the file property is present, so clearing
-// it drops the -javaagent argument entirely.
+// Drop the coroutines debug javaagent from headless IDE launches: our pinned agent rejects the 2026.1 platform's
+// debug-metadata v2 ("Expected: 1, got 2"), hanging startup until CI timeout. Clearing the file property removes it.
 tasks.withType<Task>().configureEach {
     if (this is CoroutinesJavaAgentAware) {
         coroutinesJavaAgentFile.set(provider { null })
@@ -40,11 +35,11 @@ intellijPlatform {
             // recommended() appears to resolve latest EAP for a product?
             // Starting with 2025.3, IntelliJ IDEA is unified (no separate Community edition)
             val version = toolkitIntelliJ.version().get()
-            if (version.startsWith("2025.3")) {
-                ide(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
+            if (version.startsWith("2025.3") || version.startsWith("2026.")) {
+                create(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
             } else {
-                ide(provider { IntelliJPlatformType.IntellijIdeaCommunity }, toolkitIntelliJ.version())
-                ide(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
+                create(provider { IntelliJPlatformType.IntellijIdeaCommunity }, toolkitIntelliJ.version())
+                create(provider { IntelliJPlatformType.IntellijIdeaUltimate }, toolkitIntelliJ.version())
             }
         }
     }
@@ -66,31 +61,23 @@ dependencies {
             }
         } else {
             val runIdeVariant = providers.gradleProperty("runIdeVariant")
+            val sdkVersion = toolkitIntelliJ.version().get()
 
             // prefer versions declared in IdeVersions
             toolkitIntelliJ.apply {
-                val defaultFlavor = if (version().get().startsWith("2025.3")) {
+                val defaultFlavor = if (sdkVersion.startsWith("2025.3") || sdkVersion.startsWith("2026.")) {
                     IdeFlavor.IU  // Use unified IntelliJ IDEA for 2025.3+
                 } else {
                     IdeFlavor.IC  // Use Community for older versions
                 }
                 ideFlavor.convention(IdeFlavor.values().firstOrNull { it.name == runIdeVariant.orNull } ?: defaultFlavor)
             }
-            val (type, version) = if (runIdeVariant.isPresent) {
-                val type = toolkitIntelliJ.ideFlavor.map { IntelliJPlatformType.fromCode(it.toString()) }
-                val version = toolkitIntelliJ.version()
 
-                type to version
-            } else {
-                val defaultType = if (toolkitIntelliJ.version().get().startsWith("2025.3")) {
-                    provider { IntelliJPlatformType.IntellijIdeaUltimate }
-                } else {
-                    provider { IntelliJPlatformType.IntellijIdeaCommunity }
-                }
-                defaultType to toolkitIntelliJ.version()
+            val flavor = toolkitIntelliJ.ideFlavor.get()
+            when (flavor) {
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion) { useInstaller.set(false) }
+                else -> intellijIdeaCommunity(sdkVersion) { useInstaller.set(false) }
             }
-
-            create(type, version, useInstaller = false)
             jetbrainsRuntime()
         }
     }

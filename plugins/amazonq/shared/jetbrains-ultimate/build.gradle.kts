@@ -15,7 +15,7 @@ dependencies {
     intellijPlatform {
         // RD platform is only available in 2025.3 and later
         when (providers.gradleProperty("ideProfileName").get()) {
-            "2025.2", "2025.3", "2026.1" -> {
+            "2025.2", "2025.3", "2026.1", "2026.2" -> {
                 bundledModule("intellij.rd.platform")
             }
         }

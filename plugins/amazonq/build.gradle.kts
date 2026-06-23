@@ -47,8 +47,7 @@ dependencies {
 }
 
 intellijPlatform {
-    // buildSearchableOptions launches a headless IDE whose main class (com.intellij.idea.Main) was removed from the
-    // platform in 2024.2+, so the launch fails on 2026.1. The searchable-options index is non-essential; disable it.
+    // buildSearchableOptions launches a headless IDE whose main class was removed in 2024.2+ (fails on 2026.1); index is optional
     buildSearchableOptions = false
 }
 

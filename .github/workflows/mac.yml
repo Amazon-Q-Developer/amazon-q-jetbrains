@@ -32,12 +32,13 @@ jobs:
         env:
           LOCAL_ENV_RUN: true
           CI: true
+        # --no-parallel: amazonq submodules share one test sandbox; concurrent Test tasks corrupt the index (fatal on Gradle 9)
         run: |
           chmod +x gradlew
           ./gradlew \
             -Dorg.gradle.jvmargs=-Xmx4g \
             check coverageReport \
-            --stacktrace --console plain --continue
+            --no-parallel --stacktrace --console plain --continue
 
       - name: Upload test reports
         if: failure()

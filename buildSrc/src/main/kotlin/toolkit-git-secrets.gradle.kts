@@ -15,34 +15,31 @@ val downloadGitSecrets = tasks.register<Download>("downloadGitSecrets") {
     useETag(true)
 }
 
-val gitSecrets = tasks.register<Exec>("gitSecrets") {
-    onlyIf {
-        !DefaultNativePlatform.getCurrentOperatingSystem().isWindows
-    }
+val registerGitSecrets = tasks.register<Exec>("registerGitSecrets") {
+    onlyIf { !DefaultNativePlatform.getCurrentOperatingSystem().isWindows }
+    dependsOn(downloadGitSecrets)
+    workingDir(project.rootDir)
+    commandLine("git", "config", "--add", "secrets.allowed", "123456789012")
+}
 
+val registerAwsPatterns = tasks.register<Exec>("registerAwsPatterns") {
+    onlyIf { !DefaultNativePlatform.getCurrentOperatingSystem().isWindows }
     dependsOn(downloadGitSecrets)
     workingDir(project.rootDir)
     val path = "$buildDir${File.pathSeparator}"
-    val patchendEnv = environment.apply { replace("PATH", path + getOrDefault("PATH", "")) }
-    environment = patchendEnv
-
+    environment["PATH"] = path + (environment["PATH"] ?: "")
     commandLine("/bin/sh", "$buildDir/git-secrets", "--register-aws")
+}
 
-    // cleaner than having multiple separate exec tasks
-    doLast {
-        exec {
-            workingDir(project.rootDir)
-            commandLine("git", "config", "--add", "secrets.allowed", "123456789012")
-        }
-
-        exec {
-            workingDir(project.rootDir)
-            environment = patchendEnv
-            commandLine("/bin/sh", "$buildDir/git-secrets", "--scan")
-        }
-    }
+val gitSecretsCheck = tasks.register<Exec>("gitSecrets") {
+    onlyIf { !DefaultNativePlatform.getCurrentOperatingSystem().isWindows }
+    dependsOn(registerGitSecrets, registerAwsPatterns)
+    workingDir(project.rootDir)
+    val path = "$buildDir${File.pathSeparator}"
+    environment["PATH"] = path + (environment["PATH"] ?: "")
+    commandLine("/bin/sh", "$buildDir/git-secrets", "--scan")
 }
 
 tasks.findByName("check")?.let {
-    it.dependsOn(gitSecrets)
+    it.dependsOn(gitSecretsCheck)
 }

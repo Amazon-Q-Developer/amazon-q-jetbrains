@@ -61,11 +61,10 @@ dependencies {
     intellijPlatform {
         val version = ideProfile.community.sdkVersion
         // Use unified IntelliJ IDEA for 2025.3+, Community for older versions
-        val useInstaller = false
         if (version.startsWith("2025.3") || version.startsWith("2026.")) {
-            intellijIdeaUltimate(version, useInstaller)
+            intellijIdeaUltimate(version) { useInstaller.set(false) }
         } else {
-            intellijIdeaCommunity(version, useInstaller)
+            intellijIdeaCommunity(version) { useInstaller.set(false) }
         }
 
         testImplementation(project(":plugin-core-q:core-q"))
@@ -79,6 +78,13 @@ dependencies {
     }
 
     testPlugins(project(":plugin-amazonq", "pluginZip"))
+}
+
+// Drop the community fixtures' inherited bundled-plugin closure (plugin 2.16, tagged IC-...); this module gets
+// its platform from the SDK it resolves directly above and can't resolve the IC-tagged coords against it.
+configurations.testCompileClasspath {
+    exclude(group = "bundledPlugin")
+    exclude(group = "bundledModule")
 }
 
 tasks.test {

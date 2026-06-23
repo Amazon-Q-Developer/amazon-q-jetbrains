@@ -6,7 +6,6 @@ package software.aws.toolkits.gradle.changelog.tasks
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
@@ -27,7 +26,7 @@ open class CreateRelease @Inject constructor(projectLayout: ProjectLayout) : Cha
 
     @Input
     @Optional
-    val issuesUrl: Provider<String?> = project.objects.property(String::class.java).convention("https://github.com/aws/amazon-q-jetbrains/issues")
+    val issuesUrl: Property<String> = project.objects.property(String::class.java).convention("https://github.com/aws/amazon-q-jetbrains/issues")
 
     @OutputFile
     val releaseFile: RegularFileProperty = project.objects.fileProperty().convention(changesDirectory.file(releaseVersion.map { "$it.json" }))

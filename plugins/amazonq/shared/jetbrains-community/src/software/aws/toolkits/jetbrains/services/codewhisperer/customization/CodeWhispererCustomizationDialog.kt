@@ -1,6 +1,8 @@
 // Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+@file:Suppress("INLINE_FROM_HIGHER_PLATFORM")
+
 package software.aws.toolkits.jetbrains.services.codewhisperer.customization
 
 import com.intellij.notification.NotificationAction

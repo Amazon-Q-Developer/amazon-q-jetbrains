@@ -62,6 +62,10 @@ artifacts {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 
+    // Fresh JVM per test class: many classes mockkStatic/mockkObject without teardown, leaking global state
+    // into the next class (fatal on 2026.1+: "Cannot find service", ClosedSendChannelException, mockk misses).
+    forkEvery = 1
+
     ciOnly {
         retry {
             failOnPassedAfterRetry.set(false)
@@ -115,7 +119,6 @@ configurations.register("coverageDataElements") {
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.DOCUMENTATION))
         attribute(DocsType.DOCS_TYPE_ATTRIBUTE, objects.named("jacoco-coverage-data"))
     }
-    tasks.withType<Test>().configureEach {
-        outgoing.artifact(extensions.getByType<JacocoTaskExtension>().destinationFile!!)
-    }
+    // lazy provider: Gradle 9 forbids mutating outgoing artifacts after the config is observed
+    outgoing.artifact(tasks.named<Test>("test").map { it.extensions.getByType<JacocoTaskExtension>().destinationFile!! })
 }

@@ -5,6 +5,7 @@ import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 import software.aws.toolkits.gradle.findFolders
+import software.aws.toolkits.gradle.intellij.IdeFlavor
 import software.aws.toolkits.gradle.intellij.IdeVersions
 import software.aws.toolkits.gradle.intellij.toolkitIntelliJ
 
@@ -38,6 +39,20 @@ configurations {
         exclude(group = "org.jetbrains.kotlinx")
     }
 
+    // IU modules inherit the community fixtures' bundled-plugin closure (plugin 2.16), all tagged for the
+    // community SDK (IC-...), which an IU module can't resolve against its own SDK. Drop the community-only coords.
+    if (project.name == "jetbrains-ultimate") {
+        listOf("testCompileClasspath", "testRuntimeClasspath", "testFixturesApi").forEach { configName ->
+            findByName(configName)?.apply {
+                exclude(group = "bundledPlugin", module = "com.intellij.java")
+                exclude(group = "bundledPlugin", module = "org.jetbrains.idea.maven")
+                exclude(group = "bundledPlugin", module = "com.intellij.gradle")
+                exclude(group = "bundledPlugin", module = "com.intellij.properties")
+                exclude(group = "bundledModule")
+            }
+        }
+    }
+
     configureEach {
         // IDE provides netty
         exclude("io.netty")
@@ -56,6 +71,7 @@ configurations {
 
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-coroutines")) {
+                // -debug/-test aren't published at intellij-flavored versions; -core/-core-jvm come from the SDK (excluded above)
                 useVersion(versionCatalog.findVersion("kotlinCoroutines").get().toString())
                 because("resolve kotlinx-coroutines version conflicts in favor of local version catalog")
             }
@@ -80,22 +96,26 @@ tasks.processTestResources {
 
 // Run after the project has been evaluated so that the extension (intellijToolkit) has been configured
 intellijPlatform {
-    // find the name of first subproject depth, or root if not applied to a subproject hierarchy
-    projectName.convention(generateSequence(project) { it.parent }.first { it.depth <= 1 }.name)
+    // Give each module its own test sandbox. All amazonq submodules otherwise share one ("plugin-amazonq"),
+    // so their prepareTestSandbox tasks clobber each other's plugin descriptors (Gradle 9 makes this fatal).
+    val moduleSandboxName = project.buildTreePath.replace(':', '-').trim('-')
+    sandboxContainer.convention(project.layout.buildDirectory.dir("idea-sandbox/$moduleSandboxName"))
     instrumentCode = true
 }
 
 dependencies {
     intellijPlatform {
-        val version = toolkitIntelliJ.version()
+        val sdkVersion = toolkitIntelliJ.version().get()
 
         // annoying resolution issue that we don't want to bother fixing
         if (!project.name.contains("jetbrains-gateway")) {
-            val type = toolkitIntelliJ.ideFlavor.map { IntelliJPlatformType.fromCode(it.toString()) }
-
-            create(type, version, useInstaller = false)
+            when (toolkitIntelliJ.ideFlavor.get()) {
+                IdeFlavor.IU -> intellijIdeaUltimate(sdkVersion) { useInstaller.set(false) }
+                IdeFlavor.RD -> rider(sdkVersion) { useInstaller.set(false) }
+                else -> intellijIdeaCommunity(sdkVersion) { useInstaller.set(false) }
+            }
         } else {
-            create(IntelliJPlatformType.Gateway, version)
+            create(IntelliJPlatformType.Gateway, sdkVersion)
         }
 
         bundledPlugins(toolkitIntelliJ.productProfile().map { it.bundledPlugins })

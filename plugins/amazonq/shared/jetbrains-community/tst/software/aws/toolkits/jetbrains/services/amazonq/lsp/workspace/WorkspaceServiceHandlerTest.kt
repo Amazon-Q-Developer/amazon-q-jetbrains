@@ -26,6 +26,7 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.slot
+import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -48,6 +49,7 @@ import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.WorkspaceServerCapabilities
 import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import software.amazon.q.jetbrains.utils.normalizeFileUri
@@ -153,6 +155,15 @@ class WorkspaceServiceHandlerTest {
         // Create WorkspaceServiceHandler with mocked InitializeResult
         testScope = TestScope()
         sut = WorkspaceServiceHandler(project, testScope, mockInitializeResult)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        // This test mockkStatic(ApplicationManager) / mockkObject(WorkspaceFolderUtil) but never tore them
+        // down, leaking the static mocks into sibling test classes that share the module's test JVM. Under
+        // the 2026.1+ platform that cross-test pollution became fatal (services/dispatchers from a leaked
+        // ApplicationManager broke unrelated tests). Reset all MockK state after each test.
+        unmockkAll()
     }
 
     @Test
