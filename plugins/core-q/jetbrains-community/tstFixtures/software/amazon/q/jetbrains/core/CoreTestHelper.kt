@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyDescriptor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.replaceService
 import migration.software.amazon.q.core.ToolkitClientManager
 import migration.software.amazon.q.core.clients.SdkClientProvider
@@ -20,6 +21,7 @@ import migration.software.amazon.q.jetbrains.core.RemoteResourceResolverProvider
 import migration.software.amazon.q.jetbrains.core.coroutines.PluginCoroutineScopeTracker
 import migration.software.amazon.q.jetbrains.core.credentials.CredentialManager
 import migration.software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
+import migration.software.amazon.q.jetbrains.core.credentials.pinning.ConnectionPinningManager
 import migration.software.amazon.q.jetbrains.core.credentials.profiles.ProfileWatcher
 import migration.software.amazon.q.jetbrains.core.credentials.sso.SsoLoginCallbackProvider
 import migration.software.amazon.q.jetbrains.settings.AwsSettings
@@ -38,6 +40,9 @@ import software.amazon.q.jetbrains.core.credentials.MockAwsConnectionManager
 import software.amazon.q.jetbrains.core.credentials.MockCredentialsManager
 import software.amazon.q.jetbrains.core.credentials.MockCredentialsRegionHandler
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
+import software.amazon.q.jetbrains.core.credentials.pinning.DefaultConnectionPinningManager
+import software.amazon.q.jetbrains.core.credentials.pinning.FeatureWithPinnedConnection
+import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.sso.MockSsoLoginCallbackProvider
 import software.amazon.q.jetbrains.core.region.AwsRegionProvider
 import software.amazon.q.jetbrains.services.telemetry.NoOpTelemetryService
@@ -63,6 +68,12 @@ object CoreTestHelper {
                 "software.amazon.q.jetbrains.core.credentials.pinning.FeatureWithPinnedConnection",
                 ExtensionPoint.Kind.INTERFACE
             )
+        }
+        // plugin.xml contributes QConnection to the pinned-feature EP. QConnection.getInstance() does
+        // findExtensionOrFail, which throws on the bare 262 app if only the EP (not an instance) exists, breaking
+        // production paths like getStartUrl(). Register a real instance unless one is already present.
+        if (FeatureWithPinnedConnection.EP_NAME.extensionList.none { it is QConnection }) {
+            ExtensionTestUtil.maskExtensions(FeatureWithPinnedConnection.EP_NAME, listOf(QConnection()), disposable)
         }
         if (!extensionArea.hasExtensionPoint("amazon.q.startupAuthFactory")) {
             extensionArea.registerExtensionPoint(
@@ -104,6 +115,7 @@ object CoreTestHelper {
         registerIfAbsent(ToolkitRegionProvider::class.java) { AwsRegionProvider() }
         registerIfAbsent(CredentialManager::class.java) { MockCredentialsManager() }
         registerIfAbsent(ToolkitAuthManager::class.java) { DefaultToolkitAuthManager() }
+        registerIfAbsent(ConnectionPinningManager::class.java) { DefaultConnectionPinningManager() }
         registerIfAbsent(AwsResourceCache::class.java) { MockResourceCache() }
         registerIfAbsent(RemoteResourceResolverProvider::class.java) { DefaultRemoteResourceResolverProvider() }
         registerIfAbsent(SsoLoginCallbackProvider::class.java) { MockSsoLoginCallbackProvider() }
