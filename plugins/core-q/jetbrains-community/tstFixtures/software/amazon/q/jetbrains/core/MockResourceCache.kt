@@ -4,7 +4,6 @@
 package software.amazon.q.jetbrains.core
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ApplicationRule
 import kotlinx.coroutines.runBlocking

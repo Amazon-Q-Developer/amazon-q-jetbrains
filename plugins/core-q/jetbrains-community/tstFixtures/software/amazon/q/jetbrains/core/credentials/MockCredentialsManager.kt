@@ -5,7 +5,6 @@ package software.amazon.q.jetbrains.core.credentials
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ApplicationRule
-import software.amazon.q.jetbrains.utils.getOrRegisterMockService
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
@@ -22,6 +21,7 @@ import software.amazon.q.core.credentials.ToolkitCredentialsProvider
 import software.amazon.q.core.region.AwsRegion
 import software.amazon.q.core.utils.test.aString
 import software.amazon.q.jetbrains.core.region.getDefaultRegion
+import software.amazon.q.jetbrains.utils.getOrRegisterMockService
 import software.amazon.q.jetbrains.utils.rules.ClearableLazy
 
 @Deprecated("Use MockCredentialManagerRule")

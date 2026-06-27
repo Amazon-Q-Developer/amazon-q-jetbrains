@@ -31,7 +31,6 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.runner.Description
 import org.mockito.kotlin.mock
-import software.amazon.q.jetbrains.core.DefaultRemoteResourceResolverProvider
 import software.amazon.q.jetbrains.core.credentials.AwsConnectionManager
 import software.amazon.q.jetbrains.core.credentials.CredentialsRegionHandler
 import software.amazon.q.jetbrains.core.credentials.DefaultToolkitAuthManager
@@ -239,7 +238,7 @@ object CoreTestHelper {
         defaultValue: String,
         description: String,
         restartRequired: Boolean = false,
-        overrides: Boolean = false
+        overrides: Boolean = false,
     ): RegistryKeyDescriptor {
         val ctor = RegistryKeyDescriptor::class.java.declaredConstructors
             .first { it.parameterCount == 6 || it.parameterCount == 7 }

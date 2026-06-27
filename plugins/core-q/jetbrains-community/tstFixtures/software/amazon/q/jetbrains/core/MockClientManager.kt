@@ -5,7 +5,6 @@ package software.amazon.q.jetbrains.core
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.testFramework.replaceService
 import org.junit.jupiter.api.extension.AfterEachCallback

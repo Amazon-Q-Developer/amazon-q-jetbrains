@@ -28,10 +28,10 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.warn
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.q.jetbrains.core.coroutines.getCoroutineBgContext
 import software.amazon.q.jetbrains.utils.pluginAwareExecuteOnPooledThread
 import software.amazon.q.jetbrains.utils.satisfiesKt

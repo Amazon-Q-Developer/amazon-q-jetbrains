@@ -5,8 +5,8 @@ package software.amazon.q.jetbrains.settings
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach

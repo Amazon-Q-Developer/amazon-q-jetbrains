@@ -3,8 +3,8 @@
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.replaceService
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanId
@@ -19,12 +19,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.awssdk.services.toolkittelemetry.model.MetricUnit
 import software.amazon.q.core.telemetry.DefaultMetricEvent
 import software.amazon.q.core.telemetry.DefaultMetricEvent.DefaultDatum
 import software.amazon.q.core.telemetry.TelemetryBatcher
 import software.amazon.q.core.telemetry.TelemetryPublisher
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.q.jetbrains.services.telemetry.NoOpPublisher
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
 import software.amazon.q.jetbrains.utils.satisfiesKt

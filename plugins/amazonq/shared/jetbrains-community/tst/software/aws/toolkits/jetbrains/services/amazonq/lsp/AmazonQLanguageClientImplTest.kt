@@ -11,8 +11,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.replaceService
 import io.mockk.every
 import io.mockk.mockk

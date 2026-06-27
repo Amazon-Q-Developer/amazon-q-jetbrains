@@ -14,7 +14,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import software.amazon.q.core.telemetry.MetricEvent
-import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.webview.BrowserMessage
 import software.amazon.q.jetbrains.core.webview.BrowserState
 import software.amazon.q.jetbrains.core.webview.LoginBrowser
