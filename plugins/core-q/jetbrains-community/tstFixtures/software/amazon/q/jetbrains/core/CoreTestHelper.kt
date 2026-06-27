@@ -213,8 +213,15 @@ object CoreTestHelper {
     ).associateBy { it.name }
 
     // RegistryKeyDescriptor's constructor arity changed across platforms: 2025.x takes
-    // (name, defaultValue, description, restartRequired, overrides, pluginId); 2026.2 added a trailing
+    // (name, defaultValue, description, restartRequired, overrides, pluginId); 2025.3+ added a trailing
     // pluginDescriptorPath. Construct reflectively so this compiles and runs on every supported profile.
+    //
+    // Additionally, the two String payload parameters (defaultValue and description) are assigned to the
+    // myDefaultValue/myDescription fields in an order that does NOT match the declared parameter order on the
+    // shipping platforms (verified 2025.2-2026.2): passing them positionally makes getDefaultValue() return the
+    // description, so e.g. Registry.get("amazon.q.flare.endpoint").asString() yields the description text instead
+    // of "". Build once and, if the round-tripped getDefaultValue() doesn't match, rebuild with the two payloads
+    // swapped. This keeps the helper correct regardless of how a given platform maps the constructor.
     private fun descriptor(
         name: String,
         defaultValue: String,
@@ -222,11 +229,21 @@ object CoreTestHelper {
         restartRequired: Boolean = false,
         overrides: Boolean = false
     ): RegistryKeyDescriptor {
-        val base = listOf(name, defaultValue, description, restartRequired, overrides, "amazon.q.test")
         val ctor = RegistryKeyDescriptor::class.java.declaredConstructors
             .first { it.parameterCount == 6 || it.parameterCount == 7 }
-        val args = if (ctor.parameterCount == 7) base + null else base
-        return ctor.newInstance(*args.toTypedArray()) as RegistryKeyDescriptor
+
+        fun build(first: String, second: String): RegistryKeyDescriptor {
+            val base = listOf(name, first, second, restartRequired, overrides, "amazon.q.test")
+            val args = if (ctor.parameterCount == 7) base + null else base
+            return ctor.newInstance(*args.toTypedArray()) as RegistryKeyDescriptor
+        }
+
+        val descriptorAsDeclared = build(defaultValue, description)
+        return if (descriptorAsDeclared.defaultValue == defaultValue) {
+            descriptorAsDeclared
+        } else {
+            build(description, defaultValue)
+        }
     }
 }
 
