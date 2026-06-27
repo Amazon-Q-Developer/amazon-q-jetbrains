@@ -6,6 +6,7 @@ package software.amazon.q.jetbrains.core
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyDescriptor
 import com.intellij.testFramework.ApplicationRule
@@ -29,8 +30,14 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.runner.Description
 import org.mockito.kotlin.mock
 import software.amazon.q.jetbrains.core.DefaultRemoteResourceResolverProvider
+import software.amazon.q.jetbrains.core.credentials.AwsConnectionManager
+import software.amazon.q.jetbrains.core.credentials.CredentialsRegionHandler
 import software.amazon.q.jetbrains.core.credentials.DefaultToolkitAuthManager
+import software.amazon.q.jetbrains.core.credentials.DefaultToolkitConnectionManager
+import software.amazon.q.jetbrains.core.credentials.MockAwsConnectionManager
 import software.amazon.q.jetbrains.core.credentials.MockCredentialsManager
+import software.amazon.q.jetbrains.core.credentials.MockCredentialsRegionHandler
+import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
 import software.amazon.q.jetbrains.core.credentials.sso.MockSsoLoginCallbackProvider
 import software.amazon.q.jetbrains.core.region.AwsRegionProvider
 import software.amazon.q.jetbrains.services.telemetry.NoOpTelemetryService
@@ -90,6 +97,26 @@ object CoreTestHelper {
         app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
         app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
         app.replaceService(ProfileWatcher::class.java, mock<ProfileWatcher>(), disposable)
+    }
+
+    /**
+     * Registers the project-scoped services that plugin.xml normally contributes via `<projectService>`.
+     *
+     * On 2026.2 the bare test project does not load the plugin descriptor, so `project.service<X>()` /
+     * `replaceService` on the project fail with "Cannot find service" for project-scoped services. Call this
+     * with the test's project (typically after [registerMissingServices], since some of these services resolve
+     * application services in their constructors). It is a no-op-safe on 2025.x–2026.1.
+     *
+     * Register order matters: [CredentialsRegionHandler] must exist before [MockAwsConnectionManager] is
+     * constructed (its `AwsConnectionManager` super-constructor resolves it), and the application services from
+     * [registerMissingServices] (e.g. [AwsResourceCache], region provider) must already be present.
+     */
+    fun registerMissingProjectServices(project: Project, disposable: Disposable) {
+        // Each plugin needs its own project-scoped coroutine-scope tracker (declared as a bare <projectService>).
+        project.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
+        project.replaceService(CredentialsRegionHandler::class.java, MockCredentialsRegionHandler(), disposable)
+        project.replaceService(AwsConnectionManager::class.java, MockAwsConnectionManager(project), disposable)
+        project.replaceService(ToolkitConnectionManager::class.java, DefaultToolkitConnectionManager(project), disposable)
     }
 
     /**
