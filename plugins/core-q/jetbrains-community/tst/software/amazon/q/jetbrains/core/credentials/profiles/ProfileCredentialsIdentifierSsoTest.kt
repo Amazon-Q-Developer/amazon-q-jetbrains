@@ -10,6 +10,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.mockito.kotlin.mock
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.awssdk.services.ssooidc.model.SsoOidcException
 import software.amazon.q.jetbrains.core.MockClientManagerExtension
@@ -17,7 +18,7 @@ import software.amazon.q.jetbrains.core.credentials.sso.DiskCache
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.InteractiveBearerTokenProvider
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.NoTokenInitializedException
 
-@ExtendWith(TestApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class)
 class ProfileCredentialsIdentifierSsoTest {
     private val sut = ProfileCredentialsIdentifierSso("", "", "", null)
 

@@ -19,6 +19,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.awssdk.services.toolkittelemetry.model.MetricUnit
 import software.amazon.q.core.telemetry.DefaultMetricEvent
 import software.amazon.q.core.telemetry.DefaultMetricEvent.DefaultDatum
@@ -36,7 +37,7 @@ import software.aws.toolkits.telemetry.MetricResult
 import software.aws.toolkits.telemetry.Telemetry
 import java.time.Instant
 
-@ExtendWith(TestApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class)
 class ToolkitTelemetryOTelSpanProcessorTest {
     private class TestTelemetryService(
         publisher: TelemetryPublisher = NoOpPublisher(),
