@@ -6,6 +6,7 @@ package software.amazon.q.jetbrains.core
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import migration.software.amazon.q.core.ToolkitClientManager
 import migration.software.amazon.q.core.region.ToolkitRegionProvider
@@ -15,6 +16,9 @@ import migration.software.amazon.q.jetbrains.core.credentials.CredentialManager
 import migration.software.amazon.q.jetbrains.core.credentials.sso.SsoLoginCallbackProvider
 import migration.software.amazon.q.jetbrains.settings.AwsSettings
 import migration.software.amazon.q.jetbrains.telemetry.TelemetryService
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.mockito.kotlin.mock
 import software.amazon.q.jetbrains.core.credentials.MockCredentialsManager
 import software.amazon.q.jetbrains.core.credentials.sso.MockSsoLoginCallbackProvider
@@ -52,5 +56,28 @@ object CoreTestHelper {
         app.replaceService(AwsResourceCache::class.java, MockResourceCache(), disposable)
         app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
         app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
+    }
+}
+
+/**
+ * JUnit 4 rule that registers the missing core services (see [CoreTestHelper]) for the duration of the test.
+ * Place it first in a [com.intellij.testFramework.RuleChain] so services exist before other rules resolve them.
+ */
+class CoreServicesRule : DisposableRule() {
+    override fun before() {
+        CoreTestHelper.registerMissingServices(disposable)
+    }
+}
+
+/**
+ * JUnit 5 equivalent of [CoreServicesRule]. Register with `@ExtendWith(CoreServicesExtension::class)`.
+ */
+class CoreServicesExtension : DisposableRule(), BeforeEachCallback, AfterEachCallback {
+    override fun beforeEach(context: ExtensionContext) {
+        CoreTestHelper.registerMissingServices(disposable)
+    }
+
+    override fun afterEach(context: ExtensionContext) {
+        after()
     }
 }
