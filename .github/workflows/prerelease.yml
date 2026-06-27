@@ -33,7 +33,16 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'corretto'
-          java-version: '21'
+          # 2026.2 compiles against Java 25; older profiles against 21. The Gradle toolchain picks per profile,
+          # so install both and let it choose. 21 is last so it becomes JAVA_HOME and launches Gradle.
+          java-version: |
+            25
+            21
+      - name: Configure Gradle toolchain discovery
+        run: |
+          mkdir -p ~/.gradle
+          # setup-java's JDK paths aren't auto-detected by the toolchain; point Gradle at them explicitly
+          echo "org.gradle.java.installations.fromEnv=JAVA_HOME_21_X64,JAVA_HOME_25_X64" >> ~/.gradle/gradle.properties
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.x'
