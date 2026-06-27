@@ -3,8 +3,9 @@
 
 package software.amazon.q.jetbrains.core.credentials
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ApplicationRule
+import software.amazon.q.jetbrains.utils.getOrRegisterMockService
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
@@ -85,7 +86,8 @@ class MockCredentialsManager : CredentialManager() {
 
     companion object {
         @Suppress("DEPRECATION")
-        fun getInstance(): MockCredentialsManager = service<CredentialManager>() as MockCredentialsManager
+        fun getInstance(): MockCredentialsManager =
+            ApplicationManager.getApplication().getOrRegisterMockService(CredentialManager::class.java) { MockCredentialsManager() }
     }
 
     class MockCredentialIdentifier(override val displayName: String, val credentials: AwsCredentialsProvider, override val defaultRegionId: String?) :

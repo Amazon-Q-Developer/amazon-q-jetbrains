@@ -24,6 +24,7 @@ import software.amazon.q.core.region.AwsRegion
 import software.amazon.q.core.region.ToolkitRegionProvider
 import software.amazon.q.core.utils.delegateMock
 import software.amazon.q.jetbrains.core.region.AwsRegionProvider
+import software.amazon.q.jetbrains.utils.getOrRegisterMockService
 import kotlin.reflect.KClass
 
 class MockClientManager : AwsClientManager() {
@@ -88,7 +89,8 @@ class MockClientManager : AwsClientManager() {
 }
 
 // Scoped to this file only, users should be using MockClientManagerRule to enforce cleanup correctly
-private fun getMockInstance(): MockClientManager = service<ToolkitClientManager>() as MockClientManager
+private fun getMockInstance(): MockClientManager =
+    ApplicationManager.getApplication().getOrRegisterMockService(ToolkitClientManager::class.java) { MockClientManager() }
 
 sealed class MockClientManagerBase : ExternalResource() {
     private lateinit var mockClientManager: MockClientManager

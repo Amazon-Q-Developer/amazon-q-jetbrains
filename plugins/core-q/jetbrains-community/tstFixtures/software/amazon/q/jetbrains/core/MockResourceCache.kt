@@ -18,6 +18,7 @@ import software.amazon.q.core.credentials.ToolkitBearerTokenProvider
 import software.amazon.q.core.credentials.ToolkitCredentialsProvider
 import software.amazon.q.core.region.AwsRegion
 import software.amazon.q.jetbrains.core.credentials.AwsConnectionManager
+import software.amazon.q.jetbrains.utils.getOrRegisterMockService
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.ConcurrentHashMap
@@ -124,7 +125,8 @@ class MockResourceCache : AwsResourceCache {
 
     companion object {
         @JvmStatic
-        fun getInstance(): MockResourceCache = service<AwsResourceCache>() as MockResourceCache
+        fun getInstance(): MockResourceCache =
+            ApplicationManager.getApplication().getOrRegisterMockService(AwsResourceCache::class.java) { MockResourceCache() }
 
         private data class CacheKey(val resourceId: String, val regionId: String, val credentialsId: String)
     }
