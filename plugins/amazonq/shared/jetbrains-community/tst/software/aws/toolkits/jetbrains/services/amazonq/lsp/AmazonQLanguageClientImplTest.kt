@@ -340,6 +340,11 @@ class AmazonQLanguageClientImplTest {
         val mockConnectionManager = mockk<ToolkitConnectionManager>()
         every { project.service<ToolkitConnectionManager>() } returns mockConnectionManager
 
+        // QConnection.getInstance() resolves a plugin extension point that isn't registered in a bare test
+        // application (2026.2 no longer auto-registers plugin.xml EPs for these), so mock the lookup directly.
+        mockkObject(QConnection)
+        every { QConnection.getInstance() } returns mockk()
+
         val expectedStartUrl = "https://test.aws.com"
         val mockConnection = mockk<AwsBearerTokenConnection> {
             every { startUrl } returns expectedStartUrl
@@ -355,6 +360,10 @@ class AmazonQLanguageClientImplTest {
     fun `getConnectionMetadata returns empty start URL when no active connection`() {
         val mockConnectionManager = mockk<ToolkitConnectionManager>()
         every { project.service<ToolkitConnectionManager>() } returns mockConnectionManager
+
+        // see note above: QConnection's extension point isn't registered in a bare 2026.2 test application
+        mockkObject(QConnection)
+        every { QConnection.getInstance() } returns mockk()
 
         every { mockConnectionManager.activeConnectionForFeature(QConnection.getInstance()) } returns null
 
@@ -462,8 +471,12 @@ class AmazonQLanguageClientImplTest {
         }
         ApplicationManager.getApplication().replaceService(CodeWhispererModelConfigurator::class.java, mockConfigurator, disposable)
 
-        // Mock AWS Settings
-        AwsSettings.getInstance().isTelemetryEnabled = telemetryEnabled
+        // Mock AWS Settings — the real service isn't registered in a bare 2026.2 test application
+        val mockAwsSettings = mockk<AwsSettings>(relaxed = true) {
+            every { isTelemetryEnabled } returns telemetryEnabled
+        }
+        mockkObject(AwsSettings)
+        every { AwsSettings.getInstance() } returns mockAwsSettings
 
         assertThat(sut.configuration(configurationParams("aws.q")).get())
             .singleElement()
