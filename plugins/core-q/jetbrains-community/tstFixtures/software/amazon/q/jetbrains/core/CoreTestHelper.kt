@@ -173,13 +173,22 @@ object CoreTestHelper {
         )
     ).associateBy { it.name }
 
+    // RegistryKeyDescriptor's constructor arity changed across platforms: 2025.x takes
+    // (name, defaultValue, description, restartRequired, overrides, pluginId); 2026.2 added a trailing
+    // pluginDescriptorPath. Construct reflectively so this compiles and runs on every supported profile.
     private fun descriptor(
         name: String,
         defaultValue: String,
         description: String,
         restartRequired: Boolean = false,
         overrides: Boolean = false
-    ) = RegistryKeyDescriptor(name, defaultValue, description, restartRequired, overrides, "amazon.q.test", null)
+    ): RegistryKeyDescriptor {
+        val base = listOf(name, defaultValue, description, restartRequired, overrides, "amazon.q.test")
+        val ctor = RegistryKeyDescriptor::class.java.declaredConstructors
+            .first { it.parameterCount == 6 || it.parameterCount == 7 }
+        val args = if (ctor.parameterCount == 7) base + null else base
+        return ctor.newInstance(*args.toTypedArray()) as RegistryKeyDescriptor
+    }
 }
 
 /**
