@@ -86,17 +86,29 @@ object CoreTestHelper {
             )
         }
 
-        app.replaceService(AwsSettings::class.java, MockAwsSettings(), disposable)
-        app.replaceService(ToolkitClientManager::class.java, mock<ToolkitClientManager>(), disposable)
-        app.replaceService(TelemetryService::class.java, NoOpTelemetryService(), disposable)
-        app.replaceService(ToolkitRegionProvider::class.java, AwsRegionProvider(), disposable)
-        app.replaceService(CredentialManager::class.java, MockCredentialsManager(), disposable)
-        app.replaceService(ToolkitAuthManager::class.java, DefaultToolkitAuthManager(), disposable)
-        app.replaceService(AwsResourceCache::class.java, MockResourceCache(), disposable)
-        app.replaceService(RemoteResourceResolverProvider::class.java, DefaultRemoteResourceResolverProvider(), disposable)
-        app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
-        app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
-        app.replaceService(ProfileWatcher::class.java, mock<ProfileWatcher>(), disposable)
+        // Register each service only if one isn't already present. A mock rule (e.g. MockClientManagerRule,
+        // MockCredentialManagerRule) runs its JUnit `before()` ahead of the test's `@BeforeEach`, so it may have
+        // already installed the instance the test holds a reference to; clobbering it here would make the SUT
+        // resolve a different instance than the rule configured. On a bare 262 app nothing is created yet, so the
+        // fallback is installed; on 2025.x–2026.1 the descriptor's (often lazy) services likewise aren't created
+        // yet, matching prior behavior.
+        fun <T : Any> registerIfAbsent(serviceInterface: Class<T>, factory: () -> T) {
+            if (app.getServiceIfCreated(serviceInterface) == null) {
+                app.replaceService(serviceInterface, factory(), disposable)
+            }
+        }
+
+        registerIfAbsent(AwsSettings::class.java) { MockAwsSettings() }
+        registerIfAbsent(ToolkitClientManager::class.java) { mock<ToolkitClientManager>() }
+        registerIfAbsent(TelemetryService::class.java) { NoOpTelemetryService() }
+        registerIfAbsent(ToolkitRegionProvider::class.java) { AwsRegionProvider() }
+        registerIfAbsent(CredentialManager::class.java) { MockCredentialsManager() }
+        registerIfAbsent(ToolkitAuthManager::class.java) { DefaultToolkitAuthManager() }
+        registerIfAbsent(AwsResourceCache::class.java) { MockResourceCache() }
+        registerIfAbsent(RemoteResourceResolverProvider::class.java) { DefaultRemoteResourceResolverProvider() }
+        registerIfAbsent(SsoLoginCallbackProvider::class.java) { MockSsoLoginCallbackProvider() }
+        registerIfAbsent(PluginCoroutineScopeTracker::class.java) { PluginCoroutineScopeTracker() }
+        registerIfAbsent(ProfileWatcher::class.java) { mock<ProfileWatcher>() }
     }
 
     /**

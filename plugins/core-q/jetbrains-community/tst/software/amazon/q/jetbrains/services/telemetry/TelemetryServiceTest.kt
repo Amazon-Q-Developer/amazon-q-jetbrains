@@ -12,6 +12,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.createTestOpenProjectOptions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.argumentCaptor
@@ -27,6 +28,7 @@ import software.amazon.q.core.telemetry.DefaultMetricEvent.Companion.METADATA_NO
 import software.amazon.q.core.telemetry.MetricEvent
 import software.amazon.q.core.telemetry.TelemetryBatcher
 import software.amazon.q.core.telemetry.TelemetryPublisher
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockResourceCacheRule
 import software.amazon.q.jetbrains.core.credentials.AwsConnectionManager
 import software.amazon.q.jetbrains.core.credentials.ConnectionState
@@ -67,6 +69,12 @@ class TelemetryServiceTest {
     @JvmField
     @Rule
     val disposableRule = DisposableRule()
+
+    @Before
+    fun setUp() {
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+    }
 
     @After
     fun tearDown() {
@@ -219,6 +227,9 @@ class TelemetryServiceTest {
         val projectFile = TemporaryDirectory.generateTemporaryPath("project_telemetryCanBeSendOnAfterProjectClosed${ProjectFileType.DOT_DEFAULT_EXTENSION}")
         val options = createTestOpenProjectOptions(runPostStartUpActivities = false)
         val project = ProjectManagerEx.getInstanceEx().openProject(projectFile, options)!!
+        // This project is opened by the test (not the ProjectRule) so on 2026.2's bare container its
+        // <projectService> registrations (AwsConnectionManager, CredentialsRegionHandler) are absent.
+        CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
         try {
             val credentials = credentialManager.addCredentials("profile:admin")
             val mockRegion = regionProvider.createAwsRegion()
