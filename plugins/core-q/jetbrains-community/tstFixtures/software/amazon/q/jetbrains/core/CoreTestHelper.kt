@@ -65,6 +65,13 @@ object CoreTestHelper {
                 ExtensionPoint.Kind.INTERFACE
             )
         }
+        if (!extensionArea.hasExtensionPoint("amazon.q.credentialProviderFactory")) {
+            extensionArea.registerExtensionPoint(
+                "amazon.q.credentialProviderFactory",
+                "software.amazon.q.core.credentials.CredentialProviderFactory",
+                ExtensionPoint.Kind.INTERFACE
+            )
+        }
 
         app.replaceService(AwsSettings::class.java, MockAwsSettings(), disposable)
         app.replaceService(ToolkitClientManager::class.java, mock<ToolkitClientManager>(), disposable)
