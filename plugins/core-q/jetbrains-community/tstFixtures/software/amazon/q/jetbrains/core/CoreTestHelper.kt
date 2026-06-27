@@ -13,6 +13,7 @@ import migration.software.amazon.q.core.region.ToolkitRegionProvider
 import migration.software.amazon.q.jetbrains.core.AwsResourceCache
 import migration.software.amazon.q.jetbrains.core.coroutines.PluginCoroutineScopeTracker
 import migration.software.amazon.q.jetbrains.core.credentials.CredentialManager
+import migration.software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
 import migration.software.amazon.q.jetbrains.core.credentials.sso.SsoLoginCallbackProvider
 import migration.software.amazon.q.jetbrains.settings.AwsSettings
 import migration.software.amazon.q.jetbrains.telemetry.TelemetryService
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.mockito.kotlin.mock
+import software.amazon.q.jetbrains.core.credentials.DefaultToolkitAuthManager
 import software.amazon.q.jetbrains.core.credentials.MockCredentialsManager
 import software.amazon.q.jetbrains.core.credentials.sso.MockSsoLoginCallbackProvider
 import software.amazon.q.jetbrains.core.region.AwsRegionProvider
@@ -47,12 +49,20 @@ object CoreTestHelper {
                 ExtensionPoint.Kind.INTERFACE
             )
         }
+        if (!extensionArea.hasExtensionPoint("amazon.q.startupAuthFactory")) {
+            extensionArea.registerExtensionPoint(
+                "amazon.q.startupAuthFactory",
+                "software.amazon.q.jetbrains.core.credentials.ToolkitStartupAuthFactory",
+                ExtensionPoint.Kind.INTERFACE
+            )
+        }
 
         app.replaceService(AwsSettings::class.java, MockAwsSettings(), disposable)
         app.replaceService(ToolkitClientManager::class.java, mock<ToolkitClientManager>(), disposable)
         app.replaceService(TelemetryService::class.java, NoOpTelemetryService(), disposable)
         app.replaceService(ToolkitRegionProvider::class.java, AwsRegionProvider(), disposable)
         app.replaceService(CredentialManager::class.java, MockCredentialsManager(), disposable)
+        app.replaceService(ToolkitAuthManager::class.java, DefaultToolkitAuthManager(), disposable)
         app.replaceService(AwsResourceCache::class.java, MockResourceCache(), disposable)
         app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
         app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
