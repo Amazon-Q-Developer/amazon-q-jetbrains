@@ -3,6 +3,7 @@
 
 package software.amazon.q.jetbrains.core.notifications
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.Runs
 import io.mockk.every
@@ -58,7 +59,11 @@ class NotificationPollingServiceTest {
 
     @AfterEach
     fun tearDown() {
-        sut.dispose()
+        // NotificationPollingService's constructor registers its Alarm under `this` in the global Disposer tree,
+        // so the service itself becomes a Disposer node. sut.dispose() only disposes the alarm; the service node
+        // must be removed via Disposer.dispose(sut) or it leaks (surfaced as an engine-level "Memory leak
+        // detected: NotificationPollingService" / "Failed to close extension context" only in full-suite runs).
+        Disposer.dispose(sut)
     }
 
     @Test
