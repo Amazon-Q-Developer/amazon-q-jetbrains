@@ -12,12 +12,14 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import migration.software.amazon.q.core.ToolkitClientManager
+import migration.software.amazon.q.core.clients.SdkClientProvider
 import migration.software.amazon.q.core.region.ToolkitRegionProvider
 import migration.software.amazon.q.jetbrains.core.AwsResourceCache
 import migration.software.amazon.q.jetbrains.core.RemoteResourceResolverProvider
 import migration.software.amazon.q.jetbrains.core.coroutines.PluginCoroutineScopeTracker
 import migration.software.amazon.q.jetbrains.core.credentials.CredentialManager
 import migration.software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
+import migration.software.amazon.q.jetbrains.core.credentials.profiles.ProfileWatcher
 import migration.software.amazon.q.jetbrains.core.credentials.sso.SsoLoginCallbackProvider
 import migration.software.amazon.q.jetbrains.settings.AwsSettings
 import migration.software.amazon.q.jetbrains.telemetry.TelemetryService
@@ -87,6 +89,21 @@ object CoreTestHelper {
         app.replaceService(RemoteResourceResolverProvider::class.java, DefaultRemoteResourceResolverProvider(), disposable)
         app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
         app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
+        app.replaceService(ProfileWatcher::class.java, mock<ProfileWatcher>(), disposable)
+    }
+
+    /**
+     * Registers a real [SdkClientProvider] and replaces [ToolkitClientManager] with [MockClientManager], matching
+     * the `testServiceImplementation` plugin.xml normally contributes. Heavy-platform tests that do
+     * `service<ToolkitClientManager>() as MockClientManager` need this on 2026.2's bare test app. Call after
+     * [registerMissingServices] (the EPs/region provider must exist first). No-op-safe on 2025.x–2026.1.
+     */
+    fun registerMockClientManager(disposable: Disposable) {
+        val app = ApplicationManager.getApplication()
+        // SdkClientProvider must exist before MockClientManager()'s AwsClientManager super-ctor resolves it.
+        app.replaceService(SdkClientProvider::class.java, AwsSdkClient(), disposable)
+        app.replaceService(ToolkitRegionProvider::class.java, AwsRegionProvider(), disposable)
+        app.replaceService(ToolkitClientManager::class.java, MockClientManager(), disposable)
     }
 
     /**
