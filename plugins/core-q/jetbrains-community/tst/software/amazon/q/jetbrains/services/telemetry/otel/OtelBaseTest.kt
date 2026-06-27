@@ -4,7 +4,7 @@
 package software.amazon.q.jetbrains.services.telemetry.otel
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.TraceId
 import io.opentelemetry.context.Context
@@ -42,7 +42,7 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class OtelBaseTest {
     private companion object {
         @RegisterExtension

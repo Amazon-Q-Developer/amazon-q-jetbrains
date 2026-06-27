@@ -5,7 +5,7 @@ package software.amazon.q.jetbrains.settings
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
@@ -22,7 +22,7 @@ import software.amazon.q.core.telemetry.TelemetryPublisher
 import software.amazon.q.jetbrains.services.telemetry.NoOpPublisher
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class AwsSettingsTest {
     private class TestTelemetryService(
         publisher: TelemetryPublisher = NoOpPublisher(),

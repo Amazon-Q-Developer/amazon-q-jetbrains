@@ -6,7 +6,7 @@ package software.amazon.q.jetbrains.core.notifications
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.ProjectRule
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -29,7 +29,7 @@ import java.io.InputStream
 import java.nio.file.Paths
 import java.util.stream.Stream
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class NotificationFormatUtilsTest {
     @Rule
     @JvmField

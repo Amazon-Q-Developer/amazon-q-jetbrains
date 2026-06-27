@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.codewhisperer
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -14,7 +14,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.profile.QDefaultServiceC
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QEndpoints
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionEndpoint
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class QEndpointsTest {
 
     @JvmField

@@ -3,7 +3,7 @@
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import io.opentelemetry.api.trace.Span
@@ -36,7 +36,7 @@ import software.aws.toolkits.telemetry.MetricResult
 import software.aws.toolkits.telemetry.Telemetry
 import java.time.Instant
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class ToolkitTelemetryOTelSpanProcessorTest {
     private class TestTelemetryService(
         publisher: TelemetryPublisher = NoOpPublisher(),

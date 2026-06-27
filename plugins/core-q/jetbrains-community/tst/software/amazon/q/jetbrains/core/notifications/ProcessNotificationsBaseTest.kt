@@ -4,7 +4,7 @@
 package software.amazon.q.jetbrains.core.notifications
 
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class ProcessNotificationsBaseTest {
     private lateinit var sut: ProcessNotificationsBase
     private lateinit var project: Project

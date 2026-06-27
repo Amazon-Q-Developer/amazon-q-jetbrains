@@ -11,7 +11,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import io.mockk.every
@@ -42,7 +42,7 @@ import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class AmazonQLanguageClientImplTest {
     private val project: Project = mockk(relaxed = true)
     private val sut = AmazonQLanguageClientImpl(project)

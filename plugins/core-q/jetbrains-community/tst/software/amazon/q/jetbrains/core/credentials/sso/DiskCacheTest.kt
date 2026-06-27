@@ -5,7 +5,7 @@ package software.amazon.q.jetbrains.core.credentials.sso
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -29,7 +29,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.io.path.setPosixFilePermissions
 
 class DiskCacheTest {
-    @ExtendWith(ApplicationExtension::class)
+    @ExtendWith(TestApplicationExtension::class)
     private val now = Instant.now()
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
 

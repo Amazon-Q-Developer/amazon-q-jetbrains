@@ -3,7 +3,7 @@
 
 package software.amazon.q.jetbrains.core.notifications
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -19,7 +19,7 @@ import software.amazon.q.jetbrains.core.RemoteResourceResolverProvider
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class NotificationPollingServiceTest {
     private lateinit var sut: NotificationPollingService
     private lateinit var mockResolver: RemoteResourceResolver

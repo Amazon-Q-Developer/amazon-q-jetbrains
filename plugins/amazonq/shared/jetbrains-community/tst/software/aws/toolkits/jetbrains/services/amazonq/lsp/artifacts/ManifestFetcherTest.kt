@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.utils.io.createFile
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
@@ -23,7 +23,7 @@ import software.amazon.q.jetbrains.core.getTextFromUrl
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@ExtendWith(ApplicationExtension::class, MockitoExtension::class, MockKExtension::class)
+@ExtendWith(TestApplicationExtension::class, MockitoExtension::class, MockKExtension::class)
 class ManifestFetcherTest {
 
     private lateinit var manifestFetcher: ManifestFetcher
