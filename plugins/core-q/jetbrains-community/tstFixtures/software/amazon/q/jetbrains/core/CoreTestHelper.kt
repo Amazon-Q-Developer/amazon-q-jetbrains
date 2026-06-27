@@ -6,6 +6,9 @@ package software.amazon.q.jetbrains.core
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryKeyDescriptor
+import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import migration.software.amazon.q.core.ToolkitClientManager
@@ -21,6 +24,7 @@ import migration.software.amazon.q.jetbrains.telemetry.TelemetryService
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.runner.Description
 import org.mockito.kotlin.mock
 import software.amazon.q.jetbrains.core.DefaultRemoteResourceResolverProvider
 import software.amazon.q.jetbrains.core.credentials.DefaultToolkitAuthManager
@@ -84,6 +88,81 @@ object CoreTestHelper {
         app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
         app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
     }
+
+    /**
+     * Registers the `<registryKey>` entries that plugin.xml normally contributes.
+     *
+     * On 2026.2 the bare test application does not load the plugin descriptor, so these keys are
+     * undefined and `Registry.is(...)`/`Registry.get(...)` throw "Registry key ... is not defined".
+     * The keys are merged into the platform's contributed-key map (existing keys are preserved), so
+     * this is a no-op on 2025.x–2026.1 where the descriptor already provides them.
+     */
+    fun registerMissingRegistryKeys() {
+        Registry.mutateContributedKeys { existing ->
+            val merged = LinkedHashMap(existing)
+            CONTRIBUTED_REGISTRY_KEYS.forEach { (name, descriptor) ->
+                merged.putIfAbsent(name, descriptor)
+            }
+            merged
+        }
+    }
+
+    // Mirrors the <registryKey> entries declared in plugins/amazonq/src/main/resources/META-INF/plugin.xml.
+    // RegistryKeyDescriptor(name, defaultValue, description, restartRequired, overrides, pluginId, pluginDescriptorPath)
+    private val CONTRIBUTED_REGISTRY_KEYS: Map<String, RegistryKeyDescriptor> = listOf(
+        descriptor("amazon.q.endpoint", "", "Endpoint to use for Amazon Q", restartRequired = true),
+        descriptor("amazon.q.endpoints.json", "", "List of region-endpoint pairs in JSON array form", restartRequired = true),
+        descriptor(
+            "inline.completion.rem.dev.use.rhizome",
+            "false",
+            "Defined by IntelliJ. Used for Amazon Q to display suggestions on remote.",
+            restartRequired = true
+        ),
+        descriptor("amazon.q.flare.endpoint", "", "Endpoint to use to download flare artifacts"),
+        descriptor("aws.dev.useDAG", "false", "True if DAG should be used instead of authorization_grant with PKCE", overrides = true),
+        descriptor(
+            "aws.telemetry.endpoint",
+            "https://client-telemetry.us-east-1.amazonaws.com",
+            "Endpoint to use for publishing AWS client-side telemetry",
+            restartRequired = true,
+            overrides = true
+        ),
+        descriptor(
+            "aws.telemetry.identityPool",
+            "us-east-1:820fd6d1-95c0-4ca4-bffb-3f01d32da842",
+            "Cognito identity pool to use for publishing AWS client-side telemetry",
+            restartRequired = true,
+            overrides = true
+        ),
+        descriptor(
+            "aws.telemetry.region",
+            "us-east-1",
+            "Region to use for publishing AWS client-side telemetry",
+            restartRequired = true,
+            overrides = true
+        ),
+        descriptor(
+            "aws.toolkit.developerMode",
+            "false",
+            "Enables features to facilitate development of the toolkit",
+            overrides = true
+        ),
+        descriptor(
+            "aws.toolkit.notification.endpoint",
+            "https://idetoolkits-hostedfiles.amazonaws.com/Notifications/Jetbrains/combined/2.x.json",
+            "Endpoint for AWS Toolkit notifications",
+            restartRequired = true,
+            overrides = true
+        )
+    ).associateBy { it.name }
+
+    private fun descriptor(
+        name: String,
+        defaultValue: String,
+        description: String,
+        restartRequired: Boolean = false,
+        overrides: Boolean = false
+    ) = RegistryKeyDescriptor(name, defaultValue, description, restartRequired, overrides, "amazon.q.test", null)
 }
 
 /**
@@ -106,5 +185,26 @@ class CoreServicesExtension : DisposableRule(), BeforeEachCallback, AfterEachCal
 
     override fun afterEach(context: ExtensionContext) {
         after()
+    }
+}
+
+/**
+ * JUnit 4 rule that defines the plugin.xml `<registryKey>` entries (see [CoreTestHelper.registerMissingRegistryKeys]).
+ * Extends [ApplicationRule] so the registry is loaded; place it before any rule/code that reads a registry key
+ * (e.g. before [software.amazon.q.jetbrains.utils.rules.RegistryRule]) in a [com.intellij.testFramework.RuleChain].
+ */
+class CoreRegistryKeysRule : ApplicationRule() {
+    override fun before(description: Description) {
+        super.before(description)
+        CoreTestHelper.registerMissingRegistryKeys()
+    }
+}
+
+/**
+ * JUnit 5 equivalent of [CoreRegistryKeysRule]. Register with `@ExtendWith(CoreRegistryKeysExtension::class)`.
+ */
+class CoreRegistryKeysExtension : BeforeEachCallback {
+    override fun beforeEach(context: ExtensionContext) {
+        CoreTestHelper.registerMissingRegistryKeys()
     }
 }

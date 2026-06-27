@@ -15,9 +15,11 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import software.amazon.q.jetbrains.core.CoreRegistryKeysExtension
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import java.util.concurrent.atomic.AtomicBoolean
 
-@ExtendWith(TestApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreRegistryKeysExtension::class, CoreServicesExtension::class)
 class ProcessNotificationsBaseTest {
     private lateinit var sut: ProcessNotificationsBase
     private lateinit var project: Project
