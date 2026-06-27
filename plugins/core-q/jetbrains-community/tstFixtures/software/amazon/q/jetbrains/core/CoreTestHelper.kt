@@ -11,6 +11,7 @@ import com.intellij.testFramework.replaceService
 import migration.software.amazon.q.core.ToolkitClientManager
 import migration.software.amazon.q.core.region.ToolkitRegionProvider
 import migration.software.amazon.q.jetbrains.core.AwsResourceCache
+import migration.software.amazon.q.jetbrains.core.RemoteResourceResolverProvider
 import migration.software.amazon.q.jetbrains.core.coroutines.PluginCoroutineScopeTracker
 import migration.software.amazon.q.jetbrains.core.credentials.CredentialManager
 import migration.software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.mockito.kotlin.mock
+import software.amazon.q.jetbrains.core.DefaultRemoteResourceResolverProvider
 import software.amazon.q.jetbrains.core.credentials.DefaultToolkitAuthManager
 import software.amazon.q.jetbrains.core.credentials.MockCredentialsManager
 import software.amazon.q.jetbrains.core.credentials.sso.MockSsoLoginCallbackProvider
@@ -56,6 +58,13 @@ object CoreTestHelper {
                 ExtensionPoint.Kind.INTERFACE
             )
         }
+        if (!extensionArea.hasExtensionPoint("amazon.q.sdk.clientCustomizer")) {
+            extensionArea.registerExtensionPoint(
+                "amazon.q.sdk.clientCustomizer",
+                "software.amazon.q.core.ToolkitClientCustomizer",
+                ExtensionPoint.Kind.INTERFACE
+            )
+        }
 
         app.replaceService(AwsSettings::class.java, MockAwsSettings(), disposable)
         app.replaceService(ToolkitClientManager::class.java, mock<ToolkitClientManager>(), disposable)
@@ -64,6 +73,7 @@ object CoreTestHelper {
         app.replaceService(CredentialManager::class.java, MockCredentialsManager(), disposable)
         app.replaceService(ToolkitAuthManager::class.java, DefaultToolkitAuthManager(), disposable)
         app.replaceService(AwsResourceCache::class.java, MockResourceCache(), disposable)
+        app.replaceService(RemoteResourceResolverProvider::class.java, DefaultRemoteResourceResolverProvider(), disposable)
         app.replaceService(SsoLoginCallbackProvider::class.java, MockSsoLoginCallbackProvider(), disposable)
         app.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
     }
