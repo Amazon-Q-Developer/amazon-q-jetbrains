@@ -96,10 +96,10 @@ class CodeWhispererModelConfiguratorTest {
         // below need so they resolve. No-op on 251-261.
         CoreTestHelper.registerMissingServices(disposableRule.disposable)
         CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
-        // CodeWhispererModelConfigurator.getInstance() (the @Service) isn't registered on the bare 262 app; provide it
-        // before it's spied below.
+        // CodeWhispererModelConfigurator.getInstance() does service<CodeWhispererModelConfigurator>() (the interface),
+        // which isn't registered on the bare 262 app; provide a real impl under the interface key before it's spied.
         ApplicationManager.getApplication().replaceService(
-            DefaultCodeWhispererModelConfigurator::class.java,
+            CodeWhispererModelConfigurator::class.java,
             DefaultCodeWhispererModelConfigurator(CoroutineScope(Dispatchers.Unconfined)),
             disposableRule.disposable
         )
