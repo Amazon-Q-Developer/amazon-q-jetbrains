@@ -4,9 +4,6 @@
 package software.amazon.q.jetbrains.utils.rules
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.lang.LanguageParserDefinitions
-import com.intellij.lang.java.JavaLanguage
-import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
@@ -92,13 +89,6 @@ private fun ensureJavaSdkTypeRegistered() {
         .filter { jrt -> rootTypes.none { it.javaClass == jrt.javaClass } }
     if (javaRootTypes.isNotEmpty()) {
         ExtensionTestUtil.maskExtensions(OrderRootType.EP_NAME, rootTypes + javaRootTypes, app)
-    }
-
-    // Parsing Java text (e.g. PsiFileFactory.createFileFromText(..., JavaLanguage.INSTANCE, ...)) needs the Java
-    // ParserDefinition registered; the Java plugin normally contributes it. Register it explicitly so Java PSI is
-    // available (otherwise the file isn't a PsiJavaFile and casts NPE).
-    if (LanguageParserDefinitions.INSTANCE.forLanguage(JavaLanguage.INSTANCE) == null) {
-        LanguageParserDefinitions.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, JavaParserDefinition(), app)
     }
 }
 
