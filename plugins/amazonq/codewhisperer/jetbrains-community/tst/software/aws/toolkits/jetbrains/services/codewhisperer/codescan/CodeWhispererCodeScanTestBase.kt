@@ -15,8 +15,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.systemIndependentPath
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.TestScope
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -111,7 +110,11 @@ open class CodeWhispererCodeScanTestBase(projectRule: CodeInsightTestFixtureRule
         // below need so they resolve (no-op on 251-261; the spies/mocks below replace them anyway).
         CoreTestHelper.registerMissingServices(disposableRule.disposable)
         CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
-        project.replaceService(CodeWhispererCodeScanManager::class.java, CodeWhispererCodeScanManager(project, CoroutineScope(Dispatchers.Unconfined)), disposableRule.disposable)
+        project.replaceService(
+            CodeWhispererCodeScanManager::class.java,
+            CodeWhispererCodeScanManager(project, TestScope()),
+            disposableRule.disposable
+        )
         project.replaceService(CodeWhispererZipUploadManager::class.java, CodeWhispererZipUploadManager(project), disposableRule.disposable)
 
         scanManagerSpy = spy(CodeWhispererCodeScanManager.getInstance(project))

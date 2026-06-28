@@ -10,8 +10,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.XmlSerializer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.TestScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.output.XMLOutputter
 import org.junit.Before
@@ -100,7 +99,7 @@ class CodeWhispererModelConfiguratorTest {
         // which isn't registered on the bare 262 app; provide a real impl under the interface key before it's spied.
         ApplicationManager.getApplication().replaceService(
             CodeWhispererModelConfigurator::class.java,
-            DefaultCodeWhispererModelConfigurator(CoroutineScope(Dispatchers.Unconfined)),
+            DefaultCodeWhispererModelConfigurator(TestScope()),
             disposableRule.disposable
         )
         mockClientManager.create<SsoOidcClient>()
