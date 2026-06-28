@@ -13,7 +13,9 @@ jobs:
   linux-unit-tests:
     name: Linux (${{ matrix.ideProfileName }})
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # 2026.2 runs the full check + coverage under JDK 25, which is slower than the JDK-21 profiles (~30 min) and was
+    # overrunning the previous 45-min cap. The cap is a ceiling, not a fixed wait, so the faster profiles are unaffected.
+    timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
