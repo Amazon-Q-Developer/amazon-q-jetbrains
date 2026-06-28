@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.codewhisperer
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -153,6 +154,13 @@ open class CodeWhispererTestBase {
             DefaultCodeWhispererFileContextProvider(),
             disposableRule.disposable
         )
+        // 262's bare test app doesn't load codewhisperer's <action> entries; register the one invokeCodeWhispererService()
+        // performs so performEditorAction can resolve it (no-op on 251-261).
+        val actionManager = ActionManager.getInstance()
+        if (actionManager.getAction(codeWhispererRecommendationActionId) == null) {
+            actionManager.registerAction(codeWhispererRecommendationActionId, CodeWhispererRecommendationAction())
+            Disposer.register(disposableRule.disposable) { actionManager.unregisterAction(codeWhispererRecommendationActionId) }
+        }
         val starter = object : AmazonQServerInstanceStarter {
             override fun start(
                 project: Project,
