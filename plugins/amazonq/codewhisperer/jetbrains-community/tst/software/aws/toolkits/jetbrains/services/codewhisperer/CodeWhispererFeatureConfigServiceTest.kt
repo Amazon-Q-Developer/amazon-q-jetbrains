@@ -62,9 +62,11 @@ class CodeWhispererFeatureConfigServiceTest {
     @Before
     fun setup() {
         // 262's bare test app doesn't load plugin.xml registrations; register the missing services + the
-        // amazon.q.connection.pinned.feature EP that QConnection.getInstance() needs below. No-op on 251-261.
+        // amazon.q.connection.pinned.feature EP that QConnection.getInstance() needs below + the registry keys
+        // (endpoint lookups read amazon.q.endpoints.json). No-op on 251-261.
         CoreTestHelper.registerMissingServices(disposableRule.disposable)
         CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+        CoreTestHelper.registerMissingRegistryKeys()
     }
 
     @Test
