@@ -4,18 +4,27 @@
 package software.amazon.q.jetbrains.utils.rules
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
+import com.intellij.openapi.roots.AnnotationOrderRootType
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.NativeLibraryOrderRootType
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiJavaFile
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -42,6 +51,7 @@ class JavaCodeInsightTestFixtureRule(testDescription: DefaultLightProjectDescrip
     CodeInsightTestFixtureRule(testDescription) {
 
     override fun createTestFixture(): CodeInsightTestFixture {
+        ensureJavaSdkTypeRegistered()
         val fixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(testDescription, testName)
         val newFixture = JavaTestFixtureFactory.getFixtureFactory()
             .createCodeInsightFixture(fixtureBuilder.fixture, LightTempDirTestFixtureImpl(true))
@@ -52,6 +62,34 @@ class JavaCodeInsightTestFixtureRule(testDescription: DefaultLightProjectDescrip
 
     override val fixture: JavaCodeInsightTestFixture
         get() = lazyFixture.value as JavaCodeInsightTestFixture
+}
+
+/**
+ * 2026.2 (262) carved the Java plugin's modules out of the platform monolith into separate bundled plugins whose
+ * dependency closure can't be loaded into the bare unit-test application, so `com.intellij.java` is excluded and
+ * `JavaSdk.getInstance()` returns null. The light Java fixtures then trip an assertion in
+ * `IdeaTestUtil.createMockJdk` ("Java plugin wasn't loaded"). The Java *classes* are still on the test classpath
+ * (via TestFrameworkType.Plugin.Java), so register [JavaSdkImpl] on the `com.intellij.sdkType` EP ourselves to make
+ * `JavaSdk.getInstance()` resolve. No-op on 251-261 where the plugin loads the SdkType normally.
+ */
+private fun ensureJavaSdkTypeRegistered() {
+    if (JavaSdk.getInstance() != null) return
+
+    val app = ApplicationManager.getApplication()
+
+    val sdkTypes = SdkType.EP_NAME.extensionList
+    if (sdkTypes.none { it is JavaSdkImpl }) {
+        ExtensionTestUtil.maskExtensions(SdkType.EP_NAME, sdkTypes + JavaSdkImpl(), app)
+    }
+
+    // Building a (mock) JDK also resolves the Java plugin's order-root types (annotation/javadoc/native roots);
+    // register them too, otherwise IdeaTestUtil.createMockJdk fails with "Root type ... not found".
+    val rootTypes = OrderRootType.EP_NAME.extensionList
+    val javaRootTypes = listOf(AnnotationOrderRootType(), JavadocOrderRootType(), NativeLibraryOrderRootType())
+        .filter { jrt -> rootTypes.none { it.javaClass == jrt.javaClass } }
+    if (javaRootTypes.isNotEmpty()) {
+        ExtensionTestUtil.maskExtensions(OrderRootType.EP_NAME, rootTypes + javaRootTypes, app)
+    }
 }
 
 /**
