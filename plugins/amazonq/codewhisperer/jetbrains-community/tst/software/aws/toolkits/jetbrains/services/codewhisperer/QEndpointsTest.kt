@@ -8,13 +8,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.RegisterExtension
+import software.amazon.q.jetbrains.core.CoreRegistryKeysExtension
 import software.amazon.q.jetbrains.utils.rules.RegistryExtension
 import software.amazon.q.jetbrains.utils.satisfiesKt
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QDefaultServiceConfig
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QEndpoints
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionEndpoint
 
-@ExtendWith(TestApplicationExtension::class)
+// 262's bare test app doesn't load plugin.xml <registryKey> entries, so RegistryExtension.setValue's Registry.get(...)
+// would throw MissingResourceException; CoreRegistryKeysExtension defines them first. No-op on 251-261.
+@ExtendWith(TestApplicationExtension::class, CoreRegistryKeysExtension::class)
 class QEndpointsTest {
 
     @JvmField

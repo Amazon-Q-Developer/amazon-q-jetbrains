@@ -11,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.utils.rules.PythonCodeInsightTestFixtureRule
 import software.aws.toolkits.jetbrains.services.codewhisperer.toolwindow.CodeWhispererCodeReferenceManager
 
@@ -29,6 +30,10 @@ class CodeWhispererReferenceManagerTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml service registrations; register what getInstance(...) needs.
+        // No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
         fixture = projectRule.fixture
         project = projectRule.project
 

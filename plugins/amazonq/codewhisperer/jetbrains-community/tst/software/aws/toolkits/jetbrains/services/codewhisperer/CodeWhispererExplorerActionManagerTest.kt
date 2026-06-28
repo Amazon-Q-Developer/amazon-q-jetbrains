@@ -18,6 +18,7 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.LegacyManagedBearerSsoConnection
 import software.amazon.q.jetbrains.core.credentials.MockToolkitAuthManagerRule
@@ -74,6 +75,10 @@ class CodeWhispererExplorerActionManagerTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml registrations; register the missing services + the
+        // amazon.q.connection.pinned.feature EP that QConnection.getInstance() needs. No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
         cacheRoot = tempFolder.root.toPath().toAbsolutePath()
         cacheLocation = Paths.get(cacheRoot.toString(), "fakehome", ".aws", "sso", "cache")
         Files.createDirectories(cacheLocation)
