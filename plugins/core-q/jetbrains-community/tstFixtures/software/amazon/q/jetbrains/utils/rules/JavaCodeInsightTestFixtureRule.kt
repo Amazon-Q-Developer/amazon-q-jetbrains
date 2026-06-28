@@ -100,6 +100,7 @@ private fun ensureJavaSdkTypeRegistered() {
  */
 class HeavyJavaCodeInsightTestFixtureRule : CodeInsightTestFixtureRule() {
     override fun createTestFixture(): CodeInsightTestFixture {
+        ensureJavaSdkTypeRegistered()
         val fixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(testName)
         val newFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixtureBuilder.fixture)
         newFixture.setUp()
