@@ -47,6 +47,8 @@ class CodeWhispererFileContextProviderTest {
         fixture = projectRule.fixture
         project = projectRule.project
 
+        // FileContextProvider is a project @Service not registered on the bare 262 app; provide it before getInstance.
+        project.replaceService(FileContextProvider::class.java, DefaultCodeWhispererFileContextProvider(), disposableRule.disposable)
         sut = FileContextProvider.getInstance(project) as DefaultCodeWhispererFileContextProvider
 
         featureConfigService = mock()

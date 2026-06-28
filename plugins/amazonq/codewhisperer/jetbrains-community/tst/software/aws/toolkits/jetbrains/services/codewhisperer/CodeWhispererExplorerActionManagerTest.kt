@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.codewhisperer
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
@@ -79,6 +80,11 @@ class CodeWhispererExplorerActionManagerTest {
         // amazon.q.connection.pinned.feature EP that QConnection.getInstance() needs. No-op on 251-261.
         CoreTestHelper.registerMissingServices(disposableRule.disposable)
         CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+        ApplicationManager.getApplication().replaceService(
+            CodeWhispererExplorerActionManager::class.java,
+            CodeWhispererExplorerActionManager(),
+            disposableRule.disposable
+        )
         cacheRoot = tempFolder.root.toPath().toAbsolutePath()
         cacheLocation = Paths.get(cacheRoot.toString(), "fakehome", ".aws", "sso", "cache")
         Files.createDirectories(cacheLocation)

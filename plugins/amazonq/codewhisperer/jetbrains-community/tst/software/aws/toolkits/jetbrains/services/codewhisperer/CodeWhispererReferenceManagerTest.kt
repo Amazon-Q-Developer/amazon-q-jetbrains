@@ -3,9 +3,11 @@
 
 package software.aws.toolkits.jetbrains.services.codewhisperer
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -13,6 +15,7 @@ import org.junit.Rule
 import org.junit.Test
 import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.utils.rules.PythonCodeInsightTestFixtureRule
+import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.toolwindow.CodeWhispererCodeReferenceManager
 
 class CodeWhispererReferenceManagerTest {
@@ -34,6 +37,11 @@ class CodeWhispererReferenceManagerTest {
         // No-op on 251-261.
         CoreTestHelper.registerMissingServices(disposableRule.disposable)
         CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+        ApplicationManager.getApplication().replaceService(
+            CodeWhispererExplorerActionManager::class.java,
+            CodeWhispererExplorerActionManager(),
+            disposableRule.disposable
+        )
         fixture = projectRule.fixture
         project = projectRule.project
 

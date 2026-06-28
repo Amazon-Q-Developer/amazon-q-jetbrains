@@ -81,6 +81,8 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.service.CodeWhispe
 import software.aws.toolkits.jetbrains.services.codewhisperer.service.CodeWhispererRecommendationManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.service.CodeWhispererService
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererColorUtil.POPUP_DIM_HEX
+import software.aws.toolkits.jetbrains.services.codewhisperer.util.DefaultCodeWhispererFileContextProvider
+import software.aws.toolkits.jetbrains.services.codewhisperer.util.FileContextProvider
 import software.aws.toolkits.jetbrains.settings.CodeWhispererConfiguration
 import software.aws.toolkits.jetbrains.settings.CodeWhispererConfigurationType
 import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
@@ -144,6 +146,11 @@ open class CodeWhispererTestBase {
         projectRule.project.replaceService(
             CodeWhispererCodeScanManager::class.java,
             CodeWhispererCodeScanManager(projectRule.project, this),
+            disposableRule.disposable
+        )
+        projectRule.project.replaceService(
+            FileContextProvider::class.java,
+            DefaultCodeWhispererFileContextProvider(),
             disposableRule.disposable
         )
         val starter = object : AmazonQServerInstanceStarter {
