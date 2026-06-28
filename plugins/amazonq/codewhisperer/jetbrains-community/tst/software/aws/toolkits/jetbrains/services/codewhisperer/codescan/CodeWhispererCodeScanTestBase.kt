@@ -15,6 +15,8 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -40,6 +42,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.Reference
 import software.amazon.awssdk.services.codewhispererruntime.model.Span
 import software.amazon.awssdk.services.codewhispererruntime.model.StartCodeAnalysisResponse
 import software.amazon.awssdk.services.codewhispererruntime.model.StartCodeFixJobResponse
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.utils.rules.CodeInsightTestFixtureRule
 import software.aws.toolkits.jetbrains.services.codewhisperer.CodeWhispererTestUtil
@@ -103,6 +106,13 @@ open class CodeWhispererCodeScanTestBase(projectRule: CodeInsightTestFixtureRule
     open fun setup() {
         project = projectRule.project
         s3endpoint = "http://127.0.0.1:${wireMock.port()}"
+
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve (no-op on 251-261; the spies/mocks below replace them anyway).
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
+        project.replaceService(CodeWhispererCodeScanManager::class.java, CodeWhispererCodeScanManager(project, CoroutineScope(Dispatchers.Unconfined)), disposableRule.disposable)
+        project.replaceService(CodeWhispererZipUploadManager::class.java, CodeWhispererZipUploadManager(project), disposableRule.disposable)
 
         scanManagerSpy = spy(CodeWhispererCodeScanManager.getInstance(project))
         doNothing().whenever(scanManagerSpy).buildCodeScanUI()

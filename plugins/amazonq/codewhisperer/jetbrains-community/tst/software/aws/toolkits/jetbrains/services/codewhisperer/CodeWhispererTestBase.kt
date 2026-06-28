@@ -41,6 +41,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.mockito.kotlin.wheneverBlocking
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.ManagedSsoProfile
 import software.amazon.q.jetbrains.core.credentials.MockCredentialManagerRule
@@ -66,6 +67,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.CodeWhispererTestU
 import software.aws.toolkits.jetbrains.services.codewhisperer.actions.CodeWhispererRecommendationAction
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
+import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptorImpl
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererLoginType
 import software.aws.toolkits.jetbrains.services.codewhisperer.editor.CodeWhispererEditorManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExploreActionState
@@ -124,6 +126,25 @@ open class CodeWhispererTestBase {
             "C:/Program Files/pypy3.10-v7.3.17-win64",
             "C:/Program Files/pypy3.11-v7.3.20-win64",
             "C:/hostedtoolcache/windows/Python"
+        )
+        // 262's bare test app doesn't load plugin.xml service registrations, so the spy(X.getInstance()) calls below
+        // can't resolve them. Register CoreTestHelper's shared services plus codewhisperer's own; the spies replace
+        // these right after, so bare instances are enough. No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+        val app = ApplicationManager.getApplication()
+        app.replaceService(CodeWhispererExplorerActionManager::class.java, CodeWhispererExplorerActionManager(), disposableRule.disposable)
+        app.replaceService(CodeWhispererPopupManager::class.java, CodeWhispererPopupManager(), disposableRule.disposable)
+        app.replaceService(QRegionProfileManager::class.java, QRegionProfileManager(), disposableRule.disposable)
+        projectRule.project.replaceService(
+            CodeWhispererClientAdaptor::class.java,
+            CodeWhispererClientAdaptorImpl(projectRule.project),
+            disposableRule.disposable
+        )
+        projectRule.project.replaceService(
+            CodeWhispererCodeScanManager::class.java,
+            CodeWhispererCodeScanManager(projectRule.project, this),
+            disposableRule.disposable
         )
         val starter = object : AmazonQServerInstanceStarter {
             override fun start(
