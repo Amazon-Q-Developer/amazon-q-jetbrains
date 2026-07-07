@@ -44,6 +44,7 @@ import software.amazon.q.jetbrains.core.credentials.pinning.FeatureWithPinnedCon
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.sso.MockSsoLoginCallbackProvider
 import software.amazon.q.jetbrains.core.region.AwsRegionProvider
+import software.amazon.q.jetbrains.core.region.newMockRegionProvider
 import software.amazon.q.jetbrains.services.telemetry.NoOpTelemetryService
 import software.amazon.q.jetbrains.settings.MockAwsSettings
 
@@ -111,7 +112,15 @@ object CoreTestHelper {
         registerIfAbsent(AwsSettings::class.java) { MockAwsSettings() }
         registerIfAbsent(ToolkitClientManager::class.java) { mock<ToolkitClientManager>() }
         registerIfAbsent(TelemetryService::class.java) { NoOpTelemetryService() }
-        registerIfAbsent(ToolkitRegionProvider::class.java) { AwsRegionProvider() }
+        // Register a test region provider only when the app has none — i.e. the bare 262 app, where getService
+        // returns null. On 2025.x-2026.1 plugin.xml already registers MockRegionProvider as the testServiceImplementation,
+        // so getService returns it and we keep it (re-registering it here perturbs service init ordering). Use
+        // MockRegionProvider, NOT the production AwsRegionProvider: the latter lazily loads endpoints.json and throws
+        // "Partition data is missing" in a sandbox, silently breaking client-building paths (QRegionProfileManager.getQClient
+        // -> AwsClientManager.getClient). getService (not getServiceIfCreated) so a declared-but-lazy service still resolves.
+        if (app.getService(ToolkitRegionProvider::class.java) == null) {
+            app.replaceService(ToolkitRegionProvider::class.java, newMockRegionProvider(), disposable)
+        }
         registerIfAbsent(CredentialManager::class.java) { MockCredentialsManager() }
         registerIfAbsent(ToolkitAuthManager::class.java) { DefaultToolkitAuthManager() }
         registerIfAbsent(ConnectionPinningManager::class.java) { DefaultConnectionPinningManager() }
