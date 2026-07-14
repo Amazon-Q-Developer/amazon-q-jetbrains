@@ -9,6 +9,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
@@ -258,15 +259,16 @@ private fun handleIssueCommand(issue: CodeWhispererCodeScanIssue, action: IssueC
         "detectorId" to issue.detectorId,
         "autoDetected" to issue.autoDetected.toString(),
     )
-    val actionEvent = AnActionEvent.createFromInputEvent(
-        null,
-        ToolkitPlaces.EDITOR_PSI_REFERENCE,
-        null,
+    val actionEvent = AnActionEvent.createEvent(
         SimpleDataContext.builder()
             .add(hanldeIssueCommandContextDataKey, handleIssueCommandContext)
             .add(CommonDataKeys.PROJECT, issue.project)
             .add(hanldeIssueCommandActionDataKey, action.displayName)
-            .build()
+            .build(),
+        null,
+        ToolkitPlaces.EDITOR_PSI_REFERENCE,
+        ActionUiKind.NONE,
+        null
     )
     ActionManager.getInstance().getAction("aws.amazonq.handleCodeScanIssueCommand").actionPerformed(actionEvent)
 }

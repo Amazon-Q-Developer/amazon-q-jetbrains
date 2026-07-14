@@ -5,6 +5,7 @@ package software.aws.toolkits.jetbrains.services.amazonq
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -189,10 +190,12 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
                     )?.let { connection ->
                     runInEdt {
                         SsoLogoutAction(connection).actionPerformed(
-                            AnActionEvent.createFromDataContext(
-                                "qBrowser",
+                            AnActionEvent.createEvent(
+                                DataContext.EMPTY_CONTEXT,
                                 null,
-                                DataContext.EMPTY_CONTEXT
+                                "qBrowser",
+                                ActionUiKind.NONE,
+                                null
                             )
                         )
                     }
