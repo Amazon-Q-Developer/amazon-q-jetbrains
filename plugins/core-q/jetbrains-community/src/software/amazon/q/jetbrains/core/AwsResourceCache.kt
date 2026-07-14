@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.Alarm
-import com.intellij.util.AlarmFactory
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -156,7 +155,7 @@ class DefaultAwsResourceCache(
     constructor() : this(Clock.systemDefaultZone(), MAXIMUM_CACHE_ENTRIES, DEFAULT_MAINTENANCE_INTERVAL)
 
     private val cache = ConcurrentHashMap<CacheKey, Entry<*>>()
-    private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this)
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
     init {
         ApplicationManager.getApplication().messageBus.connect(this).apply {

@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Alarm
-import com.intellij.util.AlarmFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import software.amazon.q.core.utils.RemoteResolveParser
@@ -47,7 +46,7 @@ object NotificationEndpoint {
 @Service(Service.Level.APP)
 final class NotificationPollingService : Disposable {
     private val observers = mutableListOf<() -> Unit>()
-    private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this)
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
     private val pollingIntervalMs = Duration.ofMinutes(10).toMillis()
     private val resourceResolver: RemoteResourceResolverProvider = DefaultRemoteResourceResolverProvider()
     private val notificationsResource = object : RemoteResource {

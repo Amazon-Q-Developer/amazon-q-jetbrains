@@ -13,7 +13,6 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.Alarm
-import com.intellij.util.AlarmFactory
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
@@ -83,7 +82,7 @@ class AsyncComboBox<T> private constructor(
         putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     }
 
-    private val reloadAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.SWING_THREAD, this)
+    private val reloadAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
     private var currentIndicator: ProgressIndicator? = null
 
     @Synchronized
