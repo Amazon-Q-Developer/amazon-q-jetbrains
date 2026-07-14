@@ -47,7 +47,7 @@ import java.net.HttpURLConnection
 import java.util.Base64
 import software.aws.toolkits.jetbrains.services.codewhisperer.codetest.invalidSourceZipError as testGenerationInvalidSourceZipError
 
-@Service
+@Service(Service.Level.PROJECT)
 class CodeWhispererZipUploadManager(private val project: Project) {
 
     fun createUploadUrlAndUpload(
