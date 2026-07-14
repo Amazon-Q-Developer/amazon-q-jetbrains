@@ -12,6 +12,11 @@ concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+# The lint-commits job only reads the checked-out repo, so restrict the
+# GITHUB_TOKEN to read-only access to the repository contents.
+permissions:
+  contents: read
+
 jobs:
   lint-commits:
     # Note: To re-run `lint-commits` after fixing the PR title, close-and-reopen the PR.

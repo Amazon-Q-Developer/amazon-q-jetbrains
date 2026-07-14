@@ -13,6 +13,11 @@ concurrency:
   group: ${{ github.workflow }}${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Restrict the default GITHUB_TOKEN to read-only. Jobs that need more (e.g.
+# `publish`) request elevated permissions explicitly at the job level.
+permissions:
+  contents: read
+
 jobs:
   generate_artifact:
     strategy:
