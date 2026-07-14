@@ -16,7 +16,7 @@ import software.aws.toolkits.telemetry.UiTelemetry
 
 class QOpenPanelAction : AnAction(message("action.q.openchat.text"), null, AwsIcons.Logos.AWS_Q) {
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.getRequiredData(CommonDataKeys.PROJECT)
+        val project = e.getData(CommonDataKeys.PROJECT) ?: return
         UiTelemetry.click(project, "q_openChat")
         ToolWindowManager.getInstance(project).getToolWindow(AMAZON_Q_WINDOW_ID)?.activate(null, true)
         if (e.getData(runScanKey) == true) {
