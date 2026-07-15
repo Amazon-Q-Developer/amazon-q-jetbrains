@@ -121,5 +121,5 @@ fun ProfileFile.ssoSessions(): Map<String, Profile> {
         isAccessible = true
     }
     val rawProfiles = rawProfilesField.get(this) as Map<String, Map<String, Profile>>
-    return rawProfiles.get(SSO_SESSION_SECTION_NAME).orEmpty()
+    return rawProfiles[SSO_SESSION_SECTION_NAME].orEmpty()
 }

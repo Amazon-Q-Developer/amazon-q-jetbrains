@@ -144,7 +144,7 @@ fun requestCredentialsForQ(
             idcTabState.apply {
                 profileName = connection.configSessionName
                 startUrl = connection.startUrl
-                region = AwsRegionProvider.getInstance().let { it.get(connection.region) ?: it.defaultRegion() }
+                region = AwsRegionProvider.getInstance().let { it[connection.region] ?: it.defaultRegion() }
             }
 
             // default selected tab is IdC, but just in case
