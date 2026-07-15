@@ -101,12 +101,12 @@ private data class OAuthError(
     val errorDescription: String?,
 )
 
-private class ToolkitOAuthRequest(internal val registration: PKCEClientRegistration) : OAuthRequest<AccessToken> {
+private class ToolkitOAuthRequest(val registration: PKCEClientRegistration) : OAuthRequest<AccessToken> {
     private val port: Int get() = BuiltInServerManager.getInstance().port
     private val base64Encoder = Base64.getUrlEncoder().withoutPadding()
 
     // 160 bits of entropy, per https://datatracker.ietf.org/doc/html/rfc6749#section-10.10
-    internal val csrfToken = randB64url(160)
+    val csrfToken = randB64url(160)
 
     // 256 bits of entropy, per https://datatracker.ietf.org/doc/html/rfc7636#section-7.1
     private val codeVerifier = randB64url(256)
@@ -139,9 +139,8 @@ private class ToolkitOAuthRequest(internal val registration: PKCEClientRegistrat
 
     private fun randB64url(bits: Int): String = base64Encoder.encodeToString(BigInteger(bits, DigestUtil.random).toByteArray())
 
-    internal var error: OAuthError? = null
+    var error: OAuthError? = null
 }
-
 // exchange for real token
 internal class ToolkitOauthCredentialsAcquirer(
     private val registration: PKCEClientRegistration,
