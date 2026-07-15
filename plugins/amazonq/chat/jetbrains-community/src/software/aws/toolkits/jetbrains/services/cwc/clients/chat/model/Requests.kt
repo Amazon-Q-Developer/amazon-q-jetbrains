@@ -60,6 +60,6 @@ data class FullyQualifiedName(
 )
 
 data class CodeNamesImpl(
-    @JsonProperty("simpleNames") override val simpleNames: List<String>?,
-    @JsonProperty("fullyQualifiedNames") override val fullyQualifiedNames: FullyQualifiedNames?,
+    @param:JsonProperty("simpleNames") override val simpleNames: List<String>?,
+    @param:JsonProperty("fullyQualifiedNames") override val fullyQualifiedNames: FullyQualifiedNames?,
 ) : CodeNames

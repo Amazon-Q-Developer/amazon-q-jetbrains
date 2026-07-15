@@ -8,10 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PlanTable(
-    @JsonProperty("columnNames")
+    @param:JsonProperty("columnNames")
     val columns: List<String>,
-    @JsonProperty("rows")
+    @param:JsonProperty("rows")
     val rows: MutableList<PlanTableRow>,
-    @JsonProperty("name")
+    @param:JsonProperty("name")
     val name: String,
 )

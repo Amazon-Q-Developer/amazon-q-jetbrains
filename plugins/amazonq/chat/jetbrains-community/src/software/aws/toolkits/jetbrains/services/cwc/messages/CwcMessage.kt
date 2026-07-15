@@ -34,38 +34,38 @@ sealed interface IncomingCwcMessage : CwcMessage {
     }
 
     data class ClearChat(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
     ) : IncomingCwcMessage, TabId
 
     data class Help(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
     ) : IncomingCwcMessage, TabId
 
     data class ChatPrompt(
         val chatMessage: String,
         val command: String,
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         val userIntent: String?,
     ) : IncomingCwcMessage, TabId
 
     data class TabAdded(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         val tabType: String,
     ) : IncomingCwcMessage, TabId
 
     data class TabRemoved(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         val tabType: String,
     ) : IncomingCwcMessage, TabId
 
     data class TabChanged(
-        @JsonProperty("tabID") override val tabId: String,
-        @JsonProperty("prevTabID") val prevTabId: String?,
+        @param:JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("prevTabID") val prevTabId: String?,
     ) : IncomingCwcMessage, TabId
 
     data class FollowupClicked(
         val followUp: FollowUp,
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         override val messageId: String?,
         val command: String,
         val tabType: String,
@@ -73,7 +73,7 @@ sealed interface IncomingCwcMessage : CwcMessage {
 
     data class CopyCodeToClipboard(
         val command: String?,
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         override val messageId: String,
         val userIntent: UserIntent?,
         val code: String,
@@ -85,7 +85,7 @@ sealed interface IncomingCwcMessage : CwcMessage {
     ) : IncomingCwcMessage, TabId, MessageId
 
     data class InsertCodeAtCursorPosition(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         override val messageId: String,
         val userIntent: UserIntent?,
         val code: String,
@@ -98,22 +98,22 @@ sealed interface IncomingCwcMessage : CwcMessage {
     ) : IncomingCwcMessage, TabId, MessageId
 
     data class TriggerTabIdReceived(
-        @JsonProperty("triggerID") val triggerId: String,
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("triggerID") val triggerId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
     ) : IncomingCwcMessage, TabId
 
     data class StopResponse(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
     ) : IncomingCwcMessage, TabId
 
     data class ChatItemVoted(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         override val messageId: String,
         val vote: String, // upvote / downvote
     ) : IncomingCwcMessage, TabId, MessageId
 
     data class ChatItemFeedback(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         val selectedOption: String,
         val comment: String?,
         override val messageId: String,
@@ -121,8 +121,8 @@ sealed interface IncomingCwcMessage : CwcMessage {
 
     data class UIFocus(
         val command: String,
-        @JsonDeserialize(using = FocusTypeDeserializer::class)
-        @JsonSerialize(using = FocusTypeSerializer::class)
+        @param:JsonDeserialize(using = FocusTypeDeserializer::class)
+        @param:JsonSerialize(using = FocusTypeSerializer::class)
         val type: FocusType,
     ) : IncomingCwcMessage
 
@@ -131,19 +131,19 @@ sealed interface IncomingCwcMessage : CwcMessage {
     ) : IncomingCwcMessage
 
     data class ClickedLink(
-        @JsonProperty("command") val type: LinkType,
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("command") val type: LinkType,
+        @param:JsonProperty("tabID") override val tabId: String,
         override val messageId: String?,
         val link: String,
     ) : IncomingCwcMessage, TabId, MessageId
 
     data class AuthFollowUpWasClicked(
-        @JsonProperty("tabID") override val tabId: String,
+        @param:JsonProperty("tabID") override val tabId: String,
         val authType: AuthFollowUpType,
     ) : IncomingCwcMessage, TabId
 
     data class OpenSettings(
-        @JsonProperty("tabID") override val tabId: String? = null,
+        @param:JsonProperty("tabID") override val tabId: String? = null,
     ) : IncomingCwcMessage, TabId
 }
 
@@ -220,8 +220,8 @@ data class Suggestion(
 // === App -> UI messages ===
 
 data class ChatMessage(
-    @JsonProperty("tabID") override val tabId: String,
-    @JsonProperty("triggerID") val triggerId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("triggerID") val triggerId: String,
     val messageType: ChatMessageType,
     val messageId: String,
     val message: String? = null,
@@ -238,7 +238,7 @@ data class ChatMessage(
 
 data class EditorContextCommandMessage(
     val message: String?,
-    @JsonProperty("triggerID") val triggerId: String?,
+    @param:JsonProperty("triggerID") val triggerId: String?,
     val command: String?,
 ) : UiMessage(
     tabId = null,
@@ -246,8 +246,8 @@ data class EditorContextCommandMessage(
 )
 
 data class AuthNeededException(
-    @JsonProperty("tabID") override val tabId: String,
-    @JsonProperty("triggerID") val triggerId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("triggerID") val triggerId: String,
     val authType: AuthFollowUpType,
     val message: String,
 ) : UiMessage(
@@ -256,7 +256,7 @@ data class AuthNeededException(
 )
 
 data class ErrorMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val title: String,
     val message: String,
     val messageId: String?,
@@ -275,7 +275,7 @@ data class FeatureConfigsAvailableMessage(
 
 data class QuickActionMessage(
     val message: String,
-    @JsonProperty("triggerID") val triggerId: String,
+    @param:JsonProperty("triggerID") val triggerId: String,
 ) : UiMessage(
     tabId = null,
     type = "editorContextCommandMessage",
@@ -284,14 +284,14 @@ data class QuickActionMessage(
 data class OnboardingPageInteractionMessage(
     val message: String,
     val interactionType: OnboardingPageInteractionType,
-    @JsonProperty("triggerID") val triggerId: String,
+    @param:JsonProperty("triggerID") val triggerId: String,
 ) : UiMessage(
     tabId = null,
     type = "editorContextCommandMessage",
 )
 
 data class OpenSettingsMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
 ) : UiMessage(
     tabId = tabId,
     type = "openSettingsMessage",

@@ -133,45 +133,45 @@ class ManifestFetcher {
 }
 
 data class TargetContent(
-    @JsonProperty("filename")
+    @param:JsonProperty("filename")
     val filename: String? = null,
-    @JsonProperty("url")
+    @param:JsonProperty("url")
     val url: String? = null,
-    @JsonProperty("hashes")
+    @param:JsonProperty("hashes")
     val hashes: List<String>? = emptyList(),
-    @JsonProperty("bytes")
+    @param:JsonProperty("bytes")
     val bytes: Number? = null,
 )
 
 data class VersionTarget(
-    @JsonProperty("platform")
+    @param:JsonProperty("platform")
     val platform: String? = null,
-    @JsonProperty("arch")
+    @param:JsonProperty("arch")
     val arch: String? = null,
-    @JsonProperty("contents")
+    @param:JsonProperty("contents")
     val contents: List<TargetContent>? = emptyList(),
 )
 
 data class Version(
-    @JsonProperty("serverVersion")
+    @param:JsonProperty("serverVersion")
     val serverVersion: String? = null,
-    @JsonProperty("isDelisted")
+    @param:JsonProperty("isDelisted")
     val isDelisted: Boolean? = null,
-    @JsonProperty("targets")
+    @param:JsonProperty("targets")
     val targets: List<VersionTarget>? = emptyList(),
-    @JsonProperty("thirdPartyLicenses")
+    @param:JsonProperty("thirdPartyLicenses")
     val thirdPartyLicenses: String? = null,
 )
 
 data class Manifest(
-    @JsonProperty("manifestSchemaVersion")
+    @param:JsonProperty("manifestSchemaVersion")
     val manifestSchemaVersion: String? = null,
-    @JsonProperty("artifactId")
+    @param:JsonProperty("artifactId")
     val artifactId: String? = null,
-    @JsonProperty("artifactDescription")
+    @param:JsonProperty("artifactDescription")
     val artifactDescription: String? = null,
-    @JsonProperty("isManifestDeprecated")
+    @param:JsonProperty("isManifestDeprecated")
     val isManifestDeprecated: Boolean? = null,
-    @JsonProperty("versions")
+    @param:JsonProperty("versions")
     val versions: List<Version>? = emptyList(),
 )
