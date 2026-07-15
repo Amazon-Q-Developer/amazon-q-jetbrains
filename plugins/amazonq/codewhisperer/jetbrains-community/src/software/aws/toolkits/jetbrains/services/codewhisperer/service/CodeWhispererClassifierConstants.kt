@@ -92,7 +92,7 @@ object CodeWhispererClassifierConstants {
     const val lengthLeft30To40 = -0.2442
     const val lengthLeft40To50 = -0.1471
 
-    val coefficientsMap = mapOf<String, Double>(
+    val coefficientsMap = mapOf(
         "throw" to 1.5868,
         ";" to -1.268,
         "any" to -1.1565,

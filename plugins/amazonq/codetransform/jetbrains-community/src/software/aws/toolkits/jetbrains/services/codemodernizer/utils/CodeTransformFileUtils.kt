@@ -123,7 +123,7 @@ fun parseBuildFile(buildFile: VirtualFile?): String? {
                 detectedPaths.add(path)
             }
         }
-        if (detectedPaths.size > 0) {
+        if (detectedPaths.isNotEmpty()) {
             val warningMessage =
                 message(
                     "codemodernizer.chat.message.absolute_path_detected",

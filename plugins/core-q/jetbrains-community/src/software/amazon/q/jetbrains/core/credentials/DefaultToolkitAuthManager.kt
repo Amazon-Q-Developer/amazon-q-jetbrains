@@ -232,7 +232,7 @@ class DefaultToolkitAuthManager : ToolkitAuthManager, PersistentStateComponent<T
 
     override fun loadState(state: ToolkitAuthManagerState) {
         this.state = state
-        val newConnections = linkedSetOf(*state.ssoProfiles.toTypedArray()).filterNotNull().map {
+        val newConnections = linkedSetOf(*state.ssoProfiles.toTypedArray()).map {
             connectionFromProfile(it)
         }
 

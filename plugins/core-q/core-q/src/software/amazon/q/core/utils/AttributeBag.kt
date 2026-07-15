@@ -21,7 +21,7 @@ class AttributeBag {
     private val data = mutableMapOf<String, Any>()
 
     fun <T : Any> putData(key: AttributeBagKey<T>, value: T) {
-        data.put(key.key, value)
+        data[key.key] = value
     }
 
     @Suppress("UNCHECKED_CAST")
