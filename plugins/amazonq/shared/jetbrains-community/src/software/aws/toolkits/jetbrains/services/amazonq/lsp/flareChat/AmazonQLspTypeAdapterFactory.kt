@@ -14,7 +14,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.AwsServerC
 import java.io.IOException
 
 class AmazonQLspTypeAdapterFactory : TypeAdapterFactory {
-    override fun <T : Any?> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
+    override fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
         if (type.rawType === InitializeResult::class.java) {
             val delegate: TypeAdapter<InitializeResult?> = gson.getDelegateAdapter(this, type) as TypeAdapter<InitializeResult?>
 
