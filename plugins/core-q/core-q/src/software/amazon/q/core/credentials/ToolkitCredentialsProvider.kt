@@ -110,9 +110,7 @@ class ToolkitCredentialsProvider(
 
         other as ToolkitCredentialsProvider
 
-        if (identifier != other.identifier) return false
-
-        return true
+        return identifier == other.identifier
     }
 
     override fun hashCode(): Int = identifier.hashCode()
