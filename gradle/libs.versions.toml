@@ -1,7 +1,7 @@
 [versions]
 apache-commons-collections = "4.4"
 apache-commons-io = "2.16.1"
-apache-commons-text = "1.12.0"
+apache-commons-text = "1.15.0"
 assertJ = "3.26.3"
 # match with <root>/settings.gradle.kts
 awsSdk = "2.26.25"
@@ -21,19 +21,19 @@ junit5 = "5.13.4"
 # https://kotlinlang.org/docs/releases.html#release-details
 kotlin = "2.2.20"
 # set in <root>/settings.gradle.kts
-kotlinCoroutines = "1.10.1"
+kotlinCoroutines = "1.10.2"
 lsp4j = "0.24.0"
 mockito = "5.23.0"
 mockitoKotlin = "5.4.0"
 mockk = "1.13.17"
-nimbus-jose-jwt = "9.40"
+nimbus-jose-jwt = "10.7"
 node-gradle = "7.0.2"
 telemetryGenerator = "1.0.338"
 testLogger = "4.0.0"
 testRetry = "1.5.10"
 shadow = "9.2.2"
 # test-only; platform provides slf4j transitively at runtime
-slf4j = "2.0.16"
+slf4j = "2.0.17"
 sshd = "2.13.2"
 undercouch-download = "5.2.1"
 wiremock = "3.9.1"
