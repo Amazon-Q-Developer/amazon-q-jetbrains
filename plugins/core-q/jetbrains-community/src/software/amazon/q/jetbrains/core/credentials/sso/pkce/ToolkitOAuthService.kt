@@ -141,6 +141,7 @@ private class ToolkitOAuthRequest(val registration: PKCEClientRegistration) : OA
 
     var error: OAuthError? = null
 }
+
 // exchange for real token
 internal class ToolkitOauthCredentialsAcquirer(
     private val registration: PKCEClientRegistration,
