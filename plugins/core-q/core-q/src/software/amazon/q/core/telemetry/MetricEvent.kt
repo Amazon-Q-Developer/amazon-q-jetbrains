@@ -68,7 +68,7 @@ interface MetricEvent {
     }
 }
 
-fun String.replaceIllegal(replacement: String = "") = this.replace(MetricEvent.Companion.illegalCharsRegex, replacement)
+fun String.replaceIllegal(replacement: String = "") = this.replace(MetricEvent.illegalCharsRegex, replacement)
 
 data class DefaultMetricEvent internal constructor(
     override val createTime: Instant,
