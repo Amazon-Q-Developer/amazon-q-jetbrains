@@ -8,7 +8,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import software.amazon.q.jetbrains.settings.AwsSettings
 import java.util.concurrent.atomic.AtomicBoolean
 
-class PluginAutoUpdater : ProjectActivity {
+internal class PluginAutoUpdater : ProjectActivity {
     private val autoUpdateRunOnce = AtomicBoolean(false)
 
     override suspend fun execute(project: Project) {

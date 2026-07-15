@@ -22,7 +22,7 @@ import software.aws.toolkits.jetbrains.services.cwc.inline.InlineChatController
 import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
 import java.util.concurrent.atomic.AtomicBoolean
 
-class AmazonQStartupActivity : ProjectActivity {
+internal class AmazonQStartupActivity : ProjectActivity {
     private val runOnce = AtomicBoolean(false)
 
     override suspend fun execute(project: Project) {

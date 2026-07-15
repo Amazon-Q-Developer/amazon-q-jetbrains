@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import software.aws.toolkits.resources.message
 
-class MinimumVersionChange @JvmOverloads constructor(isUnderTest: Boolean = false) : StartupActivity.DumbAware {
+internal class MinimumVersionChange @JvmOverloads constructor(isUnderTest: Boolean = false) : StartupActivity.DumbAware {
     init {
         if (ApplicationManager.getApplication().isUnitTestMode && !isUnderTest) {
             throw ExtensionNotApplicableException.INSTANCE

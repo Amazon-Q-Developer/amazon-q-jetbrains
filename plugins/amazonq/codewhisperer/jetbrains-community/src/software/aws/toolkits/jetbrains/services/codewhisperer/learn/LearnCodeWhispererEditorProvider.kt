@@ -18,7 +18,7 @@ import software.amazon.q.jetbrains.utils.isQWebviewsAvailable
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.telemetry.UiTelemetry
 
-class LearnCodeWhispererEditorProvider : FileEditorProvider, DumbAware {
+internal class LearnCodeWhispererEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile): Boolean = file is LearnCodeWhispererVirtualFile
 
     override fun createEditor(project: Project, file: VirtualFile): FileEditor = LearnCodeWhispererManager.getInstance(project).getEditor(file)

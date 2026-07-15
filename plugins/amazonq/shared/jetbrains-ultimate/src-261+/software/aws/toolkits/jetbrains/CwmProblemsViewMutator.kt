@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 
 // BackendToolWindowHost was removed in 2026.1 (261) — no-op until replacement API is identified
-class CwmProblemsViewMutator : ProblemsViewMutator {
+internal class CwmProblemsViewMutator : ProblemsViewMutator {
     override fun mutateProblemsView(project: Project, runnable: (ToolWindow) -> Unit) {
     }
 }
