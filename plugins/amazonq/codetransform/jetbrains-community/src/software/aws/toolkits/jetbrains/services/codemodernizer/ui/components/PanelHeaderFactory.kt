@@ -10,7 +10,7 @@ import javax.swing.BorderFactory
 
 class PanelHeaderFactory {
     fun createPanelHeader(headerText: String): JBLabel {
-        var headerElement = JBLabel(headerText).apply {
+        val headerElement = JBLabel(headerText).apply {
             // Set padding
             border = BorderFactory.createEmptyBorder(
                 CodeModernizerUIConstants.HEADER.PADDING_TOP,

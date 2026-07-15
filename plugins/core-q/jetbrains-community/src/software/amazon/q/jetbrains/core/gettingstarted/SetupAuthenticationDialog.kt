@@ -136,7 +136,7 @@ class SetupAuthenticationDialog(
     ).build()
     private val builderIdTab = BuilderIdTabPanelBuilder().build()
     private val iamTab = iamTab()
-    private val wrappers = SetupAuthenticationTabs.values().associateWith { BorderLayoutPanel() }
+    private val wrappers = SetupAuthenticationTabs.entries.associateWith { BorderLayoutPanel() }
     override var attempts = 0L
         private set
     override var authType = CredentialSourceId.IamIdentityCenter

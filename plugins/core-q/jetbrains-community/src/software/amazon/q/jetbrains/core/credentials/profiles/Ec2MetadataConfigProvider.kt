@@ -28,7 +28,7 @@ object Ec2MetadataConfigProvider {
 
         companion object {
             fun fromValue(s: String?): EndpointMode = s?.let { _ ->
-                values().find { it.name.equals(s, ignoreCase = true) }
+                entries.find { it.name.equals(s, ignoreCase = true) }
             } ?: throw IllegalArgumentException("Unrecognized value for endpoint mode: '$s'")
         }
     }
