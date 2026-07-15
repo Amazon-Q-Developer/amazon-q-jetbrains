@@ -237,9 +237,7 @@ abstract class ToolkitClientManager {
                     }
                 })
 
-                clientOverrideConfig.let { configuration ->
-                    configuration.retryStrategy(RetryMode.STANDARD)
-                }
+                clientOverrideConfig.retryStrategy(RetryMode.STANDARD)
 
                 endpointOverride?.let {
                     endpointOverride(URI.create(it))
@@ -247,9 +245,7 @@ abstract class ToolkitClientManager {
 
                 globalClientCustomizer(credProvider, tokenProvider, region.id(), this, clientOverrideConfig)
 
-                clientCustomizer?.let {
-                    it.customize(credProvider, tokenProvider, region.id(), this, clientOverrideConfig)
-                }
+                clientCustomizer?.customize(credProvider, tokenProvider, region.id(), this, clientOverrideConfig)
 
                 // TODO: ban overrideConfiguration outside of here
                 overrideConfiguration(clientOverrideConfig.build())
