@@ -11,6 +11,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -1008,7 +1009,7 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
             .add(CommonDataKeys.PROJECT, project)
             .add(scanScopeKey, scope)
             .build()
-        val actionEvent = AnActionEvent.createFromDataContext("", null, dataContext)
+        val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
         ActionManager.getInstance().getAction("aws.amazonq.codeScanComplete").actionPerformed(actionEvent)
     }
 

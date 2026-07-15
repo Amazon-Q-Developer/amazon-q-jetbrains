@@ -3,6 +3,7 @@
 
 package software.amazon.q.jetbrains.core.gettingstarted
 
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -395,11 +396,12 @@ class SetupAuthenticationDialog(
     private fun iamTab() = panel {
         row {
             text(AwsCoreBundle.message("gettingstarted.setup.iam.notice")) { hyperlinkEvent ->
-                AnActionEvent.createFromInputEvent(
-                    hyperlinkEvent.inputEvent,
-                    ToolkitPlaces.ADD_CONNECTION_DIALOG,
+                AnActionEvent.createEvent(
+                    DataContext { if (PlatformDataKeys.PROJECT.`is`(it)) project else null },
                     null,
-                    DataContext { if (PlatformDataKeys.PROJECT.`is`(it)) project else null }
+                    ToolkitPlaces.ADD_CONNECTION_DIALOG,
+                    ActionUiKind.NONE,
+                    hyperlinkEvent.inputEvent
                 )
             }
         }
