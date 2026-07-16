@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 
 /**
  * Note the implementation of [CodeWhispererClassResolver] should live in its corresponding module if it's dependent on
- * JB's specific language support. For example [CodeWhispererPythonClassResolver] uses [PyFile] which makes it depends on python extension point
+ * JB's specific language support. For example [CodeWhispererPythonClassResolver] uses `PyFile` which makes it depends on python extension point
  */
 interface CodeWhispererClassResolver {
     fun resolveClassAndMembers(psiFile: PsiFile): Map<ClassResolverKey, List<String>>

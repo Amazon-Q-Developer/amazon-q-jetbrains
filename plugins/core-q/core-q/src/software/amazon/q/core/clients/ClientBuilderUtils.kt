@@ -16,7 +16,7 @@ fun ClientOverrideConfiguration.Builder.nullDefaultProfileFile() = defaultProfil
 )
 
 /**
- * Only use if this is the only [overrideConfiguration] block used by the [SdkClientBuilder]
+ * Only use if this is the only `overrideConfiguration` block used by the [SdkClientBuilder]
  */
 fun<C> SdkClientBuilder<*, C>.nullDefaultProfileFile() = apply {
     overrideConfiguration {

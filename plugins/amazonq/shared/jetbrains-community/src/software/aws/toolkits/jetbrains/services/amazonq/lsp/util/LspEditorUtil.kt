@@ -67,7 +67,7 @@ object LspEditorUtil {
     }
 
     /**
-     * Works but is divergent from [FocusAreaContextExtrator]
+     * Works but is divergent from `FocusAreaContextExtrator`
      */
     fun getCursorState(editor: Editor): CursorState =
         runReadAction {

@@ -129,7 +129,7 @@ abstract class CredentialManager : SimpleModificationTracker() {
         fun getInstance(): CredentialManager = service()
 
         /***
-         * [MessageBus] topic for when credential providers get added/changed/deleted
+         * `MessageBus` topic for when credential providers get added/changed/deleted
          */
         val CREDENTIALS_CHANGED: Topic<ToolkitCredentialsChangeListener> = Topic.create(
             "AWS toolkit credential providers changed",

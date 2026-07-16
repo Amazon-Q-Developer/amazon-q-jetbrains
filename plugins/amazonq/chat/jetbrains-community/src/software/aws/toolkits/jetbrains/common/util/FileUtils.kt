@@ -39,6 +39,8 @@ fun readFileToString(file: File): String {
     return file.readText(charset)
 }
 
+data class DiffResult(val addedChars: Int, val addedLines: Int)
+
 /**
  * Calculates the number of added characters and lines between existing content and LLM response
  *
@@ -48,8 +50,6 @@ fun readFileToString(file: File): String {
  *         - "addedChars": Total number of new characters added
  *         - "addedLines": Total number of new lines added
  */
-data class DiffResult(val addedChars: Int, val addedLines: Int)
-
 fun getDiffCharsAndLines(
     existingContent: String,
     llmResponse: String,

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 /**
  * Message received from the login browser
- * property name "command", please refer to [AwsLoginBrowser.getWebviewHTML] and Webview package [defs.d.ts]
+ * property name "command", please refer to `AwsLoginBrowser.getWebviewHTML` and Webview package `defs.d.ts`
  */
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
