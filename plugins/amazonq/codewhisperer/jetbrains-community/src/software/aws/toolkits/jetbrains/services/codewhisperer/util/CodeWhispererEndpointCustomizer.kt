@@ -75,8 +75,8 @@ class CodeWhispererEndpointCustomizer : ToolkitClientCustomizer {
                     error("Q Chat HTTP client does not support SOCKS proxies")
                 } else if (address is java.net.InetSocketAddress) {
                     val proxyConfiguration = ProxyConfiguration.builder()
-                        .host(address.getHostName())
-                        .port(address.getPort())
+                        .host(address.hostName)
+                        .port(address.port)
                         .apply {
                             val configurable = HttpConfigurable.getInstance()
                             val proxyExceptions = configurable.PROXY_EXCEPTIONS

@@ -129,7 +129,7 @@ class BuildProgressTreePanel : JPanel(BorderLayout()) {
     }
 
     private fun expandAllRowsAndSubTrees(tree: Tree) {
-        for (i in 0 until tree.getRowCount()) {
+        for (i in 0 until tree.rowCount) {
             tree.expandRow(i)
         }
     }

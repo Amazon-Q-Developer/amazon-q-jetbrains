@@ -334,7 +334,7 @@ class SsoAccessTokenProvider(
 
         while (true) {
             try {
-                if (_authorization.get() == null || progressIndicator.isCanceled()) {
+                if (_authorization.get() == null || progressIndicator.isCanceled) {
                     _authorization.set(null)
                     throw ProcessCanceledException(IllegalStateException("Login canceled by user"))
                 }

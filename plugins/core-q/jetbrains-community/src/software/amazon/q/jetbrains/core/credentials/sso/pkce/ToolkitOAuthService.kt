@@ -202,7 +202,7 @@ internal class ToolkitOAuthCallbackHandler : OAuthCallbackHandlerBase() {
     override fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult {
         // focus should be on requesting component?
         runInEdt {
-            IdeFocusManager.getGlobalInstance().getLastFocusedIdeWindow()?.toFront()
+            IdeFocusManager.getGlobalInstance().lastFocusedIdeWindow?.toFront()
         }
 
         val urlBase = newFromEncoded(

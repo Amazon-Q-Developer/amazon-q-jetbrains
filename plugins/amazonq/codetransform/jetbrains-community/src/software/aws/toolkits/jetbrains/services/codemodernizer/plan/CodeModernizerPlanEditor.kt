@@ -167,7 +167,7 @@ class CodeModernizerPlanEditor(val project: Project, private val virtualFile: Vi
             JEditorPane("text/html", message("codemodernizer.migration_plan.body.steps_scroll_top")).apply {
                 addHyperlinkListener { he ->
                     if (he.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                        SwingUtilities.invokeLater { rootPanel.verticalScrollBar.setValue(0) }
+                        SwingUtilities.invokeLater { rootPanel.verticalScrollBar.value = 0 }
                     }
                 }
                 isEditable = false

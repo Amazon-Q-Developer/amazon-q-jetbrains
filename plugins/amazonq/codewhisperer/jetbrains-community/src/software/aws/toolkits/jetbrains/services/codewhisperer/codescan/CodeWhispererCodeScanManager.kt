@@ -802,7 +802,7 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
         uniqueIssues.forEach { issue ->
             val isValid = runReadAction {
                 FileDocumentManager.getInstance().getDocument(issue.file)?.let { document ->
-                    val documentLines = document.getText().split("\n")
+                    val documentLines = document.text.split("\n")
                     val (startLine, endLine) = issue.run { startLine to endLine }
                     checkIssueCodeSnippet(issue.codeSnippet, startLine, endLine, documentLines)
                 } ?: false

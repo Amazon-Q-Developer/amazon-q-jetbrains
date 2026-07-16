@@ -84,7 +84,7 @@ internal class CodeWhispererCodeScanResultsView(private val project: Project) : 
     }
 
     private val toolbar = createToolbar().apply {
-        setTargetComponent(this@CodeWhispererCodeScanResultsView)
+        targetComponent = this@CodeWhispererCodeScanResultsView
         component.border = BorderFactory.createCompoundBorder(
             CustomLineBorder(JBUI.insetsRight(1)),
             component.border
