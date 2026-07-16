@@ -9,7 +9,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.Alarm
-import com.intellij.util.AlarmFactory
 import kotlinx.coroutines.Job
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import software.aws.toolkits.jetbrains.services.amazonq.CodeWhispererFeatureConfigService
@@ -20,7 +19,7 @@ import java.time.Instant
 
 @Service
 class CodeWhispererAutoTriggerService : CodeWhispererAutoTriggerHandler, Disposable {
-    private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this)
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
     private val previousUserTriggerDecisions = CircularFifoQueue<CodewhispererPreviousSuggestionState>(5)
 
     private var lastInvocationTime: Instant? = null

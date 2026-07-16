@@ -31,7 +31,7 @@ class CodeWhispererRecommendationAction : AnAction(message("codewhisperer.trigge
         if (QRegionProfileManager.getInstance().hasValidConnectionButNoActiveProfile(project)) {
             return
         }
-        val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         if (!(
                 if (CodeWhispererFeatureConfigService.getInstance().getNewAutoTriggerUX()) {
                     CodeWhispererServiceNew.getInstance().canDoInvocation(editor, CodewhispererTriggerType.OnDemand)

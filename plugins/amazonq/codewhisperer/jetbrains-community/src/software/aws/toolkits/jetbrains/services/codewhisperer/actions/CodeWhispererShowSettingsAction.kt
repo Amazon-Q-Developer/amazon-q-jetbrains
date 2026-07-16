@@ -20,6 +20,7 @@ class CodeWhispererShowSettingsAction :
     ),
     DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(e.getRequiredData(LangDataKeys.PROJECT), CodeWhispererConfigurable::class.java)
+        val project = e.getData(LangDataKeys.PROJECT) ?: return
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, CodeWhispererConfigurable::class.java)
     }
 }

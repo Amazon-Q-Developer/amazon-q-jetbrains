@@ -19,6 +19,7 @@ class CodeWhispererProvideFeedbackAction :
     ),
     DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
-        CodeWhispererFeedbackDialog(e.getRequiredData(LangDataKeys.PROJECT)).showAndGet()
+        val project = e.getData(LangDataKeys.PROJECT) ?: return
+        CodeWhispererFeedbackDialog(project).showAndGet()
     }
 }
