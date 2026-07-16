@@ -11,10 +11,10 @@ import software.aws.toolkits.telemetry.FeatureId
 
 fun getAuthType(region: String): AuthType {
     val isCommercialRegion = !region.startsWith("us-gov") && !region.startsWith("us-iso") && !region.startsWith("cn")
-    if (!Registry.`is`("aws.dev.useDAG") && isCommercialRegion) {
-        return AuthType.PKCE
+    return if (!Registry.`is`("aws.dev.useDAG") && isCommercialRegion) {
+        AuthType.PKCE
     } else {
-        return AuthType.DeviceCode
+        AuthType.DeviceCode
     }
 }
 
