@@ -59,10 +59,6 @@ class ConfirmUserCodeLoginDialog(
         setOKButtonText(AwsCoreBundle.message("aws.sso.signing.device.code"))
         super.init()
     }
-
-    override fun doCancelAction() {
-        super.doCancelAction()
-    }
 }
 
 class CopyUserCodeForLogin(private val authCode: String) : AnAction(AwsCoreBundle.message("aws.sso.signing.device.code.copy"), "", AllIcons.Actions.Copy) {
