@@ -52,7 +52,7 @@ class ConfirmUserCodeLoginDialog(
         }
     }
 
-    override fun createCenterPanel(): JComponent? = pane
+    override fun createCenterPanel(): JComponent = pane
 
     init {
         title = dialogTitle

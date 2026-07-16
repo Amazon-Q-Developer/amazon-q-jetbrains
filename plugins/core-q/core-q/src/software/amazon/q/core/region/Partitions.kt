@@ -56,6 +56,6 @@ object ServiceEndpointResource : RemoteResource {
     override val urls: List<String> = listOf("https://idetoolkits.amazonwebservices.com/endpoints.json")
     override val name: String = "service-endpoints.json"
     override val ttl: Duration? = Duration.ofHours(24)
-    override val initialValue: (() -> InputStream)? = { BundledResources.ENDPOINTS_FILE }
+    override val initialValue: () -> InputStream = { BundledResources.ENDPOINTS_FILE }
     override val remoteResolveParser: EndpointsJsonValidator = EndpointsJsonValidator
 }

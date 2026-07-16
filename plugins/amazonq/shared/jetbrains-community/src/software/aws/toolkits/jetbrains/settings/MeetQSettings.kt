@@ -15,7 +15,7 @@ import software.amazon.q.jetbrains.settings.QSettingsMigrationUtil
 @State(name = "meetQPage", storages = [Storage("amazonq.xml", roamingType = RoamingType.DISABLED)])
 class MeetQSettings : PersistentStateComponent<MeetQSettingsConfiguration> {
     private var state = MeetQSettingsConfiguration()
-    override fun getState(): MeetQSettingsConfiguration? = state
+    override fun getState(): MeetQSettingsConfiguration = state
 
     override fun loadState(state: MeetQSettingsConfiguration) {
         this.state = state

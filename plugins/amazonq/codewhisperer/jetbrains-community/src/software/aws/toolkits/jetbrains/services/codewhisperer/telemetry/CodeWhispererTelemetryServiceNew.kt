@@ -113,7 +113,7 @@ class CodeWhispererTelemetryServiceNew(private val cs: CoroutineScope) {
     fun sendUserTriggerDecisionEvent(project: Project, latencyContext: LatencyContext) {
         cs.launch {
             AmazonQLspService.executeAsyncIfRunning(project) { server ->
-                CodeWhispererServiceNew.getInstance().getAllPaginationSessions().forEach { jobId, state ->
+                CodeWhispererServiceNew.getInstance().getAllPaginationSessions().forEach { (jobId, state) ->
                     if (state == null) return@forEach
                     val params = LogInlineCompletionSessionResultsParams(
                         sessionId = state.responseContext.sessionId,

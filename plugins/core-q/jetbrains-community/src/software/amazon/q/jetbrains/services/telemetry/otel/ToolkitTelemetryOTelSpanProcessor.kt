@@ -52,7 +52,7 @@ class ToolkitTelemetryOTelSpanProcessor : SpanProcessor {
                 value(attributes.remove("value") as Double)
 
                 // everything else
-                attributes.forEach { t, u ->
+                attributes.forEach { (t, u) ->
                     metadata(t, u.toString())
                 }
 
