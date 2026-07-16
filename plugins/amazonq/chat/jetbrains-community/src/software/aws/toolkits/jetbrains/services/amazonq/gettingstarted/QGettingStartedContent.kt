@@ -42,9 +42,9 @@ class QGettingStartedContent(val project: Project) : Disposable {
                             .distinctUntilChanged()
                             .onEach {
                                 val js = if (it.darkMode) {
-                                    "document.body.classList.add('$darkThemeClass');document.body.classList.remove('$lightThemeClass');"
+                                    "document.body.classList.add('$DARK_THEME_CLASS');document.body.classList.remove('$LIGHT_THEME_CLASS');"
                                 } else {
-                                    "document.body.classList.add('$lightThemeClass');document.body.classList.remove('$darkThemeClass');"
+                                    "document.body.classList.add('$LIGHT_THEME_CLASS');document.body.classList.remove('$DARK_THEME_CLASS');"
                                 }
                                 browser.executeJavaScript(js, browser.url, 0)
                             }
@@ -77,7 +77,7 @@ class QGettingStartedContent(val project: Project) : Disposable {
     }
 
     private fun getWebviewHTML(): String {
-        val colorMode = if (JBColor.isBright()) lightThemeClass else darkThemeClass
+        val colorMode = if (JBColor.isBright()) LIGHT_THEME_CLASS else DARK_THEME_CLASS
         val bgLogoDark = getBase64EncodedImageString("/icons/logos/Amazon-Q-Icon_White_Medium.svg")
         val qLogo = getBase64EncodedImageString("/icons/logos/Amazon-Q-Icon_Gradient_Medium.svg")
         val bgLogoLight = getBase64EncodedImageString("/icons/logos/Amazon-Q-Icon_Squid-Ink_Medium.svg")
@@ -243,7 +243,7 @@ class QGettingStartedContent(val project: Project) : Disposable {
     }
 
     companion object {
-        private const val darkThemeClass = "dark"
-        private const val lightThemeClass = "light"
+        private const val DARK_THEME_CLASS = "dark"
+        private const val LIGHT_THEME_CLASS = "light"
     }
 }
