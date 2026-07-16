@@ -15,6 +15,10 @@ exclude:
   # and many symbols are platform entry points registered in plugin.xml. Accept the
   # inspection at the config level rather than deleting reflectively-used code.
   - name: UnusedSymbol
+  # UnstableApiUsage: the plugin necessarily uses platform APIs marked
+  # @ApiStatus.Internal/@Experimental (often the only way to access needed
+  # functionality; no stable alternative). Accept at config level.
+  - name: UnstableApiUsage
 dot-net:
   solution: ReSharper.AWS.sln
 include:
