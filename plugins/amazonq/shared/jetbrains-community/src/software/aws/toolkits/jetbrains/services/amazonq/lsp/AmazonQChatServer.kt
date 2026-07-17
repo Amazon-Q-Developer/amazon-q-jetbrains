@@ -91,7 +91,7 @@ data class JsonRpcRequest<Request, Response>(
  */
 object AmazonQChatServer : JsonRpcMethodProvider {
     override fun supportedMethods() = buildMap {
-        AmazonQChatServer::class.declaredMembers.filter { it is KProperty }.forEach {
+        AmazonQChatServer::class.declaredMembers.filterIsInstance<KProperty<*>>().forEach {
             val method = it.call(AmazonQChatServer) as JsonRpcMethod<*, *>
 
             // trick lsp4j into returning the complete message even if we didn't model it completely
