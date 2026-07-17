@@ -23,11 +23,11 @@ private val WORD_REGEX = """\w+""".toRegex()
  *     return res
  * }
  */
-private fun String.tokenize(): List<String> = this.split(" ").map { str ->
+private fun String.tokenize(): List<String> = this.split(" ").flatMap { str ->
     WORD_REGEX.findAll(str)
         .map { it.value }
         .toList()
-}.flatten()
+}
 
 data class BM25Result(
     val docString: String,
