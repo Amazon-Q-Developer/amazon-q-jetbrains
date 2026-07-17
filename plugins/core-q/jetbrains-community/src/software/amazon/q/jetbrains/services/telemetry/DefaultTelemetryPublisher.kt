@@ -34,7 +34,7 @@ class DefaultTelemetryPublisher(
     override suspend fun publish(metricEvents: Collection<MetricEvent>) {
         withContext(getCoroutineBgContext()) {
             metricEvents.groupBy { Pair(it.awsProduct, it.awsVersion) }
-                .forEach { (productName, productVersion), events ->
+                .forEach { (_, _), events ->
                     client.postMetrics {
                         it.awsProduct(clientMetadata.productName)
                         it.awsProductVersion(clientMetadata.productVersion)

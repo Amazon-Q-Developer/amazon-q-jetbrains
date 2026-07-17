@@ -313,7 +313,7 @@ class CodeTransformChatController(
             return
         }
 
-        val (tabId, modulePath, targetVersion) = message
+        val (_, modulePath, targetVersion) = message
 
         val moduleVirtualFile: VirtualFile = modulePath.toVirtualFile() as VirtualFile
         val moduleName = context.project.getModuleOrProjectNameForFile(moduleVirtualFile)
