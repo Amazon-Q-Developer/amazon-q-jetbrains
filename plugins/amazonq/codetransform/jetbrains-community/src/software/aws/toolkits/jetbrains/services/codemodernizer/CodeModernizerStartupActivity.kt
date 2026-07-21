@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.isCodeTransformAvailable
 
-class CodeModernizerStartupActivity : StartupActivity.DumbAware {
+internal class CodeModernizerStartupActivity : StartupActivity.DumbAware {
 
     /**
      * Will be run on startup of the IDE

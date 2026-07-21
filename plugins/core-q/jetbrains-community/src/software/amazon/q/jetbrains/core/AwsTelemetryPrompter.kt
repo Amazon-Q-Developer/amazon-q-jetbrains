@@ -12,7 +12,7 @@ import software.amazon.q.jetbrains.settings.AwsSettings
 import software.amazon.q.jetbrains.settings.AwsSettingsSharedConfigurable
 import software.amazon.q.resources.AwsCoreBundle
 
-class AwsTelemetryPrompter : ProjectActivity {
+internal class AwsTelemetryPrompter : ProjectActivity {
     override suspend fun execute(project: Project) {
         if (AwsSettings.getInstance().promptedForTelemetry || System.getProperty("aws.telemetry.skip_prompt", null)?.toBoolean() == true) {
             return

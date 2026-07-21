@@ -6,6 +6,6 @@ package software.aws.toolkits.jetbrains.services.codemodernizer
 import com.intellij.openapi.project.Project
 import software.aws.toolkits.jetbrains.services.amazonq.apps.AmazonQAppFactory
 
-class CodeTransformChatAppFactory : AmazonQAppFactory {
+internal class CodeTransformChatAppFactory : AmazonQAppFactory {
     override fun createApp(project: Project) = CodeTransformChatApp()
 }

@@ -80,7 +80,7 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 
-class QInlineCompletionProvider(private val cs: CoroutineScope) : InlineCompletionProvider {
+internal class QInlineCompletionProvider(private val cs: CoroutineScope) : InlineCompletionProvider {
     // TODO: good news is that suggestionUpdateManager can be overridden, this means we can define custom behaviors
     // such as on backspace when variants are showing, future improvements
     override val suggestionUpdateManager: InlineCompletionSuggestionUpdateManager

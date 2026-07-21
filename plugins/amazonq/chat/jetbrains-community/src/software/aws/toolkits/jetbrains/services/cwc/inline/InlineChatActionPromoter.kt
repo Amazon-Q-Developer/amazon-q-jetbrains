@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.SystemInfo
 
-class InlineChatActionPromoter : ActionPromoter {
+internal class InlineChatActionPromoter : ActionPromoter {
     // temporary until we find a better key binding
     override fun promote(actions: MutableList<out AnAction>, context: DataContext): MutableList<AnAction> {
         val results = actions.toMutableList()

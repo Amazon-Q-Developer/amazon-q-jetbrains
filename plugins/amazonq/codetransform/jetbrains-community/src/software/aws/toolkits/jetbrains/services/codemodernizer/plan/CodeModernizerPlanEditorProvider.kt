@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.Transformation
 import software.amazon.q.core.utils.debug
 import software.amazon.q.core.utils.getLogger
 
-class CodeModernizerPlanEditorProvider : FileEditorProvider, DumbAware {
+internal class CodeModernizerPlanEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile) = file is CodeModernizerPlanVirtualFile
 
     override fun createEditor(project: Project, file: VirtualFile) = CodeModernizerPlanEditor(project, file)

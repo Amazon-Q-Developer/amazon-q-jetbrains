@@ -6,6 +6,6 @@ package software.aws.toolkits.jetbrains.services.cwc
 import com.intellij.openapi.project.Project
 import software.aws.toolkits.jetbrains.services.amazonq.apps.AmazonQAppFactory
 
-class AppFactory : AmazonQAppFactory {
+internal class AppFactory : AmazonQAppFactory {
     override fun createApp(project: Project) = App()
 }

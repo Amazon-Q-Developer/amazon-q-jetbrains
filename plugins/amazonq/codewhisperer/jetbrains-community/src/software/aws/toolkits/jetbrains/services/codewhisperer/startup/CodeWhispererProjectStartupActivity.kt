@@ -26,7 +26,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhisperer
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererUtil.promptReAuth
 
 // TODO: add logics to check if we want to remove recommendation suspension date when user open the IDE
-class CodeWhispererProjectStartupActivity : StartupActivity.DumbAware {
+internal class CodeWhispererProjectStartupActivity : StartupActivity.DumbAware {
     private var runOnce = false
 
     /**

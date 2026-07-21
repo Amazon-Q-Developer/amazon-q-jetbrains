@@ -7,7 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.psi.PyFile
 
-class CodeWhispererPythonClassResolver : CodeWhispererClassResolver {
+internal class CodeWhispererPythonClassResolver : CodeWhispererClassResolver {
     override fun resolveClassAndMembers(psiFile: PsiFile): Map<ClassResolverKey, List<String>> {
         if (psiFile !is PyFile) {
             return emptyMap()

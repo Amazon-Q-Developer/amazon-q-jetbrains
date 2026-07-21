@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class QGettingStartedEditorProvider : FileEditorProvider, DumbAware {
+internal class QGettingStartedEditorProvider : FileEditorProvider, DumbAware {
     override fun accept(project: Project, file: VirtualFile) = file is QGettingStartedVirtualFile
 
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {

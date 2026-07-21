@@ -7,7 +7,7 @@ import com.intellij.analysis.problemsView.toolWindow.ProblemsView
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 
-class DefaultProblemsViewMutator : ProblemsViewMutator {
+internal class DefaultProblemsViewMutator : ProblemsViewMutator {
     override fun mutateProblemsView(project: Project, runnable: (ToolWindow) -> Unit) {
         ProblemsView.getToolWindow(project)?.let { runnable(it) }
     }
