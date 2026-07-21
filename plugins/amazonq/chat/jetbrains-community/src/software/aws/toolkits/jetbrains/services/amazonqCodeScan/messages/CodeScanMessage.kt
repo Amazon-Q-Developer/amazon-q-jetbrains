@@ -56,47 +56,47 @@ sealed interface CodeScanBaseMessage : AmazonQMessage
 // === UI -> App Messages ===
 sealed interface IncomingCodeScanMessage : CodeScanBaseMessage {
     data class Scan(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class StartProjectScan(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class StartFileScan(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class StopProjectScan(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class StopFileScan(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class OpenIssuesPanel(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class TabCreated(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class Help(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class ClearChat(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class TabRemoved(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeScanMessage
 
     data class ResponseBodyLinkClicked(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val link: String,
     ) : IncomingCodeScanMessage
 }
@@ -112,7 +112,7 @@ sealed class CodeScanUiMessage(
 }
 
 data class PromptProgressMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val progressField: ProgressField? = null,
 ) : CodeScanUiMessage(
     tabId = tabId,
@@ -120,7 +120,7 @@ data class PromptProgressMessage(
 )
 
 data class ChatInputEnabledMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val enabled: Boolean,
 ) : CodeScanUiMessage(
     tabId = tabId,
@@ -138,7 +138,7 @@ data class AuthenticationUpdateMessage(
 )
 
 data class AuthenticationNeededExceptionMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val authType: AuthFollowUpType,
     val message: String? = null,
 ) : CodeScanUiMessage(
@@ -147,7 +147,7 @@ data class AuthenticationNeededExceptionMessage(
 )
 
 data class CodeScanChatMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     override val messageId: String? = UUID.randomUUID().toString(),
     val messageType: ChatMessageType,
     val message: String? = null,
@@ -165,7 +165,7 @@ data class CodeScanChatMessage(
 )
 
 data class UpdatePlaceholderMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val newPlaceholder: String,
 ) : CodeScanUiMessage(
     tabId = tabId,

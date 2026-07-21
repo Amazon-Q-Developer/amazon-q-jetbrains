@@ -8,23 +8,23 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class PlanTableRow(
-    @JsonProperty("name")
+    @param:JsonProperty("name")
     val name: String?,
-    @JsonProperty("value")
+    @param:JsonProperty("value")
     val value: String?,
-    @JsonProperty("dependencyName")
+    @param:JsonProperty("dependencyName")
     val dependency: String?,
-    @JsonProperty("action")
+    @param:JsonProperty("action")
     val action: String?,
-    @JsonProperty("currentVersion")
+    @param:JsonProperty("currentVersion")
     val currentVersion: String?,
-    @JsonProperty("targetVersion")
+    @param:JsonProperty("targetVersion")
     val targetVersion: String?,
-    @JsonProperty("apiFullyQualifiedName")
+    @param:JsonProperty("apiFullyQualifiedName")
     val deprecatedCode: String?,
-    @JsonProperty("numChangedFiles")
+    @param:JsonProperty("numChangedFiles")
     val filesToBeChanged: String?,
-    @JsonProperty("relativePath")
+    @param:JsonProperty("relativePath")
     val filePath: String?,
 ) {
     fun getValueForColumn(col: String): String? =

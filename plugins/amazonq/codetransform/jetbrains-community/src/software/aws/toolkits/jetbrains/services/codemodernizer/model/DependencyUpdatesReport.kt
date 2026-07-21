@@ -11,16 +11,16 @@ data class Dependency(
     val groupId: String? = null,
     val artifactId: String? = null,
     val currentVersion: String? = null,
-    @JacksonXmlElementWrapper(localName = "majors")
+    @param:JacksonXmlElementWrapper(localName = "majors")
     val majors: List<String>? = null,
-    @JacksonXmlElementWrapper(localName = "minors")
+    @param:JacksonXmlElementWrapper(localName = "minors")
     val minors: List<String>? = null,
-    @JacksonXmlElementWrapper(localName = "incrementals")
+    @param:JacksonXmlElementWrapper(localName = "incrementals")
     val incrementals: List<String>? = null,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class DependencyUpdatesReport(
-    @JacksonXmlElementWrapper(localName = "dependencies")
+    @param:JacksonXmlElementWrapper(localName = "dependencies")
     val dependencies: List<Dependency>? = null,
 )

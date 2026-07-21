@@ -31,6 +31,6 @@ data class InnerChatPrompt(
 )
 
 data class InnerChatOptions(
-    @JsonProperty("pair-programmer-mode")
+    @param:JsonProperty("pair-programmer-mode")
     val pairProgrammingMode: String?,
 )

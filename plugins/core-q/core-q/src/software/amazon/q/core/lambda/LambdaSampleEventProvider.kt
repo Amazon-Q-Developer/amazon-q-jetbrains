@@ -55,8 +55,8 @@ open class LambdaSampleEvent(val name: String, private val contentProvider: () -
 }
 
 data class LambdaSampleEventManifest(
-    @JsonProperty(value = "request")
-    @JacksonXmlElementWrapper(useWrapping = false)
+    @param:JsonProperty(value = "request")
+    @param:JacksonXmlElementWrapper(useWrapping = false)
     val requests: List<LambdaSampleEventRequest>,
 )
 

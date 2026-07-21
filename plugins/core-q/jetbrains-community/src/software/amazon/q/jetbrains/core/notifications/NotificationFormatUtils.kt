@@ -27,7 +27,7 @@ data class NotificationData(
 )
 
 data class NotificationSchedule(
-    @JsonDeserialize(using = NotificationTypeDeserializer::class)
+    @param:JsonDeserialize(using = NotificationTypeDeserializer::class)
     val type: NotificationScheduleType,
 ) {
     constructor(type: String) : this(NotificationScheduleType.fromString(type))
@@ -54,7 +54,7 @@ enum class NotificationScheduleType {
 }
 
 data class NotificationContentDescriptionLocale(
-    @JsonProperty("en-US")
+    @param:JsonProperty("en-US")
     val locale: NotificationContentDescription,
 )
 
@@ -69,7 +69,7 @@ data class NotificationFollowupActions(
 )
 
 data class NotificationFollowupActionsContent(
-    @JsonProperty("en-US")
+    @param:JsonProperty("en-US")
     val locale: NotificationActionDescription,
 )
 

@@ -67,106 +67,106 @@ data class FormItem(
 // === UI -> App Messages ===
 sealed interface IncomingCodeTransformMessage : CodeTransformBaseMessage {
     data class CodeTransformNew(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
     data class Transform(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val startNewTransform: Boolean = false,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformStart(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val modulePath: String,
         val targetVersion: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformSelectSQLMetadata(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformSelectSQLModuleSchema(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val modulePath: String,
         val schema: String,
     ) : IncomingCodeTransformMessage
 
     data class ChatPrompt(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val message: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformStop(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformCancel(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformContinue(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformConfirmSkipTests(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val skipTestsSelection: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformConfirmCustomDependencyVersions(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformOpenMvnBuild(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformOpenTransformHub(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformViewDiff(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformViewSummary(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class CodeTransformViewBuildLog(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class TabCreated(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class TabRemoved(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class AuthFollowUpWasClicked(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val authType: AuthFollowUpType,
     ) : IncomingCodeTransformMessage
 
     data class BodyLinkClicked(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val command: String,
         val messageId: String?,
         val link: String,
     ) : IncomingCodeTransformMessage
 
     data class ConfirmHilSelection(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
         val version: String,
     ) : IncomingCodeTransformMessage
 
     data class RejectHilSelection(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 
     data class OpenPomFileHilClicked(
-        @JsonProperty("tabID") val tabId: String,
+        @param:JsonProperty("tabID") val tabId: String,
     ) : IncomingCodeTransformMessage
 }
 
@@ -181,7 +181,7 @@ sealed class CodeTransformUiMessage(
 }
 
 data class AuthenticationNeededExceptionMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val authType: AuthFollowUpType,
     val message: String? = null,
 ) : CodeTransformUiMessage(
@@ -199,7 +199,7 @@ data class AuthenticationUpdateMessage(
 )
 
 data class CodeTransformChatMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     override val messageId: String? = UUID.randomUUID().toString(),
     val messageType: ChatMessageType,
     val message: String? = null,
@@ -223,7 +223,7 @@ data class CodeTransformCommandMessage(
 )
 
 data class CodeTransformUpdatePlaceholderMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val newPlaceholder: String,
 ) : CodeTransformUiMessage(
     tabId = tabId,
@@ -231,7 +231,7 @@ data class CodeTransformUpdatePlaceholderMessage(
 )
 
 data class CodeTransformChatInputEnabledMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val enabled: Boolean,
 ) : CodeTransformUiMessage(
     tabId = tabId,
@@ -239,7 +239,7 @@ data class CodeTransformChatInputEnabledMessage(
 )
 
 data class CodeTransformChatUpdateMessage(
-    @JsonProperty("tabID") override val tabId: String,
+    @param:JsonProperty("tabID") override val tabId: String,
     val targetMessageId: String,
     val message: String? = null,
     val buttons: List<Button>? = null,

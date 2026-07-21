@@ -9,71 +9,71 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
 
 @JacksonXmlRootElement(localName = "tree")
 data class SctMetadata(
-    @JsonProperty("instances")
+    @param:JsonProperty("instances")
     val instances: Instances,
 )
 
 data class Instances(
-    @JsonProperty("ProjectModel")
+    @param:JsonProperty("ProjectModel")
     val projectModel: ProjectModel,
 )
 
 data class ProjectModel(
-    @JsonProperty("entities")
+    @param:JsonProperty("entities")
     val entities: Entities,
-    @JsonProperty("relations")
+    @param:JsonProperty("relations")
     val relations: Relations,
 )
 
 data class Entities(
-    @JsonProperty("sources")
+    @param:JsonProperty("sources")
     val sources: Sources,
-    @JsonProperty("targets")
+    @param:JsonProperty("targets")
     val targets: Targets,
 )
 
 data class Sources(
-    @JsonProperty("DbServer")
+    @param:JsonProperty("DbServer")
     val dbServer: DbServer,
 )
 
 data class Targets(
-    @JsonProperty("DbServer")
+    @param:JsonProperty("DbServer")
     val dbServer: DbServer,
 )
 
 data class DbServer(
-    @JsonProperty("vendor")
+    @param:JsonProperty("vendor")
     val vendor: String,
-    @JsonProperty("name")
+    @param:JsonProperty("name")
     val name: String,
 )
 
 data class Relations(
-    @JsonProperty("server-node-location")
-    @JacksonXmlElementWrapper(useWrapping = false)
+    @param:JsonProperty("server-node-location")
+    @param:JacksonXmlElementWrapper(useWrapping = false)
     val serverNodeLocation: List<ServerNodeLocation>,
 )
 
 data class ServerNodeLocation(
-    @JsonProperty("FullNameNodeInfoList")
+    @param:JsonProperty("FullNameNodeInfoList")
     val fullNameNodeInfoList: FullNameNodeInfoList,
 )
 
 data class FullNameNodeInfoList(
-    @JsonProperty("nameParts")
+    @param:JsonProperty("nameParts")
     val nameParts: NameParts,
 )
 
 data class NameParts(
-    @JsonProperty("FullNameNodeInfo")
-    @JacksonXmlElementWrapper(useWrapping = false)
+    @param:JsonProperty("FullNameNodeInfo")
+    @param:JacksonXmlElementWrapper(useWrapping = false)
     val fullNameNodeInfo: List<FullNameNodeInfo>,
 )
 
 data class FullNameNodeInfo(
-    @JsonProperty("typeNode")
+    @param:JsonProperty("typeNode")
     val typeNode: String,
-    @JsonProperty("nameNode")
+    @param:JsonProperty("nameNode")
     val nameNode: String,
 )
