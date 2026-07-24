@@ -3,7 +3,6 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.profile
 
-import software.amazon.awssdk.awscore.exception.AwsServiceException
 import software.amazon.awssdk.services.codewhispererruntime.CodeWhispererRuntimeClient
 import software.amazon.q.core.ClientConnectionSettings
 import software.amazon.q.core.utils.debug
@@ -25,6 +24,9 @@ object QProfileResources {
         override val id: String = "amazonq.allProfiles"
 
         override fun fetch(connectionSettings: ClientConnectionSettings<*>): List<QRegionProfile> {
+            val failedRegions = mutableListOf<String>()
+            var lastException: Exception? = null
+
             val mappedProfiles = QEndpoints.listRegionEndpoints().flatMap { (regionKey, _) ->
                 val awsRegion = AwsRegionProvider.getInstance()[regionKey] ?: return@flatMap emptyList()
                 val client = AwsClientManager
@@ -39,16 +41,25 @@ object QProfileResources {
 
                     profiles
                 } catch (e: Exception) {
+                    // Don't abort the whole listing when a single region fails (e.g. a 403 from a
+                    // firewall-blocked endpoint). Log it, remember it, and continue to the next region
+                    // so profiles from reachable regions are still returned. We only surface an error
+                    // when every region fails (checked below), matching the VS Code extension behavior.
                     LOG.warn(e) { "Failed to list Q profiles for region $regionKey" }
-
-                    // service has low TPS so only suppress if not a service error
-                    if (e is AwsServiceException) {
-                        throw e
-                    }
+                    failedRegions.add(regionKey)
+                    lastException = e
 
                     emptyList()
                 }
             }
+
+            // If no profiles could be listed in any region and at least one region failed, surface the
+            // failure instead of returning an empty list (which callers treat as "user has no profiles").
+            if (mappedProfiles.isEmpty() && failedRegions.isNotEmpty()) {
+                LOG.warn { "Failed to list Q profiles for all attempted regions: $failedRegions" }
+                throw lastException ?: IllegalStateException("Failed to list Q profiles for regions: $failedRegions")
+            }
+
             return mappedProfiles
         }
 

@@ -9,16 +9,19 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.XmlSerializer
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.output.XMLOutputter
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.stub
 import org.mockito.kotlin.whenever
+import software.amazon.awssdk.awscore.exception.AwsServiceException
 import software.amazon.awssdk.core.pagination.sync.SdkIterable
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.codewhispererruntime.CodeWhispererRuntimeClient
@@ -187,6 +190,47 @@ class QRegionProfileManagerTest {
                 QRegionProfile("FOO", "foo"),
                 QRegionProfile("BAR", "bar")
             )
+    }
+
+    @Test
+    fun `listProfiles continues to next region when one regional endpoint fails`() {
+        val client = clientRule.create<CodeWhispererRuntimeClient>()
+        val mockResponse: SdkIterable<Profile> = SdkIterable<Profile> {
+            listOf(
+                Profile.builder().profileName("BAR").arn("bar").build(),
+            ).toMutableList().iterator()
+        }
+
+        val iterable: ListAvailableProfilesIterable = mock {
+            on { it.profiles() } doReturn mockResponse
+        }
+
+        // the same mocked client is used for every region, so consecutive-call stubbing simulates
+        // one region failing (e.g. a firewall-blocked endpoint returning 403) and the other succeeding
+        client.stub {
+            onGeneric {
+                listAvailableProfilesPaginator(any<Consumer<ListAvailableProfilesRequest.Builder>>())
+            } doThrow AwsServiceException.builder().message("Service returned HTTP status code 403").build() doReturn iterable
+        }
+        val connectionSettings = sut.getQClientSettings(project, null)
+
+        assertThat(QProfileResources.LIST_REGION_PROFILES.fetch(connectionSettings))
+            .containsExactly(QRegionProfile("BAR", "bar"))
+    }
+
+    @Test
+    fun `listProfiles throws when all regional endpoints fail`() {
+        val client = clientRule.create<CodeWhispererRuntimeClient>()
+
+        client.stub {
+            onGeneric {
+                listAvailableProfilesPaginator(any<Consumer<ListAvailableProfilesRequest.Builder>>())
+            } doThrow AwsServiceException.builder().message("Service returned HTTP status code 403").build()
+        }
+        val connectionSettings = sut.getQClientSettings(project, null)
+
+        assertThatThrownBy { QProfileResources.LIST_REGION_PROFILES.fetch(connectionSettings) }
+            .isInstanceOf(AwsServiceException::class.java)
     }
 
     @Test

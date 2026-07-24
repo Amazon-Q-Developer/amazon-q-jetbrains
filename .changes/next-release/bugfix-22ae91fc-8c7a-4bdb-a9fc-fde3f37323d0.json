@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Amazon Q profile selection no longer fails when one regional endpoint is unreachable (for example, blocked by a network firewall); the plugin now falls back to the other regions and only reports an error when profile listing fails in every region"
+}
