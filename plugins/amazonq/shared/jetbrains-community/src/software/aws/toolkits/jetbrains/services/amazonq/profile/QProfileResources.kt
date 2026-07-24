@@ -57,7 +57,8 @@ object QProfileResources {
             // failure instead of returning an empty list (which callers treat as "user has no profiles").
             if (mappedProfiles.isEmpty() && failedRegions.isNotEmpty()) {
                 LOG.warn { "Failed to list Q profiles for all attempted regions: $failedRegions" }
-                throw lastException ?: IllegalStateException("Failed to list Q profiles for regions: $failedRegions")
+                lastException?.let { throw it }
+                error("Failed to list Q profiles for regions: $failedRegions")
             }
 
             return mappedProfiles
