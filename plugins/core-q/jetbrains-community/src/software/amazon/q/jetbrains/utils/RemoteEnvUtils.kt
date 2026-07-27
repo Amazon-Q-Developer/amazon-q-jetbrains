@@ -30,9 +30,23 @@ private val isInternalAmznLinuxCompute by lazy {
 }
 
 /**
+ * @return true if JCEF is present and usable in the current IDE.
+ *
+ * Some products (e.g. DataGrip 2026.2) do not expose the `com.intellij.ui.jcef` classes to plugins.
+ * Referencing [JBCefApp] there throws [NoClassDefFoundError] at link time, which is a [Throwable] but
+ * not an [Exception], so it must be caught explicitly rather than relying on [JBCefApp.isSupported]
+ * returning false. Kept in its own function so the risky class reference is isolated to one call site.
+ */
+private fun isJcefSupported() = try {
+    JBCefApp.isSupported()
+} catch (_: Throwable) {
+    false
+}
+
+/**
  * On remote, only enabled experimentally and for internal
  */
-fun isQWebviewsAvailable() = JBCefApp.isSupported() && if (!isRunningOnRemoteBackend()) {
+fun isQWebviewsAvailable() = isJcefSupported() && if (!isRunningOnRemoteBackend()) {
     true
 } else {
     isDeveloperMode() || isInternalAmznLinuxCompute

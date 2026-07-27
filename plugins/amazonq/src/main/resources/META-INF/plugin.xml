@@ -62,6 +62,15 @@
 
     <depends>com.intellij.modules.lang</depends>
 
+    <!--
+      In 2026.2 (262) JetBrains moved JCEF out of the core platform into a separately-loaded bundled
+      plugin (id com.intellij.modules.jcef, holding com.intellij.ui.jcef.JBCefApp). Without this
+      dependency our classloader can't see JBCefApp and the Q webview/chat tool window is unavailable.
+      Optional so the plugin still loads where JCEF is absent (older platforms expose it via a plugin
+      alias; headless/remote setups may not ship it at all), degrading to no-webview instead of failing.
+    -->
+    <depends optional="true">com.intellij.modules.jcef</depends>
+
     <depends optional="true" config-file="amazonq-ext-codewithme.xml">com.jetbrains.codeWithMe</depends>
     <depends optional="true" config-file="amazonq-ext-java.xml">com.intellij.java</depends>
     <depends optional="true" config-file="amazonq-ext-nodejs.xml">JavaScriptDebugger</depends>
