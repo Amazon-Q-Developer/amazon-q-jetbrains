@@ -1,3 +1,6 @@
+# _4.6_ (2026-07-29)
+- **(Deprecation)** An upcoming release will remove support for IDEs based on the 2025.1 and 2025.2 platforms
+
 # _4.5_ (2026-06-29)
 
 # _4.4_ (2026-06-25)
