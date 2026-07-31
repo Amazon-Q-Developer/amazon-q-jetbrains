@@ -21,10 +21,10 @@ enum class LambdaArchitecture(
         fun fromValue(value: String?): LambdaArchitecture? = if (value == null) {
             null
         } else {
-            values().find { it.toString() == value }
+            entries.find { it.toString() == value }
         }
 
-        fun fromValue(value: Architecture): LambdaArchitecture? = values().find { it.architecture == value }
+        fun fromValue(value: Architecture): LambdaArchitecture? = entries.find { it.architecture == value }
 
         val DEFAULT = X86_64
         val ARM_COMPATIBLE = listOf(X86_64, ARM64)

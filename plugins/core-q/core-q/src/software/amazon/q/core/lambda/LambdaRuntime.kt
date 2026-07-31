@@ -41,9 +41,9 @@ enum class LambdaRuntime(
         fun fromValue(value: String?): LambdaRuntime? = if (value == null) {
             null
         } else {
-            values().find { it.toString() == value }
+            entries.find { it.toString() == value }
         }
 
-        fun fromValue(value: Runtime): LambdaRuntime? = values().find { it.runtime == value }
+        fun fromValue(value: Runtime): LambdaRuntime? = entries.find { it.runtime == value }
     }
 }
