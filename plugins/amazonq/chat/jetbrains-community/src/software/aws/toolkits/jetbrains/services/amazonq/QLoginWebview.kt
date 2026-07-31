@@ -45,6 +45,7 @@ import software.amazon.q.jetbrains.utils.isQWebviewsAvailable
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileSwitchIntent
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfile
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
+import software.aws.toolkits.jetbrains.services.amazonq.profile.isQDeveloperNotAcceptingNewCustomers
 import software.aws.toolkits.jetbrains.services.amazonq.util.createBrowser
 import software.aws.toolkits.jetbrains.services.amazonq.webview.theme.EditorThemeAdapter
 import software.aws.toolkits.jetbrains.services.amazonq.webview.theme.ThemeBrowserAdapter
@@ -331,12 +332,17 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
     private fun handleListProfilesMessage() {
         ApplicationManager.getApplication().executeOnPooledThread {
             var errorMessage = ""
+            var notAcceptingNewCustomers = false
             val profiles = try {
                 QRegionProfileManager.getInstance().listRegionProfiles(project)
             } catch (e: Exception) {
                 e.message?.let {
                     errorMessage = it
                 }
+                // Amazon Q Developer is no longer accepting this customer. Flag it so the webview can
+                // show the real service message with a "Go back" action, instead of the generic
+                // "couldn't load your profiles" error with a Try Again button that can never succeed.
+                notAcceptingNewCustomers = isQDeveloperNotAcceptingNewCustomers(e)
                 LOG.warn { "Failed to call listRegionProfiles API: $errorMessage" }
                 val qConn = ToolkitConnectionManager.getInstance(project).activeConnectionForFeature(QConnection.getInstance())
                 Telemetry.amazonq.didSelectProfile.use { span ->
@@ -360,12 +366,16 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
 
             // required EDT as this entire block is executed on thread pool
             runInEdt {
+                // errorMessage is serialized rather than interpolated into a quoted literal: it now
+                // carries real service messages, which may contain apostrophes or quotes that would
+                // otherwise break out of the JS string and produce a syntax error in prepareUi().
                 val jsonData = """
                         {
                             stage: 'PROFILE_SELECT',
                             status: '${if (profiles != null) "succeeded" else "failed"}',
                             profiles: ${writeValueAsString(profiles ?: "")},
-                            errorMessage: '$errorMessage'
+                            errorMessage: ${writeValueAsString(errorMessage)},
+                            notAcceptingNewCustomers: $notAcceptingNewCustomers
                         }
                 """.trimIndent()
 

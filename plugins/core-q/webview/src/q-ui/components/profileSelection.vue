@@ -7,6 +7,23 @@
                 <div class="title bottom-small-gap">Fetching Q Developer profiles...this may take a minute.</div>
             </template>
 
+            <template v-else-if="isNotAcceptingNewCustomers">
+                <div id="not-accepting-new-customers" class="profile-header">
+                    <div style="color: white; margin-bottom: 10px;">
+                        {{ errorMessage }}
+                    </div>
+                </div>
+                <div class="button-row">
+                    <button
+                        id="go-back"
+                        class="login-flow-button continue-button font-amazon"
+                        @click="handleGoBackClick()"
+                    >
+                        Go back
+                    </button>
+                </div>
+            </template>
+
             <template v-else>
                 <!-- Title & Subtitle -->
                 <div id="profile-page" class="profile-header">
@@ -83,11 +100,13 @@ export default defineComponent({
             availableProfiles: [] as Profile[],
             errorMessage: undefined as string | undefined,
             isRefreshing: false as boolean,
+            isNotAcceptingNewCustomers: false as boolean,
         }
     },
     computed: {
         isWaitingResponse() {
             this.errorMessage = ''
+            this.isNotAcceptingNewCustomers = false
             const profileResult = this.$store.state.listProfilesResult
             if (profileResult instanceof ListProfilePendingResult) {
                 return true
@@ -96,7 +115,14 @@ export default defineComponent({
             if (profileResult instanceof ListProfileSuccessResult) {
                 this.availableProfiles = profileResult.profiles
             } else if (profileResult instanceof ListProfileFailureResult) {
-                this.errorMessage = GENERIC_PROFILE_LOAD_ERROR
+                if (profileResult.notAcceptingNewCustomers) {
+                    // Permanent rejection: show the real service message, which explains why, and
+                    // offer only "Go back". The generic message and Try Again would both mislead.
+                    this.isNotAcceptingNewCustomers = true
+                    this.errorMessage = profileResult.errorMessage || GENERIC_PROFILE_LOAD_ERROR
+                } else {
+                    this.errorMessage = GENERIC_PROFILE_LOAD_ERROR
+                }
                 this.isRefreshing = false
             } else {
                 // should not be this path
@@ -130,6 +156,15 @@ export default defineComponent({
             window.ideApi.postMessage({command: 'listProfiles'})
         },
         handleSignoutClick() {
+            window.ideApi.postMessage({command: 'signout'})
+        },
+        /**
+         * Amazon Q Developer is no longer accepting this customer, so there is nothing to retry.
+         * Sign out to return the user to a neutral login screen. The IDE-side handler for this
+         * command already no-ops when no connection is present, so this is safe even if the
+         * connection was cleared while the error was being shown.
+         */
+        handleGoBackClick() {
             window.ideApi.postMessage({command: 'signout'})
         },
         openUrl() {

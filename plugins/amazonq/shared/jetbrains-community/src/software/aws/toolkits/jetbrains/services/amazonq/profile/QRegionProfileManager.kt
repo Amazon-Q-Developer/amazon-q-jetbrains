@@ -262,3 +262,41 @@ class QProfileState : BaseState() {
     @get:MapAnnotation
     val connectionIdToProfileList by map<String, Int>()
 }
+
+/**
+ * The [AccessDeniedException] reason meaning Amazon Q Developer is no longer accepting this
+ * customer. Compared as a raw string rather than via the generated
+ * [software.amazon.awssdk.services.codewhispererruntime.model.AccessDeniedExceptionReason] enum
+ * because the bundled service model does not (yet) declare this value, so
+ * [AccessDeniedException.reason] would resolve to `UNKNOWN_TO_SDK_VERSION` while
+ * [AccessDeniedException.reasonAsString] still returns the real wire value.
+ */
+private const val FEATURE_NOT_SUPPORTED_REASON = "FEATURE_NOT_SUPPORTED"
+
+/**
+ * Whether [throwable] (or anything in its cause chain) is Amazon Q Developer permanently rejecting
+ * this identity because it is no longer accepting new customers.
+ *
+ * This is a deliberate, permanent rejection rather than a transient failure, so callers should
+ * surface it distinctly instead of offering a retry that can never succeed.
+ *
+ * The match is intentionally narrow: it requires an actual [AccessDeniedException] whose reason is
+ * exactly [FEATURE_NOT_SUPPORTED_REASON]. Other modeled reasons -- notably
+ * `UNAUTHORIZED_CUSTOMIZATION_RESOURCE_ACCESS`, `UNAUTHORIZED_WORKSPACE_CONTEXT_FEATURE_ACCESS`
+ * and `TEMPORARILY_SUSPENDED` -- must NOT match, the last especially since it IS transient and
+ * needs to keep its retry affordance.
+ *
+ * The cause chain is walked because the exception surfaces through the resource cache, which may
+ * wrap it; a visited set guards against a self-referential or cyclic chain.
+ */
+fun isQDeveloperNotAcceptingNewCustomers(throwable: Throwable): Boolean {
+    val seen = mutableSetOf<Throwable>()
+    var current: Throwable? = throwable
+    while (current != null && seen.add(current)) {
+        if (current is AccessDeniedException && current.reasonAsString() == FEATURE_NOT_SUPPORTED_REASON) {
+            return true
+        }
+        current = current.cause
+    }
+    return false
+}

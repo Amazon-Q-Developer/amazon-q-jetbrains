@@ -14,7 +14,13 @@ export type ListProfilesMessageFromIde = {
     stage: Stage,
     status: 'succeeded' | 'failed' | 'pending',
     profiles: Profile[],
-    errorMessage: string
+    errorMessage: string,
+    /**
+     * True when the failure is Amazon Q Developer no longer accepting this customer
+     * (AccessDeniedException with reason FEATURE_NOT_SUPPORTED), as opposed to a generic or
+     * transient failure. Optional for backwards compatibility with payloads that omit it.
+     */
+    notAcceptingNewCustomers?: boolean
 }
 
 
@@ -76,7 +82,13 @@ export class ListProfileSuccessResult implements ListProfileResult {
 
 export class ListProfileFailureResult implements ListProfileResult {
     status: 'failed' = 'failed'
-    constructor(readonly errorMessage: string) {}
+    /**
+     * @param errorMessage the raw failure message from the IDE side.
+     * @param notAcceptingNewCustomers true when Amazon Q Developer is no longer accepting this
+     *        customer. This rejection is permanent, so the UI must show `errorMessage` verbatim
+     *        with a "Go back" action rather than the generic retryable error.
+     */
+    constructor(readonly errorMessage: string, readonly notAcceptingNewCustomers: boolean = false) {}
 }
 
 export class ListProfilePendingResult implements ListProfileResult {

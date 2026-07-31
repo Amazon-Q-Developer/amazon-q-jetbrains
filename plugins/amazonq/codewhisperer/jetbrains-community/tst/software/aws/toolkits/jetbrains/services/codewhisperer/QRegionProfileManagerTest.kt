@@ -22,8 +22,10 @@ import org.mockito.kotlin.whenever
 import software.amazon.awssdk.core.pagination.sync.SdkIterable
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.codewhispererruntime.CodeWhispererRuntimeClient
+import software.amazon.awssdk.services.codewhispererruntime.model.AccessDeniedException
 import software.amazon.awssdk.services.codewhispererruntime.model.ListAvailableProfilesRequest
 import software.amazon.awssdk.services.codewhispererruntime.model.Profile
+import software.amazon.awssdk.services.codewhispererruntime.model.ValidationException
 import software.amazon.awssdk.services.codewhispererruntime.paginators.ListAvailableProfilesIterable
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.region.AwsRegion
@@ -43,6 +45,7 @@ import software.amazon.q.jetbrains.utils.satisfiesKt
 import software.amazon.q.jetbrains.utils.xmlElement
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QEndpoints
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileResources
+import software.aws.toolkits.jetbrains.services.amazonq.profile.isQDeveloperNotAcceptingNewCustomers
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileState
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileSwitchIntent
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfile
@@ -428,5 +431,71 @@ class QRegionProfileManagerTest {
         val normalConnectionResult = sut.getIdcConnectionOrNull(project)
         assertThat(normalConnectionResult).isNotNull()
         assertThat(normalConnectionResult).isEqualTo(normalConn)
+    }
+
+    @Test
+    fun `isQDeveloperNotAcceptingNewCustomers matches AccessDeniedException with FEATURE_NOT_SUPPORTED`() {
+        val e = AccessDeniedException.builder()
+            .message("Amazon Q Developer is no longer accepting new customers.")
+            .reason("FEATURE_NOT_SUPPORTED")
+            .build()
+
+        assertThat(isQDeveloperNotAcceptingNewCustomers(e)).isTrue()
+    }
+
+    @Test
+    fun `isQDeveloperNotAcceptingNewCustomers does not match an unrelated AccessDeniedException reason`() {
+        // TEMPORARILY_SUSPENDED is transient and must keep its retry affordance, so it must not be
+        // mistaken for the permanent not-accepting-new-customers rejection.
+        val e = AccessDeniedException.builder()
+            .message("Account temporarily suspended.")
+            .reason("TEMPORARILY_SUSPENDED")
+            .build()
+
+        assertThat(isQDeveloperNotAcceptingNewCustomers(e)).isFalse()
+    }
+
+    @Test
+    fun `isQDeveloperNotAcceptingNewCustomers does not match AccessDeniedException with no reason`() {
+        val e = AccessDeniedException.builder()
+            .message("Access denied.")
+            .build()
+
+        assertThat(isQDeveloperNotAcceptingNewCustomers(e)).isFalse()
+    }
+
+    @Test
+    fun `isQDeveloperNotAcceptingNewCustomers does not match a different exception type`() {
+        // Guards against matching on shape alone: only a real AccessDeniedException should match,
+        // even if another exception carries the same message.
+        val e = ValidationException.builder()
+            .message("Amazon Q Developer is no longer accepting new customers.")
+            .build()
+
+        assertThat(isQDeveloperNotAcceptingNewCustomers(e)).isFalse()
+    }
+
+    @Test
+    fun `isQDeveloperNotAcceptingNewCustomers unwraps the cause chain`() {
+        // The exception surfaces through the resource cache, which may wrap it.
+        val root = AccessDeniedException.builder()
+            .message("Amazon Q Developer is no longer accepting new customers.")
+            .reason("FEATURE_NOT_SUPPORTED")
+            .build()
+        val wrapped = RuntimeException("wrapper", IllegalStateException("inner", root))
+
+        assertThat(isQDeveloperNotAcceptingNewCustomers(wrapped)).isTrue()
+    }
+
+    @Test
+    fun `isQDeveloperNotAcceptingNewCustomers tolerates a cyclic cause chain`() {
+        // A cyclic cause chain must terminate rather than loop forever. Self-causation is rejected
+        // by Throwable.initCause, so build a genuine two-node cycle: a -> b -> a.
+        val a = RuntimeException("a")
+        val b = RuntimeException("b")
+        a.initCause(b)
+        b.initCause(a)
+
+        assertThat(isQDeveloperNotAcceptingNewCustomers(a)).isFalse()
     }
 }
