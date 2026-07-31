@@ -10,6 +10,15 @@ exclude:
   - name: All
     paths:
       - .qodana
+  # UnusedSymbol is overwhelmingly false-positive on this codebase: DTOs are
+  # (de)serialized via Jackson/Gson, icons are loaded reflectively / from plugin.xml,
+  # and many symbols are platform entry points registered in plugin.xml. Accept the
+  # inspection at the config level rather than deleting reflectively-used code.
+  - name: UnusedSymbol
+  # UnstableApiUsage: the plugin necessarily uses platform APIs marked
+  # @ApiStatus.Internal/@Experimental (often the only way to access needed
+  # functionality; no stable alternative). Accept at config level.
+  - name: UnstableApiUsage
 dot-net:
   solution: ReSharper.AWS.sln
 include:
