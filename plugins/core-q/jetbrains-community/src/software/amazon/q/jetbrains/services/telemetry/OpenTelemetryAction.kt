@@ -67,7 +67,7 @@ class OpenTelemetryAction : DumbAwareAction() {
             val actionGroup = DefaultActionGroup(*consoleView.createConsoleActions())
             val toolbar = ActionManager.getInstance().createActionToolbar("AWS.TelemetryViewer", actionGroup, false)
 
-            toolbar.setTargetComponent(consoleComponent)
+            toolbar.targetComponent = consoleComponent
 
             panel.addToTop(filterPanel)
             panel.addToLeft(toolbar.component)

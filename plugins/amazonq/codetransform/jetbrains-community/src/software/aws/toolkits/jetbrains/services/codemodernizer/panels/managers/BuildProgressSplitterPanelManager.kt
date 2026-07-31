@@ -38,8 +38,8 @@ class BuildProgressSplitterPanelManager(private val project: Project) :
     var loadingPanel = LoadingPanel(project)
     var buildProgressStepDetailsPanel = BuildProgressStepDetailsPanel()
     val treeSelectionListener = TreeSelectionListener { e: TreeSelectionEvent? ->
-        if (statusTreePanel.tree.getLastSelectedPathComponent() != null) {
-            val selectedNode = statusTreePanel.tree.getLastSelectedPathComponent() as DefaultMutableTreeNode
+        if (statusTreePanel.tree.lastSelectedPathComponent != null) {
+            val selectedNode = statusTreePanel.tree.lastSelectedPathComponent as DefaultMutableTreeNode
             val userObject = selectedNode.userObject
             if (userObject is BuildProgressStepTreeItem) {
                 if (isValidStepClick(userObject.id) && userObject.transformationStepId != null) {

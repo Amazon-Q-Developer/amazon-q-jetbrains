@@ -39,7 +39,7 @@ class BuildProgressStepDetailsPanel : JPanel(BorderLayout()) {
     fun setDefaultUI() {
         val model = stepDetailsList.model as DefaultListModel
         model.removeAllElements()
-        stepDetailsList.setCellRenderer(CustomBuildProgressStepDetailCellRenderer())
+        stepDetailsList.cellRenderer = CustomBuildProgressStepDetailCellRenderer()
         stepDetailsList.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
         scrollPane.border = BorderFactory.createEmptyBorder(
             CodeModernizerUIConstants.SCROLL_PANEL.PADDING_TOP,
@@ -99,18 +99,18 @@ class BuildProgressStepDetailsPanel : JPanel(BorderLayout()) {
 
             val rowLayoutPanel = JPanel()
             rowLayoutPanel.apply {
-                setLayout(GridLayout(2, 1))
-                setAlignmentY(Component.CENTER_ALIGNMENT)
+                layout = GridLayout(2, 1)
+                alignmentY = Component.CENTER_ALIGNMENT
                 add(row1Text)
                 // We only show the text when the status
                 // is NOT working. This means success and
                 // error states will show text
                 if (it.status == BuildStepStatus.WORKING) {
                     // This layout centers the text in the row
-                    setLayout(GridLayout(1, 1))
+                    layout = GridLayout(1, 1)
                 } else {
                     add(row2Text)
-                    setLayout(GridLayout(2, 1))
+                    layout = GridLayout(2, 1)
                 }
                 repaint()
                 revalidate()

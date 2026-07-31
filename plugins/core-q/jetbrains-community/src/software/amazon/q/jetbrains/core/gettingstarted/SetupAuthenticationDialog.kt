@@ -159,19 +159,19 @@ class SetupAuthenticationDialog(
 
         idcTab.registerValidators(myDisposable) { validations ->
             if (selectedTab() == SetupAuthenticationTabs.IDENTITY_CENTER) {
-                setOKActionEnabled(validations.values.all { it.okEnabled })
+                isOKActionEnabled = validations.values.all { it.okEnabled }
             }
         }
 
         builderIdTab.registerValidators(myDisposable) { validations ->
             if (selectedTab() == SetupAuthenticationTabs.BUILDER_ID) {
-                setOKActionEnabled(validations.values.all { it.okEnabled })
+                isOKActionEnabled = validations.values.all { it.okEnabled }
             }
         }
 
         iamTab.registerValidators(myDisposable) { validations ->
             if (selectedTab() == SetupAuthenticationTabs.IAM_LONG_LIVED) {
-                setOKActionEnabled(validations.values.all { it.okEnabled })
+                isOKActionEnabled = validations.values.all { it.okEnabled }
             }
         }
 

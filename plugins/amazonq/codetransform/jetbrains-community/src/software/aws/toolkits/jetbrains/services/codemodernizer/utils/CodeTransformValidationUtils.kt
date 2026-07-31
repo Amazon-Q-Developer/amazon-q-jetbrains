@@ -12,7 +12,7 @@ fun isGradleProject(project: Project) = !GradleSettings.getInstance(project).lin
 fun getJavaVersionFromProjectSetting(project: Project): String? = project.tryGetJdk()?.toString()
 
 fun getMavenVersion(project: Project): String {
-    val mavenSettings = MavenProjectsManager.getInstance(project).getGeneralSettings()
+    val mavenSettings = MavenProjectsManager.getInstance(project).generalSettings
     // should be set to "Bundled (Maven X)" if setup instructions were followed
     return mavenSettings.getMavenHome() ?: "Unknown"
 }

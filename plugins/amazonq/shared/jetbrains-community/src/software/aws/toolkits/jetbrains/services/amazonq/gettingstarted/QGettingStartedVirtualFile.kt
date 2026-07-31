@@ -10,8 +10,8 @@ import software.aws.toolkits.resources.message
 class QGettingStartedVirtualFile : LightVirtualFile(
     message("q.onboarding.title")
 ) {
-    override fun toString() = "QGettingStartedVirtualFile[${getName()}]"
-    override fun getPath() = getName()
+    override fun toString() = "QGettingStartedVirtualFile[$name]"
+    override fun getPath() = name
     override fun isWritable() = false
     override fun isDirectory() = false
 

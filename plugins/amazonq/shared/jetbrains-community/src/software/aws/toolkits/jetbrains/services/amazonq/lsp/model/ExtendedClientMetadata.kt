@@ -83,7 +83,7 @@ fun createExtendedClientMetadata(project: Project): ExtendedClientMetadata {
                 )
             ),
             contextConfiguration = ContextConfiguration(
-                workspaceIdentifier = project.getBasePath()
+                workspaceIdentifier = project.basePath
             )
         )
     )
