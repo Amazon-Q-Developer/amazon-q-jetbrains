@@ -1,0 +1,8 @@
+{
+  "date" : "2026-07-31",
+  "version" : "4.6",
+  "entries" : [ {
+    "type" : "deprecation",
+    "description" : "An upcoming release will remove support for IDEs based on the 2025.1 and 2025.2 platforms"
+  } ]
+}
