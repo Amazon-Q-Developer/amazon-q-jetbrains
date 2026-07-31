@@ -149,11 +149,11 @@ class CodeWhispererLanguageManager {
             listOf("ps1", "psm1") to CodeWhispererPowershell.INSTANCE,
             listOf("r") to CodeWhispererR.INSTANCE,
             listOf("abap") to CodeWhispererAbap.INSTANCE,
-        ).map {
+        ).flatMap {
             val exts = it.first
             val lang = it.second
             exts.map { ext -> ext to lang }
-        }.flatten()
+        }
             .associateBy({ it.first }, { it.second })
     }
 }

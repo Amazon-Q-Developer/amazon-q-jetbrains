@@ -114,7 +114,7 @@ abstract class AbstractSpanBuilder<
         return this as BuilderType
     }
 
-    override fun <V : Any?> setAttribute(
+    override fun <V> setAttribute(
         key: AttributeKey<V?>,
         value: V & Any,
     ): BuilderType {

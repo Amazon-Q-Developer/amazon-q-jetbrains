@@ -15,9 +15,8 @@ class CodeWhispererCodeScanFilterGroup : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> =
         IssueSeverity.entries.map { FilterBySeverityAction(e, it.displayName) }.toTypedArray()
 
-    private class FilterBySeverityAction(event: AnActionEvent?, severity: String) : CheckboxAction() {
+    private class FilterBySeverityAction(event: AnActionEvent?, private val severity: String) : CheckboxAction() {
         override fun getActionUpdateThread() = ActionUpdateThread.BGT
-        private val severity = severity
 
         override fun isSelected(event: AnActionEvent): Boolean {
             val project = event.project ?: return false
