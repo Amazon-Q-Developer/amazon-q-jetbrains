@@ -45,12 +45,12 @@ import software.amazon.q.jetbrains.utils.satisfiesKt
 import software.amazon.q.jetbrains.utils.xmlElement
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QEndpoints
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileResources
-import software.aws.toolkits.jetbrains.services.amazonq.profile.isQDeveloperNotAcceptingNewCustomers
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileState
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileSwitchIntent
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfile
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileSelectedListener
+import software.aws.toolkits.jetbrains.services.amazonq.profile.isQDeveloperNotAcceptingNewCustomers
 import java.net.URI
 import java.util.function.Consumer
 import kotlin.test.fail
