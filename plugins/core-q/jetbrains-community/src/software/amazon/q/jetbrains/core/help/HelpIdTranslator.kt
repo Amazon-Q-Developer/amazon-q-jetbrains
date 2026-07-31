@@ -19,7 +19,7 @@ class HelpIdTranslator : WebHelpProvider() {
         const val DEFAULT_LOCATION = "https://docs.aws.amazon.com/console/toolkit-for-jetbrains"
         val LOGGER = getLogger<HelpIdTranslator>()
         private val HELP_REGISTRY by lazy {
-            HelpIds.values().asSequence().map { it.id to it.url }.toMap()
+            HelpIds.values().asSequence().associate { it.id to it.url }
         }
     }
 }

@@ -154,7 +154,7 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
                             "Status: ${createCodeScanResponse.status()} for request id: ${createCodeScanResponse.responseMetadata().requestId()}"
                     }
                 }
-                val errorMessage = createCodeScanResponse.errorMessage()?.let { it } ?: message("codewhisperer.codescan.run_scan_error_telemetry")
+                val errorMessage = createCodeScanResponse.errorMessage() ?: message("codewhisperer.codescan.run_scan_error_telemetry")
                 codeScanFailed(errorMessage)
             }
             val jobId = createCodeScanResponse.jobId()
@@ -191,7 +191,7 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
                                 "Status: ${getCodeScanResponse.status()} for request id: ${getCodeScanResponse.responseMetadata().requestId()}"
                         }
                     }
-                    val errorMessage = getCodeScanResponse.errorMessage()?.let { it } ?: message("codewhisperer.codescan.run_scan_error_telemetry")
+                    val errorMessage = getCodeScanResponse.errorMessage() ?: message("codewhisperer.codescan.run_scan_error_telemetry")
                     codeScanFailed(errorMessage)
                 }
             }

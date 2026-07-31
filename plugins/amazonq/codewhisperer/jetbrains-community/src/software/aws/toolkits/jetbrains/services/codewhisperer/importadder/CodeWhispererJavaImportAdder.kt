@@ -53,7 +53,6 @@ class CodeWhispererJavaImportAdder : CodeWhispererImportAdder() {
             } catch (e: IncorrectOperationException) {
                 return false
             }
-        if (addedImport !is PsiImportStatement) return false
-        return true
+        return addedImport is PsiImportStatement
     }
 }

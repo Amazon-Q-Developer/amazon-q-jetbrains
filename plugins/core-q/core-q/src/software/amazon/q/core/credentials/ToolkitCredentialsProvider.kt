@@ -83,9 +83,7 @@ abstract class CredentialIdentifierBase(override val credentialType: CredentialT
 
         other as CredentialIdentifierBase
 
-        if (id != other.id) return false
-
-        return true
+        return id == other.id
     }
 
     final override fun hashCode(): Int = id.hashCode()
@@ -112,9 +110,7 @@ class ToolkitCredentialsProvider(
 
         other as ToolkitCredentialsProvider
 
-        if (identifier != other.identifier) return false
-
-        return true
+        return identifier == other.identifier
     }
 
     override fun hashCode(): Int = identifier.hashCode()

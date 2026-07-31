@@ -60,8 +60,8 @@ class ChatSessionV1(
     override var conversationId: String? = null
 
     override fun chat(data: ChatRequestData): Flow<ChatResponseEvent> = callbackFlow {
-        var requestId: String = ""
-        var statusCode: Int = 0
+        var requestId = ""
+        var statusCode = 0
         val responseHandler = GenerateAssistantResponseResponseHandler.builder()
             .onResponse { response ->
                 requestId = response.responseMetadata().requestId()

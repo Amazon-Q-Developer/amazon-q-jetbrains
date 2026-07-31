@@ -31,7 +31,7 @@ class LocalAssetJBCefRequestHandler(jbCefBrowser: JBCefBrowserBase) : JBCefLocal
     private fun streamHandler(path: String, stream: InputStream) =
         JBCefStreamResourceHandler(
             stream,
-            if (path.endsWith(".wasm") == true) "application/wasm" else URLConnection.getFileNameMap().getContentTypeFor(path),
+            if (path.endsWith(".wasm")) "application/wasm" else URLConnection.getFileNameMap().getContentTypeFor(path),
             this
         )
 

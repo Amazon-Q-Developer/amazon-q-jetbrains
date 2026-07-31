@@ -367,7 +367,7 @@ class BuildProgressSplitterPanelManager(private val project: Project) :
     }
 
     // will be False for SQL conversions, which is what we want so that the (nonexistent) progressUpdates do not render
-    private fun haveProgressUpdates(plan: TransformationPlan): Boolean = plan.transformationSteps().any { it.progressUpdates().size > 0 }
+    private fun haveProgressUpdates(plan: TransformationPlan): Boolean = plan.transformationSteps().any { it.progressUpdates().isNotEmpty() }
 
     private fun isValidStepClick(stepId: ProgressStepId): Boolean = when (stepId) {
         ProgressStepId.PLAN_STEP -> true

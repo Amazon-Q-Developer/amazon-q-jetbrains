@@ -28,7 +28,7 @@ class AwsRegionProvider : ToolkitRegionProvider() {
             ?: BundledResources.ENDPOINTS_FILE.use { PartitionParser.parse(BundledResources.ENDPOINTS_FILE) }?.partitions
             ?: throw Exception("Failed to retrieve partitions.")
 
-        partitions.asSequence().associateBy { it.partition }.mapValues {
+        partitions.associateBy { it.partition }.mapValues {
             PartitionData(
                 it.value.partitionName,
                 it.value.services,

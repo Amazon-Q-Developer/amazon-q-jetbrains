@@ -112,7 +112,7 @@ class DetectedDiskSsoSessionConnection(
 private fun tokenConnection(provider: BearerTokenProvider, region: String) =
     TokenConnectionSettings(
         ToolkitBearerTokenProvider(provider),
-        AwsRegionProvider.getInstance().get(region) ?: error("Partition data is missing for $region")
+        AwsRegionProvider.getInstance()[region] ?: error("Partition data is missing for $region")
     )
 
 private fun disposeProviderIfRequired(settings: TokenConnectionSettings) {

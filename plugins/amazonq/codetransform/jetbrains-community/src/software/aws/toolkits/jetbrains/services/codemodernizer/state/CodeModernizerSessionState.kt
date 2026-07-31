@@ -54,7 +54,7 @@ class CodeModernizerSessionState {
 
     fun updateJobHistory(sessionContext: CodeModernizerSessionContext, newStatus: TransformationStatus, endTime: Instant) {
         val moduleName = getJobModuleName(sessionContext)
-        val jobStatus = previousJobHistory.get(moduleName) ?: throw CodeModernizerException("Unable to update the job history for $moduleName")
+        val jobStatus = previousJobHistory[moduleName] ?: throw CodeModernizerException("Unable to update the job history for $moduleName")
         val timeTaken = Duration.between(jobStatus.startTime, endTime)
         previousJobHistory[moduleName] = jobStatus.copy(status = newStatus.name, runTime = timeTaken)
     }

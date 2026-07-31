@@ -200,7 +200,7 @@ class DefaultConfigFilesFacade(
     private fun getCorrespondingSsoSessionProfilePosition(updatedArray: List<String>, sessionName: String): List<String> {
         var content = updatedArray
         val finalContent = mutableListOf<String>()
-        while (content.size > 0) {
+        while (content.isNotEmpty()) {
             val sessionProfile = checkIfProfileIsPartOfSession(content, sessionName)
             if (sessionProfile != null) { // There is atleast one profile with the prefix matching the session name
                 if (sessionProfile.shouldBeWrittenToConfig) {
