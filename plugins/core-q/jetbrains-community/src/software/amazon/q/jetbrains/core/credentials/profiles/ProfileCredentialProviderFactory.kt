@@ -258,7 +258,7 @@ class ProfileCredentialProviderFactory(private val ssoCache: SsoCache = diskCach
                 return@forEach
             }
 
-            val sessionProperty = profile.property(SsoSessionConstants.PROFILE_SSO_SESSION_PROPERTY)
+            val sessionProperty = profile.property(PROFILE_SSO_SESSION_PROPERTY)
             if (sessionProperty.isPresent) {
                 val session = sessionProperty.get()
                 if (ssoModified.any { it.profileName == session }) {
@@ -365,7 +365,7 @@ class ProfileCredentialProviderFactory(private val ssoCache: SsoCache = diskCach
     private fun createLegacySsoProvider(profile: Profile): AwsCredentialsProvider = ProfileLegacySsoProvider(ssoCache, profile)
 
     private fun createSsoSessionProfileProvider(profile: Profile): AwsCredentialsProvider {
-        val ssoSessionName = profile.requiredProperty(SsoSessionConstants.PROFILE_SSO_SESSION_PROPERTY)
+        val ssoSessionName = profile.requiredProperty(PROFILE_SSO_SESSION_PROPERTY)
         val ssoSession = profileHolder.getSsoSession(ssoSessionName)
             ?: error("Profile ${profile.name()} refers to sso-session $ssoSessionName which appears to have been removed")
 
@@ -444,7 +444,7 @@ class ProfileCredentialProviderFactory(private val ssoCache: SsoCache = diskCach
             )
             this.requiresSso() -> ProfileCredentialsIdentifierSso(
                 name,
-                requiredProperty(SsoSessionConstants.PROFILE_SSO_SESSION_PROPERTY),
+                requiredProperty(PROFILE_SSO_SESSION_PROPERTY),
                 defaultRegion,
                 requestedProfileType
             )
@@ -465,7 +465,7 @@ class ProfileCredentialProviderFactory(private val ssoCache: SsoCache = diskCach
     private fun Profile.requiresLegacySso(profiles: Map<String, Profile>) = this.traverseCredentialChain(profiles)
         .any { it.propertyExists(ProfileProperty.SSO_START_URL) }
 
-    private fun Profile.requiresSso() = propertyExists(SsoSessionConstants.PROFILE_SSO_SESSION_PROPERTY)
+    private fun Profile.requiresSso() = propertyExists(PROFILE_SSO_SESSION_PROPERTY)
 
     companion object {
         private val LOG = getLogger<ProfileCredentialProviderFactory>()
@@ -479,7 +479,7 @@ class ProfileCredentialProviderFactory(private val ssoCache: SsoCache = diskCach
 
 private fun Profile.toCredentialType(): CredentialType? = when {
     this.propertyExists(ProfileProperty.SSO_START_URL) -> CredentialType.SsoProfile
-    this.propertyExists(SsoSessionConstants.PROFILE_SSO_SESSION_PROPERTY) -> CredentialType.SsoProfile
+    this.propertyExists(PROFILE_SSO_SESSION_PROPERTY) -> CredentialType.SsoProfile
     this.propertyExists(ProfileProperty.ROLE_ARN) -> {
         if (this.propertyExists(ProfileProperty.MFA_SERIAL)) {
             CredentialType.AssumeMfaRoleProfile

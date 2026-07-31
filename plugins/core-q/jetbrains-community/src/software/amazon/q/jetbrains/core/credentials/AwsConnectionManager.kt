@@ -338,7 +338,7 @@ sealed class ConnectionState(val displayMessage: String, val isTerminal: Boolean
         override val actions: List<AnAction> = listOf()
     }
 
-    class InvalidConnection(private val cause: Exception) :
+    class InvalidConnection(cause: Exception) :
         ConnectionState(
             AwsCoreBundle.message("settings.states.invalid", ExceptionUtil.getMessage(cause) ?: ExceptionUtil.getThrowableText(cause)),
             isTerminal = true

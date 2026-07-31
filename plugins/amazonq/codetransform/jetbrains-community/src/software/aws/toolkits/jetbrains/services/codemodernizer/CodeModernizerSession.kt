@@ -518,21 +518,21 @@ class CodeModernizerSession(
                 result.state == TransformationStatus.FAILED -> {
                     if (!passedStart) {
                         val failureReason = result.jobDetails?.reason() ?: message("codemodernizer.notification.warn.unknown_start_failure")
-                        return CodeModernizerJobCompletedResult.JobFailed(jobId, failureReason)
+                        CodeModernizerJobCompletedResult.JobFailed(jobId, failureReason)
                     } else if (!passedBuild) {
                         // This is a short term solution to check if build log is available by attempting to download it.
                         // In the long term, we should check if build log is available from transformation metadata.
                         val downloadArtifactResult = artifactHandler.downloadArtifact(jobId, TransformationDownloadArtifactType.LOGS, true)
                         if (downloadArtifactResult is DownloadArtifactResult.Success) {
                             val failureReason = result.jobDetails?.reason() ?: message("codemodernizer.notification.warn.maven_failed.content")
-                            return CodeModernizerJobCompletedResult.JobFailedInitialBuild(jobId, failureReason, true)
+                            CodeModernizerJobCompletedResult.JobFailedInitialBuild(jobId, failureReason, true)
                         } else {
                             val failureReason = result.jobDetails?.reason() ?: message("codemodernizer.notification.warn.maven_failed.content")
-                            return CodeModernizerJobCompletedResult.JobFailedInitialBuild(jobId, failureReason, false)
+                            CodeModernizerJobCompletedResult.JobFailedInitialBuild(jobId, failureReason, false)
                         }
                     } else {
                         val failureReason = result.jobDetails?.reason() ?: message("codemodernizer.notification.warn.unknown_status_response")
-                        return CodeModernizerJobCompletedResult.JobFailed(jobId, failureReason)
+                        CodeModernizerJobCompletedResult.JobFailed(jobId, failureReason)
                     }
                 }
 
@@ -568,7 +568,7 @@ class CodeModernizerSession(
         return if (transformationId != null) {
             // Means job exists in backend, and we have to call the stop api
             clientAdaptor.stopTransformation(transformationId)
-            return true
+            true
         } else {
             true // We did not yet call the start API so no need to call the stop job api
         }
