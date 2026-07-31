@@ -52,16 +52,12 @@ class ConfirmUserCodeLoginDialog(
         }
     }
 
-    override fun createCenterPanel(): JComponent? = pane
+    override fun createCenterPanel(): JComponent = pane
 
     init {
         title = dialogTitle
         setOKButtonText(AwsCoreBundle.message("aws.sso.signing.device.code"))
         super.init()
-    }
-
-    override fun doCancelAction() {
-        super.doCancelAction()
     }
 }
 

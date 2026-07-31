@@ -10,10 +10,7 @@ import java.awt.Rectangle
 import kotlin.math.max
 
 class CodeWhispererInlayBlockRenderer(myValue: String) : CodeWhispererInlayRenderer(myValue) {
-    private val myLines: List<String>
-    init {
-        myLines = myValue.split("\n")
-    }
+    private val myLines: List<String> = myValue.split("\n")
 
     override fun calcWidthInPixels(inlay: Inlay<*>): Int {
         val fontMetrics = getFontInfo(inlay.editor).fontMetrics()

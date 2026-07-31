@@ -9,7 +9,7 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * The persistent state for the [CodeModernizerTelemetryManager] as such should only be accessed by [CodeModernizerTelemetryManager].
+ * The persistent state for the `CodeModernizerTelemetryManager` as such should only be accessed by `CodeModernizerTelemetryManager`.
  */
 class CodeTransformTelemetryState {
     private val mainState = CodeModernizerTelemetryStateBase()

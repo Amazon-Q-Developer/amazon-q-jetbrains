@@ -7,14 +7,14 @@ import software.amazon.awssdk.services.codewhispererruntime.model.AccessDeniedEx
 import software.amazon.awssdk.services.codewhispererruntime.model.CodeWhispererRuntimeException
 
 object CustomizationConstants {
-    private const val noAccessToCustomizationMessage = "Your account is not authorized to use CodeWhisperer Enterprise."
-    private const val invalidCustomizationMessage = "You are not authorized to access"
+    private const val NO_ACCESS_TO_CUSTOMIZATION_MESSAGE = "Your account is not authorized to use CodeWhisperer Enterprise."
+    private const val INVALID_CUSTOMIZATION_MESSAGE = "You are not authorized to access"
 
     val noAccessToCustomizationExceptionPredicate: (e: Exception) -> Boolean = { e ->
         if (e !is CodeWhispererRuntimeException) {
             false
         } else {
-            e is AccessDeniedException && (e.message?.contains(noAccessToCustomizationMessage, ignoreCase = true) ?: false)
+            e is AccessDeniedException && (e.message?.contains(NO_ACCESS_TO_CUSTOMIZATION_MESSAGE, ignoreCase = true) ?: false)
         }
     }
 
@@ -27,5 +27,5 @@ object CustomizationConstants {
     }
 
     fun isInvalidCustomizationMessage(m: String): Boolean =
-        m.contains(invalidCustomizationMessage, ignoreCase = true) && m.contains(":customization/")
+        m.contains(INVALID_CUSTOMIZATION_MESSAGE, ignoreCase = true) && m.contains(":customization/")
 }

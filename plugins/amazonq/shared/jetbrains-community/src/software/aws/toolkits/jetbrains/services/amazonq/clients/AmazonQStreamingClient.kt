@@ -36,16 +36,12 @@ class AmazonQStreamingClient(private val project: Project) {
          * Useful for cases where some exception handling is needed. e.g. log data or send telemetry.
          *
          * The client will then raise the exception to the callee.
-         *
-         * @param e exception thrown by the streaming client.
          */
         onError: (e: Exception) -> Unit,
         /**
          * Handler for extra logic after streaming ends.
          *
          * Useful for cases where some exception handling is needed. e.g. log data or send telemetry.
-         *
-         * @param startTime exception thrown by the streaming client.
          */
         onStreamingFinished: (startTime: Instant) -> Unit,
     ): MutableList<ByteArray> {

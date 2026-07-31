@@ -9,7 +9,7 @@ import com.intellij.ui.LayeredIcon
 import javax.swing.Icon
 
 /**
- * Lives in `icons` package due to that is how [com.intellij.openapi.util.IconLoader.getReflectiveIcon] works
+ * Lives in `icons` package due to that is how `com.intellij.openapi.util.IconLoader.getReflectiveIcon` works
  */
 @Deprecated("Plugin-specific icons should not be declared in shared icons")
 object AwsIcons {
