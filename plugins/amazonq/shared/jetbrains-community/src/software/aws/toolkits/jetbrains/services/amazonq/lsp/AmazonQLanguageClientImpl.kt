@@ -4,6 +4,7 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.lsp
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.BrowserUtil
@@ -71,9 +72,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowO
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowSaveFileDialogParams
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowSaveFileDialogResult
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.ConnectionMetadata
-import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.MESSAGE_TYPE_ERROR
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.Q_DEV_ACCESS_BLOCKED_NOTIFICATION_ID
-import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.Q_DEV_NOTIFICATION_TITLE
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.ShowNotificationParams
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.LspEditorUtil
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.TelemetryParsingUtil
@@ -87,6 +86,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -464,12 +464,36 @@ class AmazonQLanguageClientImpl(private val project: Project) : AmazonQLanguageC
      * unrelated notifications, and should be dropped once a server carrying the id is the minimum
      * supported version.
      */
-    private fun isQDevAccessBlockedNotification(params: ShowNotificationParams): Boolean {
-        if (params.id == Q_DEV_ACCESS_BLOCKED_NOTIFICATION_ID) {
-            return true
+    /**
+     * The id the server set, recovered from what the client actually receives.
+     *
+     * The runtime does not forward the server's id verbatim: RouterByServerName replaces it with
+     * base64 of {"serverName":...,"id":...} so followups can be routed back to the originating server.
+     * The server's own id is therefore only reachable by decoding that envelope. Falls back to the raw
+     * value so a server sending a plain id still matches.
+     */
+    private fun serverNotificationId(id: String?): String? {
+        if (id == null) {
+            return null
         }
-        return params.type == MESSAGE_TYPE_ERROR && params.content?.title == Q_DEV_NOTIFICATION_TITLE
+
+        return try {
+            val decoded = String(Base64.getDecoder().decode(id), StandardCharsets.UTF_8)
+            jacksonObjectMapper().readTree(decoded)?.get("id")?.asText() ?: id
+        } catch (e: Exception) {
+            // Not an envelope; treat the value as the id itself.
+            id
+        }
     }
+
+    /**
+     * Matches on the id only. Matching on the title was tried and rejected: acting on this
+     * notification signs the user out, and "Amazon Q Developer" is a plausible title for any future
+     * error the server sends, so a text match would eventually sign out a working user. Every server
+     * able to deliver a notification at all sends the id, so there is nothing to fall back for.
+     */
+    private fun isQDevAccessBlockedNotification(params: ShowNotificationParams): Boolean =
+        serverNotificationId(params.id) == Q_DEV_ACCESS_BLOCKED_NOTIFICATION_ID
 
     override fun sendChatUpdate(params: LSPAny) {
         chatManager.notifyUi(

@@ -239,6 +239,10 @@ class QRegionProfileManager : PersistentStateComponent<QProfileState>, Disposabl
      * for every user. After a restart the user is signed out and sees the normal login screen; if they
      * sign in with the same identity the block is reported again within seconds.
      */
+    // Volatile because the write comes from the language server's notification thread while the reads
+    // happen on the EDT (prepareBrowser) and on pooled threads (handleListProfilesMessage). Without it
+    // a reader may never observe the write, which would silently disable the whole feature.
+    @Volatile
     var qDevAccessBlockedMessage: String? = null
         private set
 

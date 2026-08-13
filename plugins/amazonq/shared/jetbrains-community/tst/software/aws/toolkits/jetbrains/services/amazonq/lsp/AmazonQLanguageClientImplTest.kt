@@ -18,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.slot
+import io.mockk.spyk
 import io.mockk.verify
 import migration.software.amazon.q.jetbrains.settings.AwsSettings
 import org.assertj.core.api.Assertions.assertThat
@@ -36,9 +37,13 @@ import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.ConnectionMetadata
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.SsoProfileData
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.ShowNotificationContent
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.ShowNotificationParams
+import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererCustomization
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
 import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
+import java.util.Base64
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -507,4 +512,64 @@ class AmazonQLanguageClientImplTest {
             }
         }
     )
+
+    /**
+     * The runtime does not deliver the server's notification id verbatim -- RouterByServerName replaces
+     * it with base64 of {"serverName":...,"id":...} so followups can be routed back. Tests must send
+     * what the client actually receives, or they pass against a shape that never reaches production.
+     */
+    private fun routedId(id: String): String =
+        Base64.getEncoder().encodeToString("""{"serverName":"Server","id":"$id"}""".toByteArray())
+
+    private fun blockedNotification(id: String?, text: String?, title: String? = "Amazon Q Developer") =
+        ShowNotificationParams(id = id, type = 1, content = ShowNotificationContent(title = title, text = text))
+
+    @Test
+    fun `showNotification records the block when the routed id matches`() {
+        val profileManager = spyk(QRegionProfileManager())
+        mockkObject(QRegionProfileManager)
+        every { QRegionProfileManager.getInstance() } returns profileManager
+
+        sut.showNotification(blockedNotification(routedId("qDevPluginAccessBlocked"), "Visit https://kiro.dev/"))
+
+        // Stored verbatim: it is the service's own copy and the only thing telling the user what to do.
+        assertThat(profileManager.qDevAccessBlockedMessage).isEqualTo("Visit https://kiro.dev/")
+    }
+
+    @Test
+    fun `showNotification ignores an unrelated error notification that shares the title`() {
+        val profileManager = spyk(QRegionProfileManager())
+        mockkObject(QRegionProfileManager)
+        every { QRegionProfileManager.getInstance() } returns profileManager
+
+        // Regression guard for the removed title matching. Acting on this notification signs the user
+        // out, so a lookalike must not match -- "Amazon Q Developer" is a plausible title for any future
+        // error the server sends, and matching it would sign out a working user.
+        sut.showNotification(blockedNotification(routedId("someOtherNotification"), "Something else failed"))
+
+        assertThat(profileManager.qDevAccessBlockedMessage).isNull()
+    }
+
+    @Test
+    fun `showNotification ignores a notification with no id`() {
+        val profileManager = spyk(QRegionProfileManager())
+        mockkObject(QRegionProfileManager)
+        every { QRegionProfileManager.getInstance() } returns profileManager
+
+        sut.showNotification(blockedNotification(null, "Visit https://kiro.dev/"))
+
+        assertThat(profileManager.qDevAccessBlockedMessage).isNull()
+    }
+
+    @Test
+    fun `showNotification does not record a block with no message`() {
+        val profileManager = spyk(QRegionProfileManager())
+        mockkObject(QRegionProfileManager)
+        every { QRegionProfileManager.getInstance() } returns profileManager
+
+        // Signing the user out with no explanation to show would be strictly worse than doing nothing.
+        sut.showNotification(blockedNotification(routedId("qDevPluginAccessBlocked"), "   "))
+
+        assertThat(profileManager.qDevAccessBlockedMessage).isNull()
+    }
 }

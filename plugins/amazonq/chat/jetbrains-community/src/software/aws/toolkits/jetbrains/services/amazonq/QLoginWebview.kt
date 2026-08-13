@@ -304,15 +304,7 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
         // screen; sending status 'failed' with notAcceptingNewCustomers selects that branch directly,
         // so no profile listing is attempted and no second copy of the UI is needed.
         if (qDevAccessBlockedMessage != null) {
-            val blockedJson = """
-                    {
-                        stage: 'PROFILE_SELECT',
-                        status: 'failed',
-                        profiles: ${writeValueAsString(emptyList<QRegionProfile>())},
-                        errorMessage: ${writeValueAsString(qDevAccessBlockedMessage)},
-                        notAcceptingNewCustomers: true
-                    }
-            """.trimIndent()
+            val blockedJson = buildProfileSelectPayload(null, qDevAccessBlockedMessage, notAcceptingNewCustomers = true)
             executeJS("window.ideClient.prepareUi($blockedJson)")
             return
         }
@@ -363,6 +355,30 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
         jcefBrowser.loadURL(assetHandler.createResource("content.html", getWebviewHTML(webScriptUri, query)))
     }
 
+    /**
+     * The one place the PROFILE_SELECT payload is built. Three call sites need it (initial prepare,
+     * the profile listing, and the access-blocked short-circuit) and they previously each inlined it,
+     * which had already drifted: two serialized `profiles` as an empty list and one as an empty
+     * string, for a field the webview types as an array.
+     *
+     * errorMessage is serialized rather than interpolated into a quoted literal because it now carries
+     * real service messages, which may contain apostrophes or quotes that would otherwise break out of
+     * the JS string and produce a syntax error in prepareUi().
+     */
+    private fun buildProfileSelectPayload(
+        profiles: List<QRegionProfile>?,
+        errorMessage: String,
+        notAcceptingNewCustomers: Boolean,
+    ): String = """
+        {
+            stage: 'PROFILE_SELECT',
+            status: '${if (profiles != null) "succeeded" else "failed"}',
+            profiles: ${writeValueAsString(profiles ?: emptyList<QRegionProfile>())},
+            errorMessage: ${writeValueAsString(errorMessage)},
+            notAcceptingNewCustomers: $notAcceptingNewCustomers
+        }
+    """.trimIndent()
+
     private fun handleListProfilesMessage() {
         ApplicationManager.getApplication().executeOnPooledThread {
             // When access is blocked there is nothing to list, so report the stored service message
@@ -374,15 +390,7 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
             val blockedMessage = QRegionProfileManager.getInstance().qDevAccessBlockedMessage
             if (blockedMessage != null) {
                 runInEdt {
-                    val blockedData = """
-                            {
-                                stage: 'PROFILE_SELECT',
-                                status: 'failed',
-                                profiles: ${writeValueAsString("")},
-                                errorMessage: ${writeValueAsString(blockedMessage)},
-                                notAcceptingNewCustomers: true
-                            }
-                    """.trimIndent()
+                    val blockedData = buildProfileSelectPayload(null, blockedMessage, notAcceptingNewCustomers = true)
 
                     executeJS("window.ideClient.prepareUi($blockedData)")
                 }
@@ -427,15 +435,7 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
                 // errorMessage is serialized rather than interpolated into a quoted literal: it now
                 // carries real service messages, which may contain apostrophes or quotes that would
                 // otherwise break out of the JS string and produce a syntax error in prepareUi().
-                val jsonData = """
-                        {
-                            stage: 'PROFILE_SELECT',
-                            status: '${if (profiles != null) "succeeded" else "failed"}',
-                            profiles: ${writeValueAsString(profiles ?: "")},
-                            errorMessage: ${writeValueAsString(errorMessage)},
-                            notAcceptingNewCustomers: $notAcceptingNewCustomers
-                        }
-                """.trimIndent()
+                val jsonData = buildProfileSelectPayload(profiles, errorMessage, notAcceptingNewCustomers)
 
                 executeJS("window.ideClient.prepareUi($jsonData)")
             }

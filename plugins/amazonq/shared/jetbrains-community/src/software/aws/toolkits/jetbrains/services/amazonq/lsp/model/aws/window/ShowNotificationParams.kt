@@ -5,16 +5,6 @@ package software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window
 
 const val SHOW_NOTIFICATION_NOTIFICATION_METHOD = "aws/window/showNotification"
 
-/** MessageType.Error from the LSP spec. */
-const val MESSAGE_TYPE_ERROR = 1
-
-/**
- * Title the language server sets on the Amazon Q Developer access-blocked notification.
- *
- * See [ShowNotificationParams] for why this is currently needed.
- */
-const val Q_DEV_NOTIFICATION_TITLE = "Amazon Q Developer"
-
 /**
  * Stable identifier the language server is expected to set on the access-blocked notification.
  * Preferred over matching on text, since it is the only part of the payload intended to be
