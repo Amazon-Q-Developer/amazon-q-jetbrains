@@ -10,8 +10,6 @@ import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileChooser.FileChooser
@@ -48,7 +46,8 @@ import software.amazon.q.core.utils.info
 import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
-import software.amazon.q.jetbrains.core.credentials.actions.SsoLogoutAction
+import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManagerListener
+import software.amazon.q.jetbrains.core.credentials.logoutFromSsoConnection
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
 import software.amazon.q.jetbrains.utils.getCleanedContent
@@ -446,9 +445,14 @@ class AmazonQLanguageClientImpl(private val project: Project) : AmazonQLanguageC
             val connectionToSignOut = connection ?: return
 
             runInEdt {
-                SsoLogoutAction(connectionToSignOut).actionPerformed(
-                    AnActionEvent.createFromDataContext("qBrowser", null, DataContext.EMPTY_CONTEXT)
-                )
+                // Deliberately not SsoLogoutAction: it is a user-facing action, so it emits a
+                // "signOut" UI-click metric that would misattribute this to the user, and for
+                // profile-managed IdC connections it opens a confirmation dialog. Neither fits a
+                // sign-out the service has forced. This is the same work that action performs.
+                logoutFromSsoConnection(project, connectionToSignOut)
+                ApplicationManager.getApplication().messageBus
+                    .syncPublisher(ToolkitConnectionManagerListener.TOPIC)
+                    .activeConnectionChanged(null)
             }
         } catch (e: Exception) {
             // Must never throw: this runs on the LSP notification dispatch thread, and a failure here
