@@ -10,7 +10,10 @@
             <template v-else-if="isNotAcceptingNewCustomers">
                 <div id="not-accepting-new-customers" class="profile-header">
                     <div style="color: white; margin-bottom: 10px;">
-                        {{ errorMessage }}
+                        <template v-for="(segment, index) in errorMessageSegments" :key="index"
+                            ><a v-if="segment.url" @click.prevent="openExternalUrl(segment.url)">{{ segment.text }}</a
+                            ><template v-else>{{ segment.text }}</template></template
+                        >
                     </div>
                 </div>
                 <div class="button-row">
@@ -104,6 +107,36 @@ export default defineComponent({
         }
     },
     computed: {
+        /**
+         * Splits the message into plain-text and URL segments so URLs render as clickable links. The
+         * message is the service's own copy and the URL is the action the user has to take, which is
+         * useless as inert text.
+         *
+         * Deliberately not v-html: the string comes from a service response, and rendering it as
+         * markup would let that response inject into the login webview.
+         */
+        errorMessageSegments(): { text: string; url?: string }[] {
+            const message = String(this.errorMessage ?? '')
+            const segments: { text: string; url?: string }[] = []
+            // Trailing ),.,: etc. are almost always sentence punctuation rather than part of the URL.
+            const urlPattern = /https?:\/\/[^\s<>"']*[^\s<>"'.,:;!?)\]}]/g
+            let lastIndex = 0
+
+            for (const match of message.matchAll(urlPattern)) {
+                const start = match.index ?? 0
+                if (start > lastIndex) {
+                    segments.push({text: message.slice(lastIndex, start)})
+                }
+                segments.push({text: match[0], url: match[0]})
+                lastIndex = start + match[0].length
+            }
+
+            if (lastIndex < message.length) {
+                segments.push({text: message.slice(lastIndex)})
+            }
+
+            return segments
+        },
         isWaitingResponse() {
             this.errorMessage = ''
             this.isNotAcceptingNewCustomers = false
@@ -166,6 +199,13 @@ export default defineComponent({
          */
         handleGoBackClick() {
             window.ideApi.postMessage({command: 'signout'})
+        },
+        openExternalUrl(externalLink: string) {
+            // Links must go through the IDE rather than the embedded browser, same as openUrl below.
+            window.ideApi.postMessage({
+                command: 'openUrl',
+                externalLink
+            })
         },
         openUrl() {
             window.ideApi.postMessage({

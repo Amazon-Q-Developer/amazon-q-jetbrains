@@ -184,12 +184,15 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
             }
 
             is BrowserMessage.Signout -> {
-                (
-                    ToolkitConnectionManager.getInstance(project)
-                        .activeConnectionForFeature(QConnection.getInstance()) as? AwsBearerTokenConnection
-                    )?.let { connection ->
+                // Dismissing the blocked screen routes here, so clear the blocked state as part of
+                // signing out; otherwise the persisted flag would pin the user to that screen and
+                // they could never try a different account.
+                QRegionProfileManager.getInstance().clearQDevAccessBlocked()
+                val activeConnection = ToolkitConnectionManager.getInstance(project)
+                    .activeConnectionForFeature(QConnection.getInstance()) as? AwsBearerTokenConnection
+                if (activeConnection != null) {
                     runInEdt {
-                        SsoLogoutAction(connection).actionPerformed(
+                        SsoLogoutAction(activeConnection).actionPerformed(
                             AnActionEvent.createFromDataContext(
                                 "qBrowser",
                                 null,
@@ -197,6 +200,12 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
                             )
                         )
                     }
+                } else {
+                    // Reacting to the block already signed the user out, so this is the normal path for
+                    // Go back rather than an edge case. Signing out is what would otherwise re-render
+                    // the webview, so without driving it explicitly the user stays on the blocked
+                    // screen even though the state behind it has been cleared.
+                    prepareBrowser(BrowserState(FeatureId.AmazonQ, false))
                 }
             }
 
@@ -275,12 +284,37 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
             writeValueAsString(it)
         }
 
-        val stage = if (isQExpired(project)) {
+        // A blocked identity has to win over every other stage. It is otherwise indistinguishable
+        // here: a blocked Builder ID user is connected, unexpired and has no profile to select, so
+        // the checks below resolve to START and the customer is returned to a sign-in screen with no
+        // explanation of why the previous attempt achieved nothing.
+        val qDevAccessBlockedMessage = QRegionProfileManager.getInstance().qDevAccessBlockedMessage
+
+        val stage = if (qDevAccessBlockedMessage != null) {
+            "PROFILE_SELECT"
+        } else if (isQExpired(project)) {
             "REAUTH"
         } else if (isQConnected(project) && QRegionProfileManager.getInstance().isPendingProfileSelection(project)) {
             "PROFILE_SELECT"
         } else {
             "START"
+        }
+
+        // Reuses the PROFILE_SELECT stage because profileSelection.vue already owns the blocked
+        // screen; sending status 'failed' with notAcceptingNewCustomers selects that branch directly,
+        // so no profile listing is attempted and no second copy of the UI is needed.
+        if (qDevAccessBlockedMessage != null) {
+            val blockedJson = """
+                    {
+                        stage: 'PROFILE_SELECT',
+                        status: 'failed',
+                        profiles: ${writeValueAsString(emptyList<QRegionProfile>())},
+                        errorMessage: ${writeValueAsString(qDevAccessBlockedMessage)},
+                        notAcceptingNewCustomers: true
+                    }
+            """.trimIndent()
+            executeJS("window.ideClient.prepareUi($blockedJson)")
+            return
         }
 
         when (stage) {
@@ -331,6 +365,30 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
 
     private fun handleListProfilesMessage() {
         ApplicationManager.getApplication().executeOnPooledThread {
+            // When access is blocked there is nothing to list, so report the stored service message
+            // instead of calling the profile API. Relying on that call to surface the block does not
+            // work for the affected population: profiles are an IdC concept, so for Builder ID
+            // listRegionProfiles returns null WITHOUT throwing, leaving nothing to classify and
+            // rendering the generic "couldn't load your profiles" error with a Try Again that can
+            // never succeed.
+            val blockedMessage = QRegionProfileManager.getInstance().qDevAccessBlockedMessage
+            if (blockedMessage != null) {
+                runInEdt {
+                    val blockedData = """
+                            {
+                                stage: 'PROFILE_SELECT',
+                                status: 'failed',
+                                profiles: ${writeValueAsString("")},
+                                errorMessage: ${writeValueAsString(blockedMessage)},
+                                notAcceptingNewCustomers: true
+                            }
+                    """.trimIndent()
+
+                    executeJS("window.ideClient.prepareUi($blockedData)")
+                }
+                return@executeOnPooledThread
+            }
+
             var errorMessage = ""
             var notAcceptingNewCustomers = false
             val profiles = try {

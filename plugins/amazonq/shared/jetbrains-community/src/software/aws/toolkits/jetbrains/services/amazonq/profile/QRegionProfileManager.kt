@@ -227,6 +227,33 @@ class QRegionProfileManager : PersistentStateComponent<QProfileState>, Disposabl
         fun getInstance(): QRegionProfileManager = service<QRegionProfileManager>()
     }
 
+    /**
+     * Set when the language server reports that RTS has blocked Q Developer plugin access for this
+     * identity. Holds the service's own message, which is shown verbatim: FEATURE_NOT_SUPPORTED is
+     * reused across several RTS gates, so only the message says why and what to do about it.
+     *
+     * Deliberately in-memory rather than part of [QProfileState]. The whole sequence -- observe the
+     * block, sign out, show the message on the login screen -- happens inside one IDE session, so
+     * persistence buys only that the message survives a restart. That is not worth adding a field to
+     * a persisted component shared with profile state: it changes that component's serialized shape
+     * for every user. After a restart the user is signed out and sees the normal login screen; if they
+     * sign in with the same identity the block is reported again within seconds.
+     */
+    var qDevAccessBlockedMessage: String? = null
+        private set
+
+    fun setQDevAccessBlocked(message: String) {
+        qDevAccessBlockedMessage = message
+    }
+
+    /**
+     * Recovery path, and required rather than optional: without it an identity that later becomes
+     * eligible -- or one misclassified -- would be pinned to the blocked screen with no way out.
+     */
+    fun clearQDevAccessBlocked() {
+        qDevAccessBlockedMessage = null
+    }
+
     override fun dispose() {}
 
     override fun getState(): QProfileState {

@@ -31,6 +31,8 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowO
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowSaveFileDialogParams
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowSaveFileDialogResult
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.ConnectionMetadata
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.SHOW_NOTIFICATION_NOTIFICATION_METHOD
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.ShowNotificationParams
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -40,6 +42,13 @@ import java.util.concurrent.CompletableFuture
 interface AmazonQLanguageClient : LanguageClient {
     @JsonRequest("aws/credentials/getConnectionMetadata")
     fun getConnectionMetadata(): CompletableFuture<ConnectionMetadata>
+
+    /**
+     * Sent by the server when it needs the IDE to surface a message. Generic channel shared by
+     * several servers, so implementations must tolerate payloads they do not recognise.
+     */
+    @JsonNotification(SHOW_NOTIFICATION_NOTIFICATION_METHOD)
+    fun showNotification(params: ShowNotificationParams)
 
     @JsonRequest(CHAT_OPEN_TAB)
     fun openTab(params: LSPAny): CompletableFuture<LSPAny>

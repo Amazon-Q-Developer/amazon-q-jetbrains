@@ -35,6 +35,11 @@ data class QCapabilities(
 data class WindowCapabilities(
     val showSaveFileDialog: Boolean,
     val showLogs: Boolean,
+    /**
+     * Required for the server to send `aws/window/showNotification` at all: the language server
+     * runtime drops that notification unless the client advertises support here.
+     */
+    val notifications: Boolean,
 )
 
 data class ClientInfoMetadata(
@@ -80,6 +85,7 @@ fun createExtendedClientMetadata(project: Project): ExtendedClientMetadata {
                 window = WindowCapabilities(
                     showSaveFileDialog = true,
                     showLogs = true,
+                    notifications = true,
                 )
             ),
             contextConfiguration = ContextConfiguration(
