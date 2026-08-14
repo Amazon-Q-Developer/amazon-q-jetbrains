@@ -29,6 +29,7 @@ import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
+import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManagerListener
 import software.amazon.q.jetbrains.core.credentials.actions.SsoLogoutAction
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.sono.Q_SCOPES
@@ -202,10 +203,21 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
                     }
                 } else {
                     // Reacting to the block already signed the user out, so this is the normal path for
-                    // Go back rather than an edge case. Signing out is what would otherwise re-render
-                    // the webview, so without driving it explicitly the user stays on the blocked
-                    // screen even though the state behind it has been cleared.
-                    prepareBrowser(BrowserState(FeatureId.AmazonQ, false))
+                    // Go back rather than an edge case, and something still has to re-render.
+                    //
+                    // Announce the connection change rather than calling prepareBrowser here. The tool
+                    // window already listens on this topic and re-renders through preparePanelContent,
+                    // so driving a second render directly from this handler raced with it: whichever
+                    // won decided whether the user landed on the sign-in screen or bounced back to the
+                    // blocked one, which is what made Go back behave inconsistently. It also ran
+                    // prepareBrowser's connection enumeration on the browser's message thread, which is
+                    // what made it slow. This is the same announcement a normal sign-out makes, so Go
+                    // back now takes exactly the path sign-out already takes.
+                    runInEdt {
+                        ApplicationManager.getApplication().messageBus
+                            .syncPublisher(ToolkitConnectionManagerListener.TOPIC)
+                            .activeConnectionChanged(null)
+                    }
                 }
             }
 

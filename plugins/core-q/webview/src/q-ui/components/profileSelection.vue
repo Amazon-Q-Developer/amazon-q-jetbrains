@@ -11,7 +11,7 @@
                 <div id="not-accepting-new-customers" class="profile-header">
                     <div style="color: white; margin-bottom: 10px;">
                         <template v-for="(segment, index) in errorMessageSegments" :key="index"
-                            ><a v-if="segment.url" @click.prevent="openExternalUrl(segment.url)">{{ segment.text }}</a
+                            ><a v-if="segment.url" :href="segment.url" @click.prevent="openExternalUrl(segment.url)">{{ segment.text }}</a
                             ><template v-else>{{ segment.text }}</template></template
                         >
                     </div>
@@ -202,6 +202,10 @@ export default defineComponent({
         },
         openExternalUrl(externalLink: string) {
             // Links must go through the IDE rather than the embedded browser, same as openUrl below.
+            // The anchor also carries a real href purely for affordance: browsers only apply
+            // cursor: pointer to anchors that have one, and without it the link rendered as blue text
+            // that gave no sign it could be clicked -- reported in the bug bash as "not clickable".
+            // @click.prevent stops the webview itself from navigating.
             window.ideApi.postMessage({
                 command: 'openUrl',
                 externalLink
