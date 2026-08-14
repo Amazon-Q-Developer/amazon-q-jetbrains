@@ -264,6 +264,17 @@ export default defineComponent({
     text-align: left;
     padding: 0 4px;
 
+    /* Every login stage sits inside .auth-container.centered-with-max-width, which caps width at
+       260px. That is too narrow for these cards, and the cap cannot be widened here because it is on
+       an ancestor owned by login.vue and shared with the other stages. Centring on the parent's axis
+       and letting the content exceed the cap symmetrically keeps this change inside the component
+       that owns the screen. max-width stays relative to the viewport so it never overflows a narrow
+       tool window. */
+    width: 90vw;
+    max-width: 380px;
+    margin-left: 50%;
+    transform: translateX(-50%);
+
     .blocked-heading {
         font-size: 15px;
         font-weight: 700;
