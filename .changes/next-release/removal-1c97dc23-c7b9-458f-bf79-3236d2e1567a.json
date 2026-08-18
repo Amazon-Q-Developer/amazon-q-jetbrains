@@ -1,0 +1,4 @@
+{
+  "type" : "removal",
+  "description" : "Removed support for IDEs based on the 2025.1 and 2025.2 platforms"
+}
