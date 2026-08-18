@@ -385,7 +385,7 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
         {
             stage: 'PROFILE_SELECT',
             status: '${if (profiles != null) "succeeded" else "failed"}',
-            profiles: ${writeValueAsString(profiles ?: emptyList<QRegionProfile>())},
+            profiles: ${writeValueAsString(profiles.orEmpty())},
             errorMessage: ${writeValueAsString(errorMessage)},
             notAcceptingNewCustomers: $notAcceptingNewCustomers
         }
