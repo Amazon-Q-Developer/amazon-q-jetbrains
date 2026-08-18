@@ -440,13 +440,17 @@ abstract class LoginBrowser(
                 };
                 }())
             </script>
-            <script type="text/javascript" src="$webScriptUri"></script>
+            <script type="text/javascript" charset="UTF-8" src="$webScriptUri"></script>
             """.trimIndent()
 
             return """
             <!DOCTYPE html>
             <html>
                 <head>
+                    <!-- Without this the browser falls back to windows-1252 and any non-ASCII character
+                         in the bundle is mis-decoded: an arrow renders as "â†’" and an em dash as "â€"".
+                         The bundle is UTF-8, so declare it. -->
+                    <meta charset="utf-8">
                     <title>AWS Q</title>
                 </head>
                 <body class="$colorMode">

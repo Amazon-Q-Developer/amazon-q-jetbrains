@@ -29,6 +29,7 @@ import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
+import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManagerListener
 import software.amazon.q.jetbrains.core.credentials.actions.SsoLogoutAction
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.sono.Q_SCOPES
@@ -45,6 +46,7 @@ import software.amazon.q.jetbrains.utils.isQWebviewsAvailable
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QProfileSwitchIntent
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfile
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
+import software.aws.toolkits.jetbrains.services.amazonq.profile.isQDeveloperNotAcceptingNewCustomers
 import software.aws.toolkits.jetbrains.services.amazonq.util.createBrowser
 import software.aws.toolkits.jetbrains.services.amazonq.webview.theme.EditorThemeAdapter
 import software.aws.toolkits.jetbrains.services.amazonq.webview.theme.ThemeBrowserAdapter
@@ -183,18 +185,38 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
             }
 
             is BrowserMessage.Signout -> {
-                (
-                    ToolkitConnectionManager.getInstance(project)
-                        .activeConnectionForFeature(QConnection.getInstance()) as? AwsBearerTokenConnection
-                    )?.let { connection ->
+                // Dismissing the blocked screen routes here, so clear the blocked state as part of
+                // signing out; otherwise the persisted flag would pin the user to that screen and
+                // they could never try a different account.
+                QRegionProfileManager.getInstance().clearQDevAccessBlocked()
+                val activeConnection = ToolkitConnectionManager.getInstance(project)
+                    .activeConnectionForFeature(QConnection.getInstance()) as? AwsBearerTokenConnection
+                if (activeConnection != null) {
                     runInEdt {
-                        SsoLogoutAction(connection).actionPerformed(
+                        SsoLogoutAction(activeConnection).actionPerformed(
                             AnActionEvent.createFromDataContext(
                                 "qBrowser",
                                 null,
                                 DataContext.EMPTY_CONTEXT
                             )
                         )
+                    }
+                } else {
+                    // Reacting to the block already signed the user out, so this is the normal path for
+                    // Go back rather than an edge case, and something still has to re-render.
+                    //
+                    // Announce the connection change rather than calling prepareBrowser here. The tool
+                    // window already listens on this topic and re-renders through preparePanelContent,
+                    // so driving a second render directly from this handler raced with it: whichever
+                    // won decided whether the user landed on the sign-in screen or bounced back to the
+                    // blocked one, which is what made Go back behave inconsistently. It also ran
+                    // prepareBrowser's connection enumeration on the browser's message thread, which is
+                    // what made it slow. This is the same announcement a normal sign-out makes, so Go
+                    // back now takes exactly the path sign-out already takes.
+                    runInEdt {
+                        ApplicationManager.getApplication().messageBus
+                            .syncPublisher(ToolkitConnectionManagerListener.TOPIC)
+                            .activeConnectionChanged(null)
                     }
                 }
             }
@@ -274,12 +296,29 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
             writeValueAsString(it)
         }
 
-        val stage = if (isQExpired(project)) {
+        // A blocked identity has to win over every other stage. It is otherwise indistinguishable
+        // here: a blocked Builder ID user is connected, unexpired and has no profile to select, so
+        // the checks below resolve to START and the customer is returned to a sign-in screen with no
+        // explanation of why the previous attempt achieved nothing.
+        val qDevAccessBlockedMessage = QRegionProfileManager.getInstance().qDevAccessBlockedMessage
+
+        val stage = if (qDevAccessBlockedMessage != null) {
+            "PROFILE_SELECT"
+        } else if (isQExpired(project)) {
             "REAUTH"
         } else if (isQConnected(project) && QRegionProfileManager.getInstance().isPendingProfileSelection(project)) {
             "PROFILE_SELECT"
         } else {
             "START"
+        }
+
+        // Reuses the PROFILE_SELECT stage because profileSelection.vue already owns the blocked
+        // screen; sending status 'failed' with notAcceptingNewCustomers selects that branch directly,
+        // so no profile listing is attempted and no second copy of the UI is needed.
+        if (qDevAccessBlockedMessage != null) {
+            val blockedJson = buildProfileSelectPayload(null, qDevAccessBlockedMessage, notAcceptingNewCustomers = true)
+            executeJS("window.ideClient.prepareUi($blockedJson)")
+            return
         }
 
         when (stage) {
@@ -328,15 +367,60 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
         jcefBrowser.loadURL(assetHandler.createResource("content.html", getWebviewHTML(webScriptUri, query)))
     }
 
+    /**
+     * The one place the PROFILE_SELECT payload is built. Three call sites need it (initial prepare,
+     * the profile listing, and the access-blocked short-circuit) and they previously each inlined it,
+     * which had already drifted: two serialized `profiles` as an empty list and one as an empty
+     * string, for a field the webview types as an array.
+     *
+     * errorMessage is serialized rather than interpolated into a quoted literal because it now carries
+     * real service messages, which may contain apostrophes or quotes that would otherwise break out of
+     * the JS string and produce a syntax error in prepareUi().
+     */
+    private fun buildProfileSelectPayload(
+        profiles: List<QRegionProfile>?,
+        errorMessage: String,
+        notAcceptingNewCustomers: Boolean,
+    ): String = """
+        {
+            stage: 'PROFILE_SELECT',
+            status: '${if (profiles != null) "succeeded" else "failed"}',
+            profiles: ${writeValueAsString(profiles.orEmpty())},
+            errorMessage: ${writeValueAsString(errorMessage)},
+            notAcceptingNewCustomers: $notAcceptingNewCustomers
+        }
+    """.trimIndent()
+
     private fun handleListProfilesMessage() {
         ApplicationManager.getApplication().executeOnPooledThread {
+            // When access is blocked there is nothing to list, so report the stored service message
+            // instead of calling the profile API. Relying on that call to surface the block does not
+            // work for the affected population: profiles are an IdC concept, so for Builder ID
+            // listRegionProfiles returns null WITHOUT throwing, leaving nothing to classify and
+            // rendering the generic "couldn't load your profiles" error with a Try Again that can
+            // never succeed.
+            val blockedMessage = QRegionProfileManager.getInstance().qDevAccessBlockedMessage
+            if (blockedMessage != null) {
+                runInEdt {
+                    val blockedData = buildProfileSelectPayload(null, blockedMessage, notAcceptingNewCustomers = true)
+
+                    executeJS("window.ideClient.prepareUi($blockedData)")
+                }
+                return@executeOnPooledThread
+            }
+
             var errorMessage = ""
+            var notAcceptingNewCustomers = false
             val profiles = try {
                 QRegionProfileManager.getInstance().listRegionProfiles(project)
             } catch (e: Exception) {
                 e.message?.let {
                     errorMessage = it
                 }
+                // Amazon Q Developer is no longer accepting this customer. Flag it so the webview can
+                // show the real service message with a "Go back" action, instead of the generic
+                // "couldn't load your profiles" error with a Try Again button that can never succeed.
+                notAcceptingNewCustomers = isQDeveloperNotAcceptingNewCustomers(e)
                 LOG.warn { "Failed to call listRegionProfiles API: $errorMessage" }
                 val qConn = ToolkitConnectionManager.getInstance(project).activeConnectionForFeature(QConnection.getInstance())
                 Telemetry.amazonq.didSelectProfile.use { span ->
@@ -360,14 +444,10 @@ class QWebviewBrowser(val project: Project, private val parentDisposable: Dispos
 
             // required EDT as this entire block is executed on thread pool
             runInEdt {
-                val jsonData = """
-                        {
-                            stage: 'PROFILE_SELECT',
-                            status: '${if (profiles != null) "succeeded" else "failed"}',
-                            profiles: ${writeValueAsString(profiles ?: "")},
-                            errorMessage: '$errorMessage'
-                        }
-                """.trimIndent()
+                // errorMessage is serialized rather than interpolated into a quoted literal: it now
+                // carries real service messages, which may contain apostrophes or quotes that would
+                // otherwise break out of the JS string and produce a syntax error in prepareUi().
+                val jsonData = buildProfileSelectPayload(profiles, errorMessage, notAcceptingNewCustomers)
 
                 executeJS("window.ideClient.prepareUi($jsonData)")
             }

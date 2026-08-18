@@ -227,6 +227,37 @@ class QRegionProfileManager : PersistentStateComponent<QProfileState>, Disposabl
         fun getInstance(): QRegionProfileManager = service<QRegionProfileManager>()
     }
 
+    /**
+     * Set when the language server reports that RTS has blocked Q Developer plugin access for this
+     * identity. Holds the service's own message, which is shown verbatim: FEATURE_NOT_SUPPORTED is
+     * reused across several RTS gates, so only the message says why and what to do about it.
+     *
+     * Deliberately in-memory rather than part of [QProfileState]. The whole sequence -- observe the
+     * block, sign out, show the message on the login screen -- happens inside one IDE session, so
+     * persistence buys only that the message survives a restart. That is not worth adding a field to
+     * a persisted component shared with profile state: it changes that component's serialized shape
+     * for every user. After a restart the user is signed out and sees the normal login screen; if they
+     * sign in with the same identity the block is reported again within seconds.
+     */
+    // Volatile because the write comes from the language server's notification thread while the reads
+    // happen on the EDT (prepareBrowser) and on pooled threads (handleListProfilesMessage). Without it
+    // a reader may never observe the write, which would silently disable the whole feature.
+    @Volatile
+    var qDevAccessBlockedMessage: String? = null
+        private set
+
+    fun setQDevAccessBlocked(message: String) {
+        qDevAccessBlockedMessage = message
+    }
+
+    /**
+     * Recovery path, and required rather than optional: without it an identity that later becomes
+     * eligible -- or one misclassified -- would be pinned to the blocked screen with no way out.
+     */
+    fun clearQDevAccessBlocked() {
+        qDevAccessBlockedMessage = null
+    }
+
     override fun dispose() {}
 
     override fun getState(): QProfileState {
@@ -261,4 +292,42 @@ class QProfileState : BaseState() {
     @get:Property
     @get:MapAnnotation
     val connectionIdToProfileList by map<String, Int>()
+}
+
+/**
+ * The [AccessDeniedException] reason meaning Amazon Q Developer is no longer accepting this
+ * customer. Compared as a raw string rather than via the generated
+ * [software.amazon.awssdk.services.codewhispererruntime.model.AccessDeniedExceptionReason] enum
+ * because the bundled service model does not (yet) declare this value, so
+ * [AccessDeniedException.reason] would resolve to `UNKNOWN_TO_SDK_VERSION` while
+ * [AccessDeniedException.reasonAsString] still returns the real wire value.
+ */
+private const val FEATURE_NOT_SUPPORTED_REASON = "FEATURE_NOT_SUPPORTED"
+
+/**
+ * Whether [throwable] (or anything in its cause chain) is Amazon Q Developer permanently rejecting
+ * this identity because it is no longer accepting new customers.
+ *
+ * This is a deliberate, permanent rejection rather than a transient failure, so callers should
+ * surface it distinctly instead of offering a retry that can never succeed.
+ *
+ * The match is intentionally narrow: it requires an actual [AccessDeniedException] whose reason is
+ * exactly [FEATURE_NOT_SUPPORTED_REASON]. Other modeled reasons -- notably
+ * `UNAUTHORIZED_CUSTOMIZATION_RESOURCE_ACCESS`, `UNAUTHORIZED_WORKSPACE_CONTEXT_FEATURE_ACCESS`
+ * and `TEMPORARILY_SUSPENDED` -- must NOT match, the last especially since it IS transient and
+ * needs to keep its retry affordance.
+ *
+ * The cause chain is walked because the exception surfaces through the resource cache, which may
+ * wrap it; a visited set guards against a self-referential or cyclic chain.
+ */
+fun isQDeveloperNotAcceptingNewCustomers(throwable: Throwable): Boolean {
+    val seen = mutableSetOf<Throwable>()
+    var current: Throwable? = throwable
+    while (current != null && seen.add(current)) {
+        if (current is AccessDeniedException && current.reasonAsString() == FEATURE_NOT_SUPPORTED_REASON) {
+            return true
+        }
+        current = current.cause
+    }
+    return false
 }
