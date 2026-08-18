@@ -303,7 +303,6 @@ export default defineComponent({
         font-size: 15px;
         font-weight: 700;
         text-align: center;
-        color: white;
     }
 
     .blocked-subheading {
@@ -311,11 +310,10 @@ export default defineComponent({
         margin-bottom: 14px;
         text-align: center;
         font-size: 13px;
-        opacity: 0.75;
     }
 
     .blocked-card {
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        border: 1px solid transparent;
         border-radius: 8px;
         padding: 10px 12px;
         margin-bottom: 10px;
@@ -364,7 +362,6 @@ export default defineComponent({
         margin: 0 0 6px 0;
         font-size: 13px;
         line-height: 1.45;
-        color: white;
 
         &:last-child {
             margin-bottom: 0;
@@ -417,8 +414,7 @@ export default defineComponent({
 
     .blocked-btn-secondary {
         background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.28);
-        color: white;
+        border: 1px solid transparent;
     }
 
     .blocked-footer-link {
@@ -493,6 +489,30 @@ export default defineComponent({
 }
 
 body.jb-dark {
+    /* The blocked screen's text and chrome colours are theme dependent, so they belong here rather
+       than in the neutral block above. .blocked-subheading previously declared no colour at all and
+       inherited the document default -- black -- which disappeared into the dark panel. The accent
+       hues and the primary button's white-on-gradient text stay fixed, as both read correctly
+       against either theme. */
+
+    .blocked-heading,
+    .blocked-card-body,
+    .blocked-btn-secondary {
+        color: white;
+    }
+
+    .blocked-subheading {
+        color: #bbbbbb;
+    }
+
+    .blocked-card {
+        border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .blocked-btn-secondary {
+        border-color: rgba(255, 255, 255, 0.28);
+    }
+
     .profile-item {
         border: 1px solid white;
     }
@@ -503,6 +523,24 @@ body.jb-dark {
 }
 
 body.jb-light {
+    .blocked-heading,
+    .blocked-card-body,
+    .blocked-btn-secondary {
+        color: black;
+    }
+
+    .blocked-subheading {
+        color: #5a5a5a;
+    }
+
+    .blocked-card {
+        border-color: rgba(0, 0, 0, 0.18);
+    }
+
+    .blocked-btn-secondary {
+        border-color: rgba(0, 0, 0, 0.28);
+    }
+
     .profile-item {
         border: 1px solid black;
     }
