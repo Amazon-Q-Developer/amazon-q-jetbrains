@@ -1,3 +1,6 @@
+# _4.7_ (2026-08-19)
+- **(Feature)** Amazon Q: Clearer message when signing in with an account that is not eligible for Amazon Q Developer, instead of a generic profile loading failure
+
 # _4.6_ (2026-07-31)
 - **(Deprecation)** An upcoming release will remove support for IDEs based on the 2025.1 and 2025.2 platforms
 
