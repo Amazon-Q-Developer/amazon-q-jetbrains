@@ -22,7 +22,7 @@ We want your feedback!
 
 ## Supported IDEs
 
-All JetBrains IDEs 2025.1+
+All JetBrains IDEs 2025.3+
 
 ## Installation
 
