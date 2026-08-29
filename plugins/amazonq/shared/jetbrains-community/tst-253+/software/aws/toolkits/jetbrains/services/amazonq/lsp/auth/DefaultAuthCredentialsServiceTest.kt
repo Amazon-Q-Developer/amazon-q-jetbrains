@@ -14,6 +14,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.spyk
@@ -25,6 +26,7 @@ import software.amazon.q.core.TokenConnectionSettings
 import software.amazon.q.core.credentials.ToolkitBearerTokenProvider
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
+import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.credentials.sso.PKCEAuthorizationGrantToken
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.BearerTokenAuthState
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.InteractiveBearerTokenProvider
@@ -100,6 +102,11 @@ class DefaultAuthCredentialsServiceTest : HeavyPlatformTestCase() {
     }
 
     private fun setupMockConnectionManager(accessToken: String = TEST_ACCESS_TOKEN) {
+        // QConnection.getInstance() resolves the amazon.q.connection.pinned.feature extension point, which the
+        // 2026.2 bare test application no longer registers from plugin.xml; mock the lookup so the production
+        // code under test resolves a feature instance instead of throwing "Missing extension point".
+        mockkObject(QConnection)
+        every { QConnection.getInstance() } returns mockk()
         mockConnection = createMockConnection(accessToken)
         mockConnectionManager = mockk {
             every { activeConnectionForFeature(any()) } returns mockConnection

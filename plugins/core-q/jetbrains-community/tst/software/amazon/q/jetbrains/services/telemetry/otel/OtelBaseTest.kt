@@ -4,7 +4,7 @@
 package software.amazon.q.jetbrains.services.telemetry.otel
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.TraceId
 import io.opentelemetry.context.Context
@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import software.amazon.awssdk.services.toolkittelemetry.model.AWSProduct
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.warn
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.q.jetbrains.core.coroutines.getCoroutineBgContext
 import software.amazon.q.jetbrains.utils.pluginAwareExecuteOnPooledThread
 import software.amazon.q.jetbrains.utils.satisfiesKt
@@ -42,7 +43,7 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class)
 class OtelBaseTest {
     private companion object {
         @RegisterExtension

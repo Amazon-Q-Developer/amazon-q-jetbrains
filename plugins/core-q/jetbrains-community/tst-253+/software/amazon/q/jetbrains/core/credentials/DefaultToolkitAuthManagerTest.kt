@@ -27,6 +27,7 @@ import software.amazon.q.core.telemetry.TelemetryBatcher
 import software.amazon.q.core.telemetry.TelemetryPublisher
 import software.amazon.q.core.utils.delegateMock
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManager
 import software.amazon.q.jetbrains.core.credentials.profiles.ProfileSsoSessionIdentifier
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.BearerTokenAuthState
@@ -54,6 +55,9 @@ class DefaultToolkitAuthManagerTest : HeavyPlatformTestCase() {
 
     override fun setUp() {
         super.setUp()
+        // 2026.2 builds a bare test app without plugin.xml services; register them + the MockClientManager impl.
+        CoreTestHelper.registerMissingServices(testRootDisposable)
+        CoreTestHelper.registerMockClientManager(testRootDisposable)
         mockClientManager = service<ToolkitClientManager>() as MockClientManager
 
         val ssoOidcClient = delegateMock<SsoOidcClient>()

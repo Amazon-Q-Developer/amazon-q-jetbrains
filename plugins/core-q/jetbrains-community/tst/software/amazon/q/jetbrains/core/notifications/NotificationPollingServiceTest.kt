@@ -3,7 +3,8 @@
 
 package software.amazon.q.jetbrains.core.notifications
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -15,11 +16,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import software.amazon.q.core.utils.RemoteResourceResolver
 import software.amazon.q.core.utils.UpdateCheckResult
+import software.amazon.q.jetbrains.core.CoreRegistryKeysExtension
 import software.amazon.q.jetbrains.core.RemoteResourceResolverProvider
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreRegistryKeysExtension::class)
 class NotificationPollingServiceTest {
     private lateinit var sut: NotificationPollingService
     private lateinit var mockResolver: RemoteResourceResolver
@@ -57,7 +59,11 @@ class NotificationPollingServiceTest {
 
     @AfterEach
     fun tearDown() {
-        sut.dispose()
+        // NotificationPollingService's constructor registers its Alarm under `this` in the global Disposer tree,
+        // so the service itself becomes a Disposer node. sut.dispose() only disposes the alarm; the service node
+        // must be removed via Disposer.dispose(sut) or it leaks (surfaced as an engine-level "Memory leak
+        // detected: NotificationPollingService" / "Failed to close extension context" only in full-suite runs).
+        Disposer.dispose(sut)
     }
 
     @Test

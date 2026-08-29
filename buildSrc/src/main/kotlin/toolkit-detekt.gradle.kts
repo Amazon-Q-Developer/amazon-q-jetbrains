@@ -34,8 +34,13 @@ detekt {
 
 val javaVersion = project.jvmTarget().get()
 
+// detekt's bundled Kotlin analyzer only accepts --jvm-target up to 22, but the 2026.2 profile targets 25.
+// detekt does static analysis only, so cap the value it sees; the real compile/test target is unaffected.
+val maxDetektJvmTarget = 22
+val detektJvmTarget = minOf(javaVersion.majorVersion.toInt(), maxDetektJvmTarget).toString()
+
 tasks.withType<Detekt>().configureEach {
-    jvmTarget = javaVersion.majorVersion
+    jvmTarget = detektJvmTarget
     dependsOn(":detekt-rules:assemble")
 
     reports {
@@ -45,7 +50,7 @@ tasks.withType<Detekt>().configureEach {
 }
 
 tasks.withType<DetektCreateBaselineTask>().configureEach {
-    jvmTarget = javaVersion.majorVersion
+    jvmTarget = detektJvmTarget
     dependsOn(":detekt-rules:assemble")
 
     // weird issue where the baseline tasks can't find the source code

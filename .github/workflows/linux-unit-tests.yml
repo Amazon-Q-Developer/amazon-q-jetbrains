@@ -13,7 +13,9 @@ jobs:
   linux-unit-tests:
     name: Linux (${{ matrix.ideProfileName }})
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # 2026.2 runs the full check + coverage under JDK 25, which is slower than the JDK-21 profiles (~30 min) and was
+    # overrunning the previous 45-min cap. The cap is a ceiling, not a fixed wait, so the faster profiles are unaffected.
+    timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
@@ -27,10 +29,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 21
+      - name: Set up JDKs
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          # Install both: 251-261 profiles target JDK 21, 2026.2 targets JDK 25. The Gradle toolchain (see
+          # toolkit-jvm-conventions.gradle.kts) selects the right one per profile, so CI never picks a JDK itself.
+          # 21 is listed last so it becomes JAVA_HOME and launches Gradle; 25 is forked to only for 2026.2.
+          java-version: |
+            25
+            21
           distribution: 'corretto'
           cache: 'gradle'
 
@@ -40,13 +47,18 @@ jobs:
           cat >> ~/.gradle/gradle.properties <<EOF
           org.gradle.jvmargs=-Xmx4g
           kotlin.daemon.jvmargs=-Xmx4g
+          # let the Gradle toolchain discover the JDKs setup-java installed (it doesn't auto-detect these paths)
+          org.gradle.java.installations.fromEnv=JAVA_HOME_21_X64,JAVA_HOME_25_X64
           EOF
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Run tests
-        # 262 test compile is blocked by a Java 25 inline-bytecode issue pending a Kotlin bump; buildPlugin still gates it
+        # 2026.2 unit tests have known pre-existing failures: the 262 platform changed how plugin extension points
+        # and services register in tests (~280 "Missing extension point" / "Cannot find service"). The same tests
+        # pass on 2026.1, so this is a 262 test-infra migration, tracked separately. Until that lands, 262 tests run
+        # and report but don't gate; buildPlugin (below) still gates 262 on a real compile. 251-261 gate fully.
         continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
         # --no-parallel: amazonq submodules share one test sandbox; concurrent Test tasks corrupt the index (fatal on Gradle 9)
         run: |
@@ -55,6 +67,8 @@ jobs:
           ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport -x gitSecrets --no-parallel --stacktrace --console plain --continue
 
       - name: Build plugin
+        # runs when tests pass (251-261) or when tests were non-gating (262 via continue-on-error above),
+        # so 262 is still gated on a successful buildPlugin compile
         if: success()
         run: ./gradlew -PideProfileName=${{ matrix.ideProfileName }} buildPlugin --no-parallel
 

@@ -4,7 +4,7 @@
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts
 
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.util.io.createDirectories
 import com.intellij.util.text.SemVer
 import io.mockk.Runs
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.io.TempDir
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts.ArtifactManager.SupportedManifestVersionRange
 import java.nio.file.Path
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class ArtifactHelperTest {
     @TempDir
     lateinit var tempDir: Path

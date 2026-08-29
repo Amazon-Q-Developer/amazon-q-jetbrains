@@ -5,7 +5,6 @@ package software.amazon.q.jetbrains.core.credentials.sso
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.replaceService
@@ -40,6 +39,8 @@ import software.amazon.awssdk.services.ssooidc.model.StartDeviceAuthorizationRes
 import software.amazon.q.core.region.aRegionId
 import software.amazon.q.core.utils.delegateMock
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreRegistryKeysRule
+import software.amazon.q.jetbrains.core.CoreServicesRule
 import software.amazon.q.jetbrains.core.credentials.sono.IDENTITY_CENTER_ROLE_ACCESS_SCOPE
 import software.amazon.q.jetbrains.core.credentials.sso.pkce.ToolkitOAuthService
 import software.amazon.q.jetbrains.utils.rules.RegistryRule
@@ -62,14 +63,20 @@ class SsoAccessTokenProviderTest {
     private lateinit var sut: SsoAccessTokenProvider
     private lateinit var ssoCache: SsoCache
 
-    private val applicationRule = ApplicationRule()
+    // CoreRegistryKeysRule extends ApplicationRule and also defines the plugin.xml registry keys
+    // (e.g. aws.dev.useDAG) that 2026.2's bare test app no longer loads, so RegistryRule can read them.
+    private val applicationRule = CoreRegistryKeysRule()
+
+    // 2026.2 builds a bare test app without plugin.xml services; register them (incl. SsoLoginCallbackProvider)
+    // after the app exists but before ssoCallbackRule resolves MockSsoLoginCallbackProvider.getInstance().
+    private val coreServices = CoreServicesRule()
     private val disposableRule = DisposableRule()
     private val ssoCallbackRule = SsoLoginCallbackProviderRule()
     private val registryRule = RegistryRule("aws.dev.useDAG", true)
 
     @JvmField
     @Rule
-    val ruleChain = RuleChain(applicationRule, registryRule, ssoCallbackRule, disposableRule)
+    val ruleChain = RuleChain(applicationRule, coreServices, registryRule, ssoCallbackRule, disposableRule)
 
     @Before
     fun setUp() {

@@ -10,6 +10,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.mockito.kotlin.any
@@ -29,6 +30,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.ListFeatureEva
 import software.amazon.awssdk.services.codewhispererruntime.paginators.ListAvailableCustomizationsIterable
 import software.amazon.q.core.TokenConnectionSettings
 import software.amazon.q.core.region.AwsRegion
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.LegacyManagedBearerSsoConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
@@ -56,6 +58,16 @@ class CodeWhispererFeatureConfigServiceTest {
     @JvmField
     @Rule
     val mockClientManagerRule = MockClientManagerRule()
+
+    @Before
+    fun setup() {
+        // 262's bare test app doesn't load plugin.xml registrations; register the missing services + the
+        // amazon.q.connection.pinned.feature EP that QConnection.getInstance() needs below + the registry keys
+        // (endpoint lookups read amazon.q.endpoints.json). No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+        CoreTestHelper.registerMissingRegistryKeys()
+    }
 
     @Test
     fun `test FEATURE_DEFINITIONS is not empty`() {

@@ -25,6 +25,9 @@ import kotlin.math.min
 class FocusAreaContextExtractor(private val fqnWebviewAdapter: FqnWebviewAdapter?, private val project: Project) {
 
     private val languageExtractor: LanguageExtractor = LanguageExtractor()
+
+    // keep suspend for API consistency with other extractors / coroutine callers (newer detekt flags it as redundant)
+    @Suppress("RedundantSuspendModifier")
     suspend fun extract(): FocusAreaContext? {
         val editorManager = FileEditorManager.getInstance(project)
         val editor = computeOnEdt {

@@ -16,6 +16,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.AwsCredentialConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitAuthManager
@@ -35,6 +36,7 @@ class ConnectionPinningManagerTest {
 
     @Before
     fun setUp() {
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
         sut = spy(DefaultConnectionPinningManager())
     }
 
