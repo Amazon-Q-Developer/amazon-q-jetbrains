@@ -44,15 +44,12 @@ class NotificationPollingServiceTest {
         providerField.isAccessible = true
         providerField.set(sut, mockProvider)
 
-        // Create mock observers
+        // Register a mock observer through the public API so the tests exercise the
+        // real observer collection held by the service.
         observer = mockk<() -> Unit>()
         every { observer.invoke() } just Runs
 
-        val observersField = NotificationPollingService::class.java
-            .getDeclaredField("observers")
-            .apply { isAccessible = true }
-
-        observersField.set(sut, mutableListOf(observer))
+        sut.addObserver(observer)
     }
 
     @AfterEach
@@ -78,6 +75,20 @@ class NotificationPollingServiceTest {
     fun `test pollForNotifications when ETag different - notify observers`() {
         every { mockResolver.checkForUpdates(any(), any()) } returns UpdateCheckResult.HasUpdates
         sut.startPolling()
+        verify(exactly = 1) { observer.invoke() }
+    }
+
+    @Test
+    fun `notifyObservers does not fail when an observer registers another observer during iteration`() {
+        every { mockResolver.checkForUpdates(any(), any()) } returns UpdateCheckResult.FirstPollCheck
+
+        // Registering a new observer while notifyObservers() is iterating the collection
+        // reproduces the reported ConcurrentModificationException when the backing list is
+        // not thread-safe. With a copy-on-write list it must complete without throwing.
+        sut.addObserver { sut.addObserver { } }
+
+        sut.startPolling()
+
         verify(exactly = 1) { observer.invoke() }
     }
 }
