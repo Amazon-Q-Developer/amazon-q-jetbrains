@@ -12,12 +12,16 @@ jobs:
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Print payload
+        env:
+          RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_HTML_URL: ${{ github.event.release.html_url }}
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
-          echo '{
-            "version": "${{ github.event.release.tag_name }}",
-            "releaseLink": "${{ github.event.release.html_url }}",
-            "changelog": ${{ toJSON(github.event.release.body) }}
-          }'
+          jq -n \
+            --arg version "$RELEASE_TAG_NAME" \
+            --arg releaseLink "$RELEASE_HTML_URL" \
+            --arg changelog "$RELEASE_BODY" \
+            '{version: $version, releaseLink: $releaseLink, changelog: $changelog}'
 
       - name: Send Release Details to Slack
         uses: slackapi/slack-github-action@v1.23.0
