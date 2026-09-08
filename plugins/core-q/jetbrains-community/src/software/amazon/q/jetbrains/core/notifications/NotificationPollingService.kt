@@ -24,6 +24,7 @@ import software.aws.toolkits.telemetry.Component
 import software.aws.toolkits.telemetry.ToolkitTelemetry
 import java.io.InputStream
 import java.time.Duration
+import java.util.concurrent.CopyOnWriteArrayList
 
 private const val MAX_RETRIES = 3
 private const val RETRY_DELAY_MS = 1000L
@@ -46,7 +47,10 @@ object NotificationEndpoint {
 
 @Service(Service.Level.APP)
 final class NotificationPollingService : Disposable {
-    private val observers = mutableListOf<() -> Unit>()
+    // Observers may be registered (addObserver) from project startup activities on one thread
+    // while notifyObservers() iterates this list on the polling thread. Use a copy-on-write
+    // list so concurrent registration during iteration cannot raise ConcurrentModificationException.
+    private val observers: MutableList<() -> Unit> = CopyOnWriteArrayList()
     private val alarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this)
     private val pollingIntervalMs = Duration.ofMinutes(10).toMillis()
     private val resourceResolver: RemoteResourceResolverProvider = DefaultRemoteResourceResolverProvider()
