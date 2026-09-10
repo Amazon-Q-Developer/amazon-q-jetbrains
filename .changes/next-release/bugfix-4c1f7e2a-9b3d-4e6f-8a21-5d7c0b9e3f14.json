@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "The sign-in screen no longer shows an empty \"CONFIRMATION CODE\" block while waiting for browser authentication when the authorization flow does not use a confirmation code"
+}
