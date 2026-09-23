@@ -9,7 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusConnection
 import io.mockk.coEvery
@@ -33,7 +33,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.dependenci
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class DefaultModuleDependenciesServiceTest {
     private lateinit var project: Project
     private lateinit var mockLanguageServer: AmazonQLanguageServer

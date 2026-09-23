@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.Position
 import software.amazon.awssdk.services.codewhispererruntime.model.Range
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.utils.test.aStringWithLineCount
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.LegacyManagedBearerSsoConnection
 import software.amazon.q.jetbrains.core.credentials.sono.Q_SCOPES
@@ -57,6 +58,10 @@ class CodeWhispererUtilTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve. No-op on 251-261.
+        CoreTestHelper.registerMissingServices(projectRule.fixture.testRootDisposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, projectRule.fixture.testRootDisposable)
         regionProvider.addRegion(Region.US_EAST_1)
         fixture = projectRule.fixture
 

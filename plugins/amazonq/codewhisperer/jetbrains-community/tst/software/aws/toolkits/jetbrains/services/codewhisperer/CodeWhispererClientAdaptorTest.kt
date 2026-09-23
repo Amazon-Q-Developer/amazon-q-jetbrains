@@ -43,6 +43,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.StartCodeAnaly
 import software.amazon.awssdk.services.codewhispererruntime.paginators.GenerateCompletionsIterable
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ManagedSsoProfile
@@ -80,6 +81,10 @@ class CodeWhispererClientAdaptorTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve. No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
         sut = CodeWhispererClientAdaptorImpl(projectRule.project)
         ssoClient = mockClientManagerRule.create()
 

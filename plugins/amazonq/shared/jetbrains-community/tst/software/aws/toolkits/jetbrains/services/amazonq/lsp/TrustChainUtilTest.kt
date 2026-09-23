@@ -9,7 +9,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.util.net.ssl.CertificateManager
 import org.assertj.core.api.Assertions.assertThat
 import org.bouncycastle.asn1.x500.X500Name
@@ -41,7 +41,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Date
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrustChainUtilTest {
     companion object {

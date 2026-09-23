@@ -3,7 +3,7 @@
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.util
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.extension.ExtendWith
 import software.amazon.q.jetbrains.utils.normalizeFileUri
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class FileUriUtilTest {
 
     private fun createMockVirtualFile(path: String, mockProtocol: String = "file", mockIsDirectory: Boolean = false): VirtualFile =

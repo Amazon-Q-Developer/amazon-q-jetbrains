@@ -11,6 +11,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
@@ -27,6 +28,7 @@ import software.amazon.q.core.credentials.CredentialsChangeListener
 import software.amazon.q.core.region.AwsRegion
 import software.amazon.q.core.region.anAwsRegion
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.region.MockRegionProviderRule
 import software.amazon.q.jetbrains.core.region.getDefaultRegion
 import software.amazon.q.jetbrains.utils.assertIsNonDispatchThread
@@ -46,6 +48,11 @@ class CredentialManagerTest {
     @Rule
     @JvmField
     val regionProvider = MockRegionProviderRule()
+
+    @Before
+    fun setUp() {
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+    }
 
     @Test
     fun testCredentialsCanLoadFromExtensions() {

@@ -87,6 +87,8 @@ class ThemeBrowserAdapter {
         append("}")
     }
 
+    // invoked via the Color overload above; newer detekt mis-resolves the extension-function overload as unused
+    @Suppress("UnusedPrivateMember")
     private fun StringBuilder.append(variable: CssVariable, value: Color) = append(variable, value.toCss())
 
     private fun StringBuilder.append(variable: CssVariable, value: String) {

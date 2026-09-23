@@ -13,7 +13,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -30,7 +30,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class ApplyWorkspaceEditTest {
 
     private lateinit var project: Project

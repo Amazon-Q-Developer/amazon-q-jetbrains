@@ -20,6 +20,7 @@ import software.amazon.q.core.utils.createParentDirectories
 import software.amazon.q.core.utils.test.aString
 import software.amazon.q.core.utils.toHexString
 import software.amazon.q.core.utils.writeText
+import software.amazon.q.jetbrains.core.CoreServicesRule
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -28,12 +29,14 @@ import java.time.format.DateTimeFormatter
 
 class ProfileSdkTokenProviderWrapperTest {
     val applicationRule = ApplicationRule()
+    val coreServices = CoreServicesRule()
     val mockClientManager = MockClientManagerRule()
 
     @Rule
     @JvmField
     val ruleChain = RuleChain(
         applicationRule,
+        coreServices,
         mockClientManager
     )
 

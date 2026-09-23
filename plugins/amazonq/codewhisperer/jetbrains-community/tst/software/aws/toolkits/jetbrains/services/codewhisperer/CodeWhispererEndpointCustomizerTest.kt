@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.codewhispererstreaming.model.GenerateAssi
 import software.amazon.q.jetbrains.core.AwsClientManager
 import software.amazon.q.jetbrains.core.MockClientManager.Companion.useRealImplementations
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class CodeWhispererEndpointCustomizerTest {
     @Rule
@@ -116,6 +117,9 @@ class CodeWhispererEndpointCustomizerTest {
                 }
         }
 
-        latch.await()
+        // Bound the wait: the request goes through the proxy at connection time (which is what the tests verify),
+        // but the async onError/onComplete callback that counts the latch down isn't guaranteed to fire against the
+        // real endpoint — on 2026.2 it could otherwise block this pooled thread forever and hang the whole suite.
+        latch.await(30, TimeUnit.SECONDS)
     }
 }

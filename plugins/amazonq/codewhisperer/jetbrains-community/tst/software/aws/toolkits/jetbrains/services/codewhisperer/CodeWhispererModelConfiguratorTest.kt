@@ -10,6 +10,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.testFramework.replaceService
 import com.intellij.util.xmlb.XmlSerializer
+import kotlinx.coroutines.test.TestScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.output.XMLOutputter
 import org.junit.Before
@@ -28,6 +29,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.FeatureValue
 import software.amazon.awssdk.services.codewhispererruntime.model.ListAvailableCustomizationsRequest
 import software.amazon.awssdk.services.codewhispererruntime.model.ListAvailableCustomizationsResponse
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.DefaultToolkitConnectionManager
 import software.amazon.q.jetbrains.core.credentials.LegacyManagedBearerSsoConnection
@@ -89,6 +91,17 @@ class CodeWhispererModelConfiguratorTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve. No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+        // CodeWhispererModelConfigurator.getInstance() does service<CodeWhispererModelConfigurator>() (the interface),
+        // which isn't registered on the bare 262 app; provide a real impl under the interface key before it's spied.
+        ApplicationManager.getApplication().replaceService(
+            CodeWhispererModelConfigurator::class.java,
+            DefaultCodeWhispererModelConfigurator(TestScope()),
+            disposableRule.disposable
+        )
         mockClientManager.create<SsoOidcClient>()
         mockClient = mockClientManager.create<CodeWhispererRuntimeClient>()
         regionProvider.addRegion(Region.US_EAST_1)

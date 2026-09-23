@@ -5,6 +5,8 @@ package software.amazon.q.jetbrains.core.credentials
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.replaceService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
@@ -17,6 +19,7 @@ import software.amazon.q.core.region.AwsRegion
 import software.amazon.q.core.rules.EnvironmentVariableHelper
 import software.amazon.q.core.rules.SystemPropertyHelper
 import software.amazon.q.core.utils.test.notNull
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockResourceCacheRule
 import software.amazon.q.jetbrains.core.credentials.AwsConnectionManager.Companion.selectedPartition
 import software.amazon.q.jetbrains.core.credentials.profiles.DEFAULT_PROFILE_ID
@@ -59,6 +62,10 @@ class DefaultAwsConnectionManagerTest {
     @JvmField
     val systemPropertyHelper = SystemPropertyHelper()
 
+    @Rule
+    @JvmField
+    val disposableRule = DisposableRule()
+
     private lateinit var manager: DefaultAwsConnectionManager
 
     @Before
@@ -68,7 +75,24 @@ class DefaultAwsConnectionManagerTest {
         System.getProperties().setProperty("aws.sharedCredentialsFile", Files.createTempFile("dummy", null).toAbsolutePath().toString())
         System.getProperties().remove("aws.region")
         environmentVariableHelper.remove("AWS_REGION")
+
+        // On 2026.2 the bare test app no longer loads plugin.xml. Force the mock rules to install their
+        // application services first (they register lazily), then fill the remaining application services and the
+        // project-scoped CredentialsRegionHandler that DefaultAwsConnectionManager's constructor resolves.
+        regionProviderRule.defaultRegion()
+        resourceCache.cache
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        projectRule.project.replaceService(
+            CredentialsRegionHandler::class.java,
+            MockCredentialsRegionHandler(),
+            disposableRule.disposable
+        )
+
         manager = DefaultAwsConnectionManager(projectRule.project)
+        // The test drives `manager` directly but the SUT/asserts read it back via AwsConnectionManager.getInstance
+        // (Project.getConnectionSettings()); plugin.xml's <projectService> normally makes these the same instance.
+        // Register our manager as the project service so they agree on 2026.2's bare project.
+        projectRule.project.replaceService(AwsConnectionManager::class.java, manager, disposableRule.disposable)
     }
 
     @After

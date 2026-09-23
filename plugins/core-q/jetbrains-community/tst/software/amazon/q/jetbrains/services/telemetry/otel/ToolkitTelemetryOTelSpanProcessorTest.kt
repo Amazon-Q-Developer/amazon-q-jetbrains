@@ -3,8 +3,8 @@
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.replaceService
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanId
@@ -24,6 +24,7 @@ import software.amazon.q.core.telemetry.DefaultMetricEvent
 import software.amazon.q.core.telemetry.DefaultMetricEvent.DefaultDatum
 import software.amazon.q.core.telemetry.TelemetryBatcher
 import software.amazon.q.core.telemetry.TelemetryPublisher
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.q.jetbrains.services.telemetry.NoOpPublisher
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
 import software.amazon.q.jetbrains.utils.satisfiesKt
@@ -36,7 +37,7 @@ import software.aws.toolkits.telemetry.MetricResult
 import software.aws.toolkits.telemetry.Telemetry
 import java.time.Instant
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class)
 class ToolkitTelemetryOTelSpanProcessorTest {
     private class TestTelemetryService(
         publisher: TelemetryPublisher = NoOpPublisher(),

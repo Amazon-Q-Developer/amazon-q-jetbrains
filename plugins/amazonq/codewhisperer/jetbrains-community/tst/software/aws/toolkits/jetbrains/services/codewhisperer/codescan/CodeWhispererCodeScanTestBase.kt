@@ -7,6 +7,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.junit.WireMockRule
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -15,6 +16,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.systemIndependentPath
+import kotlinx.coroutines.test.TestScope
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -40,6 +42,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.Reference
 import software.amazon.awssdk.services.codewhispererruntime.model.Span
 import software.amazon.awssdk.services.codewhispererruntime.model.StartCodeAnalysisResponse
 import software.amazon.awssdk.services.codewhispererruntime.model.StartCodeFixJobResponse
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.utils.rules.CodeInsightTestFixtureRule
 import software.aws.toolkits.jetbrains.services.codewhisperer.CodeWhispererTestUtil
@@ -103,6 +106,27 @@ open class CodeWhispererCodeScanTestBase(projectRule: CodeInsightTestFixtureRule
     open fun setup() {
         project = projectRule.project
         s3endpoint = "http://127.0.0.1:${wireMock.port()}"
+
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve (no-op on 251-261; the spies/mocks below replace them anyway).
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
+        // The scan UI consults the problemsViewMutator EP, contributed by plugin.xml and so absent on the bare 262
+        // app; register the (empty) EP so lookups don't fail. No-op on 251-261.
+        val extensionArea = ApplicationManager.getApplication().extensionArea
+        if (!extensionArea.hasExtensionPoint("software.aws.toolkits.jetbrains.problemsViewMutator")) {
+            extensionArea.registerExtensionPoint(
+                "software.aws.toolkits.jetbrains.problemsViewMutator",
+                "software.aws.toolkits.jetbrains.ProblemsViewMutator",
+                ExtensionPoint.Kind.INTERFACE
+            )
+        }
+        project.replaceService(
+            CodeWhispererCodeScanManager::class.java,
+            CodeWhispererCodeScanManager(project, TestScope()),
+            disposableRule.disposable
+        )
+        project.replaceService(CodeWhispererZipUploadManager::class.java, CodeWhispererZipUploadManager(project), disposableRule.disposable)
 
         scanManagerSpy = spy(CodeWhispererCodeScanManager.getInstance(project))
         doNothing().whenever(scanManagerSpy).buildCodeScanUI()

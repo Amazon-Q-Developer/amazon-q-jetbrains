@@ -38,6 +38,7 @@ import software.amazon.awssdk.services.ssooidc.model.InvalidGrantException
 import software.amazon.q.core.region.aRegionId
 import software.amazon.q.core.utils.test.aString
 import software.amazon.q.jetbrains.core.AwsClientManager
+import software.amazon.q.jetbrains.core.CoreServicesRule
 import software.amazon.q.jetbrains.core.MockClientManager
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.sono.SONO_URL
@@ -54,12 +55,14 @@ import java.time.temporal.ChronoUnit
 
 class InteractiveBearerTokenProviderTest {
     val applicationRule = ApplicationRule()
+    val coreServices = CoreServicesRule()
     val mockClientManager = MockClientManagerRule()
 
     @Rule
     @JvmField
     val ruleChain = RuleChain(
         applicationRule,
+        coreServices,
         mockClientManager
     )
 

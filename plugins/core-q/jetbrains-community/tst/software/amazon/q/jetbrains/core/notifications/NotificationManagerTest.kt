@@ -3,28 +3,24 @@
 
 package software.amazon.q.jetbrains.core.notifications
 
-import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.Extension
-import org.junit.jupiter.api.extension.RegisterExtension
 
-@ExtendWith(ApplicationExtension::class)
+@TestApplication
 class NotificationManagerTest {
 
-    val projectRule = ProjectRule()
-
-    @JvmField
-    @RegisterExtension
-    val testExtension = object : Extension {
-        fun getProject() = projectRule.project
-    }
+    // Open the project through a JUnit 5 fixture so its lifecycle (including teardown/close) is managed by the
+    // framework. The previous `val projectRule = ProjectRule()` was never registered as an extension (a JUnit 4
+    // rule that does not fire under JUnit 5), so the lazily-opened project was never closed and leaked a
+    // ProjectImpl (surfaced as an engine-level "leaked instance of ProjectImpl" only in full-suite runs).
+    private val projectFixture = projectFixture()
+    private val project get() = projectFixture.get()
 
     @Test
     fun `If no follow-up actions, expand action is present`() {
-        val sut = NotificationManager.createActions(projectRule.project, listOf(), "Dummy Test Action", "Dummy title")
+        val sut = NotificationManager.createActions(project, listOf(), "Dummy Test Action", "Dummy title")
         assertThat(sut).isNotNull
         assertThat(sut).hasSize(1)
         assertThat(sut.first().title).isEqualTo("More...")
@@ -36,7 +32,7 @@ class NotificationManagerTest {
             "UpdateExtension",
             NotificationFollowupActionsContent(NotificationActionDescription("title", null))
         )
-        val sut = NotificationManager.createActions(projectRule.project, listOf(followupActions), "Dummy Test Action", "Dummy title")
+        val sut = NotificationManager.createActions(project, listOf(followupActions), "Dummy Test Action", "Dummy title")
         assertThat(sut).isNotNull
         assertThat(sut).hasSize(2)
         assertThat(sut.first().title).isEqualTo("Update")
