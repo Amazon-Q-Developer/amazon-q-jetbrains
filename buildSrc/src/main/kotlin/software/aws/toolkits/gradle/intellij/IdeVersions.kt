@@ -117,39 +117,44 @@ object IdeVersions {
         Profile(
             name = "2026.2",
             gateway = ProductProfile(
-                // 2026.2 is still EAP; pinned to the build where compatible marketplace plugins exist
-                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                sdkVersion = "2026.2",
                 bundledPlugins = listOf("org.jetbrains.plugins.terminal")
             ),
             community = ProductProfile(
-                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                sdkVersion = "2026.2",
                 bundledPlugins = commonPlugins + listOf(
                     "com.intellij.java",
                     "com.intellij.gradle",
                     "org.jetbrains.idea.maven",
-                    "com.intellij.properties"
+                    "com.intellij.properties",
+                    // JCEF split out of the platform into its own bundled plugin in 2026.2; needed on the
+                    // compile classpath. The runtime edge is already declared in amazonq's plugin.xml.
+                    "com.intellij.modules.jcef"
                 ),
                 marketplacePlugins = listOf(
-                    "org.toml.lang:262.7581.3",
-                    "PythonCore:262.7581.18",
-                    "Docker:262.7581.3",
-                    "com.intellij.modules.json:262.7581.18"
+                    "org.toml.lang:262.8665.176",
+                    "PythonCore:262.8665.258",
+                    "Docker:262.8665.185",
+                    "com.intellij.modules.json:262.8665.176"
                 )
             ),
             ultimate = ProductProfile(
-                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                sdkVersion = "2026.2",
                 bundledPlugins = commonPlugins + listOf(
                     "JavaScript",
                     "JavaScriptDebugger",
                     // 2026.1 scooped "css" out of the JS plugin (which we depend on) into a separate package
                     "com.intellij.css",
                     "NodeJS",
-                    "com.intellij.database"
+                    "com.intellij.database",
+                    // JCEF split out of the platform into its own bundled plugin in 2026.2; needed on the
+                    // compile classpath. The runtime edge is already declared in amazonq's plugin.xml.
+                    "com.intellij.modules.jcef"
                 ),
                 marketplacePlugins = listOf(
-                    "Pythonid:262.7581.18",
-                    "org.jetbrains.plugins.go:262.7581.18",
-                    "com.intellij.modules.json:262.7581.18"
+                    "Pythonid:262.8665.258",
+                    "org.jetbrains.plugins.go:262.8665.258",
+                    "com.intellij.modules.json:262.8665.176"
                 )
             ),
             rider = RiderProfile(
