@@ -74,7 +74,7 @@ internal fun shouldShowAmazonQDeprecationBanner(
 
 internal fun isSupportedEditor(fileEditor: FileEditor): Boolean = fileEditor is TextEditor
 
-class AmazonQDeprecationBannerProvider : EditorNotificationProvider, DumbAware {
+internal class AmazonQDeprecationBannerProvider : EditorNotificationProvider, DumbAware {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile,
