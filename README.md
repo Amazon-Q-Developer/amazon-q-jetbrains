@@ -3,7 +3,13 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/24267-amazon-q.svg)](https://plugins.jetbrains.com/plugin/24267-amazon-q) 
 [![Version](https://img.shields.io/jetbrains/plugin/v/24267.svg?label=version)](https://plugins.jetbrains.com/plugin/24267-amazon-q)
 <!-- [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=aws_amazon-q-jetbrains&metric=alert_status)](https://sonarcloud.io/dashboard?id=aws_amazon-q-jetbrains) -->
- 
+
+## Amazon Q Developer IDE plugins: end of support
+
+On April 30, 2027, AWS will discontinue support for Amazon Q Developer IDE plugins. For capabilities similar to Amazon Q Developer IDE plugins, [explore Kiro](https://kiro.dev) to access the latest models and features, including agentic coding, chat and MCP support.
+
+[Learn more](https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/)
+
 # Amazon Q for JetBrains
 
 Amazon Q for JetBrains is an AI-powered assistant plugin for JetBrains IDEs that helps you build applications faster on [Amazon Web Services](https://aws.amazon.com/).
