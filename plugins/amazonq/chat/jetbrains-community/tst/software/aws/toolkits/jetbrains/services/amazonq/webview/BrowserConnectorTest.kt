@@ -31,6 +31,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.Descripti
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.Recommendation
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
+import software.aws.toolkits.jetbrains.settings.MeetQSettings
 
 class BrowserConnectorTest : AmazonQTestBase() {
     private lateinit var browserConnector: BrowserConnector
@@ -267,5 +268,25 @@ class BrowserConnectorTest : AmazonQTestBase() {
         browserConnector.parseFindingsMessages(findingsMessage)
 
         verify(mockCodeScanManager, never()).addOnDemandIssues(any(), any(), any())
+    }
+
+    @Test
+    fun `acknowledging deprecation notice persists only the deprecation setting`() {
+        val settings = MeetQSettings()
+
+        acknowledgeChatPromptOption(CLIENT_DEPRECATION_NOTICE_ID, settings)
+
+        assertThat(settings.deprecationNoticeAcknowledged).isTrue()
+        assertThat(settings.pairProgrammingAcknowledged).isFalse()
+    }
+
+    @Test
+    fun `old feature card acknowledgement remains supported`() {
+        val settings = MeetQSettings()
+
+        acknowledgeChatPromptOption(PROGRAMMER_MODE_CARD_ID, settings)
+
+        assertThat(settings.pairProgrammingAcknowledged).isTrue()
+        assertThat(settings.deprecationNoticeAcknowledged).isFalse()
     }
 }

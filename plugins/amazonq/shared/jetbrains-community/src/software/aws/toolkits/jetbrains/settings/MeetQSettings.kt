@@ -53,6 +53,12 @@ class MeetQSettings : PersistentStateComponent<MeetQSettingsConfiguration> {
             state.pairProgrammingAcknowledged = value
         }
 
+    var deprecationNoticeAcknowledged: Boolean
+        get() = state.deprecationNoticeAcknowledged
+        set(value) {
+            state.deprecationNoticeAcknowledged = value
+        }
+
     companion object {
         fun getInstance(): MeetQSettings = service()
     }
@@ -62,4 +68,5 @@ data class MeetQSettingsConfiguration(
     var reinvent2024OnboardingCount: Int = 0,
     var disclaimerAcknowledged: Boolean = false,
     var pairProgrammingAcknowledged: Boolean = false,
+    var deprecationNoticeAcknowledged: Boolean = false,
 )
