@@ -13,6 +13,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <!--Q Getting Started page -->
         <fileEditorProvider implementation="software.aws.toolkits.jetbrains.services.amazonq.gettingstarted.QGettingStartedEditorProvider"/>
+        <editorNotificationProvider implementation="software.aws.toolkits.jetbrains.services.amazonq.notifications.AmazonQDeprecationBannerProvider"/>
 
         <toolWindow id="amazon.q.window" anchor="right"
                     factoryClass="software.aws.toolkits.jetbrains.services.amazonq.toolwindow.AmazonQToolWindowFactory" icon="AwsIcons.Logos.AWS_Q" />
