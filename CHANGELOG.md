@@ -1,3 +1,6 @@
+# _4.9_ (2026-10-01)
+- **(Bug Fix)** Amazon Q: Fixed a ConcurrentModificationException that could occur during IDE startup when a notification observer was registered while notifications were being processed
+
 # _4.8_ (2026-09-16)
 - **(Bug Fix)** Amazon Q profile selection no longer fails when one regional endpoint is unreachable (for example, blocked by a network firewall); the plugin now falls back to the other regions and only reports an error when profile listing fails in every region
 - **(Removal)** Removed support for IDEs based on the 2025.1 and 2025.2 platforms

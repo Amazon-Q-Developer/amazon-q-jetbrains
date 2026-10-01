@@ -1,0 +1,8 @@
+{
+  "date" : "2026-10-01",
+  "version" : "4.9",
+  "entries" : [ {
+    "type" : "bugfix",
+    "description" : "Amazon Q: Fixed a ConcurrentModificationException that could occur during IDE startup when a notification observer was registered while notifications were being processed"
+  } ]
+}
