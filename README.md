@@ -1,8 +1,4 @@
-<!-- ![Build Status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiekhxeERIMmNLSkNYUktnUFJzUVJucmJqWnFLMGlpNXJiNE1LLzVWV3B1QUpSSkhCS04veHZmUGxZZ0ZmZlRzYjJ3T1VtVEs1b3JxbWNVOHFOeFJDOTAwPSIsIml2UGFyYW1ldGVyU3BlYyI6ImZXNW5KaStDRGNLdjZuZDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main)  -->
-<!-- [![Coverage](https://img.shields.io/codecov/c/github/aws/amazon-q-jetbrains/main.svg)](https://codecov.io/gh/aws/amazon-q-jetbrains/branch/main)  -->
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/24267-amazon-q.svg)](https://plugins.jetbrains.com/plugin/24267-amazon-q) 
-[![Version](https://img.shields.io/jetbrains/plugin/v/24267.svg?label=version)](https://plugins.jetbrains.com/plugin/24267-amazon-q)
-<!-- [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=aws_amazon-q-jetbrains&metric=alert_status)](https://sonarcloud.io/dashboard?id=aws_amazon-q-jetbrains) -->
+# Amazon Q for JetBrains
 
 > [!IMPORTANT]
 > **Amazon Q Developer IDE plugins: end of support**
@@ -11,7 +7,11 @@
 >
 > [Learn more](https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/)
 
-# Amazon Q for JetBrains
+<!-- ![Build Status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiekhxeERIMmNLSkNYUktnUFJzUVJucmJqWnFLMGlpNXJiNE1LLzVWV3B1QUpSSkhCS04veHZmUGxZZ0ZmZlRzYjJ3T1VtVEs1b3JxbWNVOHFOeFJDOTAwPSIsIml2UGFyYW1ldGVyU3BlYyI6ImZXNW5KaStDRGNLdjZuZDgiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main)  -->
+<!-- [![Coverage](https://img.shields.io/codecov/c/github/aws/amazon-q-jetbrains/main.svg)](https://codecov.io/gh/aws/amazon-q-jetbrains/branch/main)  -->
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/24267-amazon-q.svg)](https://plugins.jetbrains.com/plugin/24267-amazon-q)
+[![Version](https://img.shields.io/jetbrains/plugin/v/24267.svg?label=version)](https://plugins.jetbrains.com/plugin/24267-amazon-q)
+<!-- [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=aws_amazon-q-jetbrains&metric=alert_status)](https://sonarcloud.io/dashboard?id=aws_amazon-q-jetbrains) -->
 
 Amazon Q for JetBrains is an AI-powered assistant plugin for JetBrains IDEs that helps you build applications faster on [Amazon Web Services](https://aws.amazon.com/).
 
