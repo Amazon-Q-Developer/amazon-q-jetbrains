@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.runInEdtAndWait
@@ -24,6 +25,7 @@ import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import java.io.File
 
 class CreateOrUpdateCredentialProfilesActionTest {
@@ -36,11 +38,19 @@ class CreateOrUpdateCredentialProfilesActionTest {
     @JvmField
     val projectRule = ProjectRule()
 
+    @Rule
+    @JvmField
+    val disposableRule = DisposableRule()
+
     private lateinit var fileEditorManager: FileEditorManager
     private lateinit var localFileSystem: LocalFileSystem
 
     @Before
     fun setUp() {
+        // 2026.2's bare app/project no longer loads plugin.xml, so the TelemetryService the action records and the
+        // project-scoped AwsConnectionManager it resolves are missing.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
         fileEditorManager = FileEditorManager.getInstance(projectRule.project)
         localFileSystem = LocalFileSystem.getInstance()
     }

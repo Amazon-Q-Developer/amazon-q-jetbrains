@@ -38,6 +38,8 @@ class LoginBrowserTest : HeavyPlatformTestCase() {
 
     override fun setUp() {
         super.setUp()
+        // 2026.2 builds a bare test app without plugin.xml services; register them before constructing LoginBrowser.
+        CoreTestHelper.registerMissingServices(testRootDisposable)
         mockTelemetryService.beforeEach(null)
         sut = TestLoginBrowser(project)
     }

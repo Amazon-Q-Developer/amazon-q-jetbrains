@@ -37,6 +37,7 @@ import software.amazon.awssdk.services.codewhispererstreaming.model.UserIntent
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.telemetry.MetricEvent
 import software.amazon.q.core.telemetry.TelemetryBatcher
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerExtension
 import software.amazon.q.jetbrains.core.credentials.LegacyManagedBearerSsoConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnection
@@ -172,6 +173,11 @@ class TelemetryHelperTest {
         val fixtureBuilder = factory.createLightFixtureBuilder("TelemetryHelperTest")
         myFixture = factory.createCodeInsightFixture(fixtureBuilder.fixture, LightTempDirTestFixtureImpl(true))
         myFixture.setUp()
+
+        // 262's bare test app doesn't load plugin.xml service registrations; register what's missing (e.g. AwsSettings
+        // used below) so getInstance(...) resolves. No-op on 251-261. register-if-absent, so the mock extensions below
+        // still win.
+        CoreTestHelper.registerMissingServices(myFixture.testRootDisposable)
 
         // NOW manually initialize mocks - Application exists now
         mockClientManager.beforeEach(null)

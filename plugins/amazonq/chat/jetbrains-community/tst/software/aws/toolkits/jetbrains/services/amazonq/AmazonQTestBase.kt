@@ -17,6 +17,7 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import software.amazon.q.core.TokenConnectionSettings
 import software.amazon.q.core.credentials.ToolkitBearerTokenProvider
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.BearerTokenProvider
@@ -42,6 +43,10 @@ open class AmazonQTestBase(
     @Before
     open fun setup() {
         project = projectRule.project
+        // 262 builds a bare test app that doesn't load plugin.xml service registrations; register what the
+        // platform/Q services need so getInstance(...) below resolves. No-op on 251-261 (services already present).
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
         toolkitConnectionManager = spy(ToolkitConnectionManager.getInstance(project))
 
         val provider = mock<BearerTokenProvider>()

@@ -23,6 +23,7 @@ import kotlinx.coroutines.withContext
 import migration.software.amazon.q.jetbrains.core.coroutines.PluginCoroutineScopeTracker
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -51,6 +52,16 @@ class ScopeTest {
     @Rule
     @JvmField
     val testName = TestName()
+
+    @Before
+    fun setUp() {
+        // 2026.2 runs on a bare test application/project that no longer loads plugin.xml, so the
+        // application- and project-scoped PluginCoroutineScopeTracker registrations are absent. Register the
+        // application one once, and the project one for the rule's project; tests that open their own project
+        // register it on that project directly.
+        registerProjectTracker(ApplicationManager.getApplication())
+        registerProjectTracker(projectRule.project)
+    }
 
     @Test
     fun `plugin being uploaded cancels application scope`() {
@@ -94,6 +105,7 @@ class ScopeTest {
         val projectFile = tempDir.newFile("${testName.methodName}${ProjectFileType.DOT_DEFAULT_EXTENSION}").toPath()
         val options = createTestOpenProjectOptions(runPostStartUpActivities = false)
         val project = ProjectManagerEx.getInstanceEx().openProject(projectFile, options)!!
+        registerProjectTracker(project)
 
         assertScopeIsCanceled(projectCoroutineScope(project)) {
             PlatformTestUtil.forceCloseProjectWithoutSaving(project)
@@ -129,6 +141,7 @@ class ScopeTest {
         val projectFile = tempDir.newFile("${testName.methodName}${ProjectFileType.DOT_DEFAULT_EXTENSION}").toPath()
         val options = createTestOpenProjectOptions(runPostStartUpActivities = false)
         val project2 = ProjectManagerEx.getInstanceEx().openProject(projectFile, options)!!
+        registerProjectTracker(project2)
 
         try {
             assertThat(
@@ -151,6 +164,17 @@ class ScopeTest {
     @Test
     fun `disposableCoroutineScope can't take an application`() {
         assertThatThrownBy { disposableCoroutineScope(ApplicationManager.getApplication()) }.isInstanceOf<IllegalStateException>()
+    }
+
+    // plugin.xml declares PluginCoroutineScopeTracker as both an application- and project-scoped service; on
+    // 2026.2's bare test container neither is loaded, so register it on each component manager the test touches.
+    // Tie the registration's lifetime to the container itself (a Project disposes its services when it closes,
+    // which is what `project being disposed cancels project scope` relies on); fall back to the test disposable
+    // for the application, which must not be disposed between tests.
+    private fun registerProjectTracker(componentManager: ComponentManager) {
+        val parent = componentManager as? Disposable ?: disposableRule.disposable
+        val disposable = if (componentManager is com.intellij.openapi.application.Application) disposableRule.disposable else parent
+        componentManager.replaceService(PluginCoroutineScopeTracker::class.java, PluginCoroutineScopeTracker(), disposable)
     }
 
     private fun createFakePluginScope(componentManager: ComponentManager = ApplicationManager.getApplication()): Disposable {

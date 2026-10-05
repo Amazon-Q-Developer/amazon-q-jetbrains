@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import com.intellij.openapi.Disposable
-import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.junit.Rule
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -18,7 +18,7 @@ import software.amazon.q.jetbrains.core.credentials.sso.bearer.BearerTokenProvid
 import software.amazon.q.jetbrains.utils.extensions.SsoLogin
 import software.amazon.q.jetbrains.utils.extensions.SsoLoginExtension
 
-@ExtendWith(ApplicationExtension::class, SsoLoginExtension::class)
+@ExtendWith(TestApplicationExtension::class, SsoLoginExtension::class)
 @SsoLogin("amazonq-test-account")
 class PreAmazonQUiTest {
 

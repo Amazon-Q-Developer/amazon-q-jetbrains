@@ -32,6 +32,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.ValidationExce
 import software.amazon.awssdk.services.codewhispererruntime.paginators.ListAvailableProfilesIterable
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.region.AwsRegion
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManager
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.MockResourceCacheRule
@@ -89,6 +90,13 @@ class QRegionProfileManagerTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve. No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
+        // listProfiles/endpoint lookups read the amazon.q.endpoints.json registry key, contributed by plugin.xml and
+        // absent on the bare 262 app.
+        CoreTestHelper.registerMissingRegistryKeys()
         clientRule.create<SsoOidcClient>()
         regionProviderRule.addRegion(AwsRegion("us-east-1", "US East (N. Virginia)", "aws"))
         regionProviderRule.addRegion(AwsRegion("eu-central-1", "Europe (Frankfurt)", "aws"))

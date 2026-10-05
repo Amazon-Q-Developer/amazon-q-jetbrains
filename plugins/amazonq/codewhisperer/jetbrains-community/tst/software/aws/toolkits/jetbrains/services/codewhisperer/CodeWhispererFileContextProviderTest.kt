@@ -14,6 +14,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.mock
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.utils.rules.HeavyJavaCodeInsightTestFixtureRule
 import software.aws.toolkits.jetbrains.services.amazonq.CodeWhispererFeatureConfigService
 import software.aws.toolkits.jetbrains.services.codewhisperer.language.languages.CodeWhispererJava
@@ -39,9 +40,15 @@ class CodeWhispererFileContextProviderTest {
 
     @Before
     fun setup() {
+        // 262's bare test app doesn't load plugin.xml service registrations; register what getInstance(...) needs.
+        // No-op on 251-261.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
         fixture = projectRule.fixture
         project = projectRule.project
 
+        // FileContextProvider is a project @Service not registered on the bare 262 app; provide it before getInstance.
+        project.replaceService(FileContextProvider::class.java, DefaultCodeWhispererFileContextProvider(), disposableRule.disposable)
         sut = FileContextProvider.getInstance(project) as DefaultCodeWhispererFileContextProvider
 
         featureConfigService = mock()

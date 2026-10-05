@@ -22,7 +22,12 @@ fun Project.ciOnly(block: () -> Unit) {
 fun Project.isCi() : Boolean = providers.environmentVariable("CI").isPresent
 
 fun Project.jvmTarget(): Provider<JavaVersion> = withCurrentProfileName {
-    JavaVersion.VERSION_21
+    when (it) {
+        // 2026.2 (262) platform is built with Java 25 (bytecode 69); compiling Kotlin against it
+        // requires a matching JVM target, otherwise inline-bytecode compilation fails.
+        "2026.2" -> JavaVersion.VERSION_25
+        else -> JavaVersion.VERSION_21
+    }
 }
 
 // https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#stdlib-miscellaneous
