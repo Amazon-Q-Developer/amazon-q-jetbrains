@@ -128,6 +128,8 @@ import java.util.function.Function
 internal const val PROGRAMMER_MODE_CARD_ID = "programmerModeCardId"
 internal const val CLIENT_DEPRECATION_NOTICE_ID = "client-deprecation-notice"
 
+internal fun openChatLink(link: String) = BrowserUtil.open(link)
+
 internal fun acknowledgeChatPromptOption(
     messageId: String?,
     settings: MeetQSettings,
@@ -404,7 +406,7 @@ class BrowserConnector(
             }
 
             CHAT_LINK_CLICK -> {
-                node.get("params")?.get("link")?.asText()?.let { BrowserUtil.browse(it) }
+                node.get("params")?.get("link")?.asText()?.let(::openChatLink)
             }
 
             CHAT_INFO_LINK_CLICK -> {

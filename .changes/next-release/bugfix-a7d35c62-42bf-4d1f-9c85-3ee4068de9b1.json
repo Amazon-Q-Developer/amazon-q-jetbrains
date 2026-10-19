@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Amazon Q: open chat file links through the operating system's associated application instead of always forcing them into a web browser"
+}

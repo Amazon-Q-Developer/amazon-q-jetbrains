@@ -4,6 +4,7 @@
 package software.aws.toolkits.jetbrains.services.amazonq.webview
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -52,6 +53,17 @@ class BrowserConnectorTest : AmazonQTestBase() {
         project.replaceService(CodeWhispererCodeScanManager::class.java, mockCodeScanManager, disposableRule.disposable)
 
         browserConnector = spy(BrowserConnector(project = project))
+    }
+
+    @Test
+    fun `chat links use OS-aware open instead of forcing the browser`() {
+        val link = "src/main/kotlin/Example.kt"
+
+        mockStatic(BrowserUtil::class.java).use { browserUtilMock ->
+            openChatLink(link)
+
+            browserUtilMock.verify { BrowserUtil.open(link) }
+        }
     }
 
     @Test
