@@ -10,7 +10,6 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.emptyText
@@ -23,7 +22,6 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
-import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidChangeConfigurationParams
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnection
@@ -270,10 +268,10 @@ class CodeWhispererConfigurable(private val project: Project) :
                             return@forEach
                         }
 
-                        currentThreadCoroutineScope().launch {
-                            AmazonQLspService.executeAsyncIfRunning(project) { server ->
-                                server.workspaceService.didChangeConfiguration(DidChangeConfigurationParams())
-                            }
+                        // apply callbacks run in a blocking context on the EDT with no coroutine scope of their own,
+                        // so dispatch through the LSP service's scope rather than currentThreadCoroutineScope()
+                        AmazonQLspService.launchAsyncIfRunning(project) { server ->
+                            server.workspaceService.didChangeConfiguration(DidChangeConfigurationParams())
                         }
                     }
                 }

@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Amazon Q: fixed an `IllegalStateException: There is no scoping element in this thread` when applying the Amazon Q settings page on 2026.1+ IDEs"
+}
