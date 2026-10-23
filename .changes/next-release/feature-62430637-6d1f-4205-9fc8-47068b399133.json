@@ -1,0 +1,4 @@
+{
+  "type" : "feature",
+  "description" : "Amazon Q: Added keyboard shortcuts for the run, reject and stop buttons shown for a shell command in chat, matching the Amazon Q VS Code extension. The shortcuts only apply while the chat window has focus, so the IDE keeps its own bindings everywhere else."
+}
