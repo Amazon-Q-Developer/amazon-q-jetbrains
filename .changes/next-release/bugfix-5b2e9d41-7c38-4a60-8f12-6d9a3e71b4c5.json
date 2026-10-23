@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Amazon Q: fixed an `IllegalStateException: 'runBlockingCancellable' is forbidden in the Write Action` raised while syncing module dependencies when the IDE changes project roots inside a write action, for example on PyCharm startup"
+}
