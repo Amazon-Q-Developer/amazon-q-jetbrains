@@ -1,3 +1,6 @@
+# _4.10_ (2026-10-28)
+- **(Bug Fix)** Amazon Q: fixed an `IllegalStateException: There is no scoping element in this thread` when applying the Amazon Q settings page on 2026.1+ IDEs
+
 # _4.9_ (2026-10-01)
 - **(Bug Fix)** Amazon Q: Fixed a ConcurrentModificationException that could occur during IDE startup when a notification observer was registered while notifications were being processed
 
