@@ -1,0 +1,4 @@
+{
+  "type" : "feature",
+  "description" : "Amazon Q local MCP servers start only after the project is trusted"
+}
