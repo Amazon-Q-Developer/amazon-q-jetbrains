@@ -5,6 +5,7 @@ package software.amazon.q.jetbrains.services.telemetry.otel
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ApplicationExtension
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.TraceId
 import io.opentelemetry.context.Context
@@ -305,6 +306,36 @@ class OtelBaseTest {
         val span = Telemetry.aws.openUrl.startSpan()
         span.result(MetricResult.Succeeded)
         assertDoesNotThrow { block(span) }
+    }
+
+    @Test
+    fun `setAttribute forwards String and typed attribute values to the span`() {
+        val typedKey = AttributeKey.longKey("typedKey")
+
+        spanBuilder("tracer", "span")
+            .setAttribute("stringKey", "value")
+            .setAttribute(typedKey, 42L)
+            .use {}
+
+        assertThat(otelExtension.completedSpans).singleElement().satisfiesKt { span ->
+            assertThat(span.getAttribute(AttributeKey.stringKey("stringKey"))).isEqualTo("value")
+            assertThat(span.getAttribute(typedKey)).isEqualTo(42L)
+        }
+    }
+
+    @Test
+    fun `setAttribute with a null value does not set the attribute`() {
+        val typedKey = AttributeKey.longKey("typedKey")
+
+        spanBuilder("tracer", "span")
+            .setAttribute("stringKey", null)
+            .setAttribute(typedKey, null)
+            .use {}
+
+        assertThat(otelExtension.completedSpans).singleElement().satisfiesKt { span ->
+            assertThat(span.getAttribute(AttributeKey.stringKey("stringKey"))).isNull()
+            assertThat(span.getAttribute(typedKey)).isNull()
+        }
     }
 
     private fun spanBuilder(tracer: String, spanName: String) = DefaultSpanBuilder(otelExtension.sdk.sdk.getTracer(tracer).spanBuilder(spanName))

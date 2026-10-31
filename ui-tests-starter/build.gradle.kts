@@ -60,8 +60,9 @@ dependencies {
 
     intellijPlatform {
         val version = ideProfile.community.sdkVersion
-        // Use unified IntelliJ IDEA for 2025.3+, Community for older versions
-        if (version.startsWith("2025.3") || version.startsWith("2026.")) {
+        // Use unified IntelliJ IDEA for 2025.3+, Community for older versions.
+        // Compare the profile name: an EAP profile pins a build number (e.g. 263.x) instead of a 20XX.X version.
+        if (ideProfile.name >= "2025.3") {
             intellijIdeaUltimate(version) { useInstaller.set(false) }
         } else {
             intellijIdeaCommunity(version) { useInstaller.set(false) }

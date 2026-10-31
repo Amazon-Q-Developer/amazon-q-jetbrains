@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         build_target: [ ':plugin-amazonq:buildPlugin' ]
-        version: [ '2025.3', '2026.1', '2026.2' ]
+        version: [ '2025.3', '2026.1', '2026.2', '2026.3' ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
           dotnet-version: '6.x'
       - name: Generate artifact
         run: |
-          ./gradlew -PideProfileName=${{ matrix.version }} ${{ matrix.build_target }} ${{ matrix.version == '2026.2' && '--no-parallel' || '' }}
+          ./gradlew -PideProfileName=${{ matrix.version }} ${{ matrix.build_target }} ${{ (matrix.version == '2026.2' || matrix.version == '2026.3') && '--no-parallel' || '' }}
       - name: Fix artifact name
         env:
           BUILD_TARGET: "${{ matrix.build_target }}"

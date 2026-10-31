@@ -164,6 +164,56 @@ object IdeVersions {
                 rdGenVersion = "2026.2.4",
                 nugetVersion = "2026.2.0-eap06"
             )
+        ),
+        Profile(
+            name = "2026.3",
+            gateway = ProductProfile(
+                // 2026.3 is still EAP; pinned to a build that has matching marketplace plugin builds
+                sdkVersion = "263.7307.112-EAP-CANDIDATE",
+                bundledPlugins = listOf("org.jetbrains.plugins.terminal")
+            ),
+            community = ProductProfile(
+                sdkVersion = "263.7307.112-EAP-CANDIDATE",
+                bundledPlugins = commonPlugins + listOf(
+                    "com.intellij.java",
+                    "com.intellij.gradle",
+                    "org.jetbrains.idea.maven",
+                    "com.intellij.properties",
+                    // JCEF has been a separate bundled plugin since 2026.2
+                    "com.intellij.modules.jcef"
+                ),
+                marketplacePlugins = listOf(
+                    "org.toml.lang:263.7307.112",
+                    "PythonCore:263.7307.112",
+                    "Docker:263.7307.117",
+                    "com.intellij.modules.json:263.7307.112"
+                )
+            ),
+            ultimate = ProductProfile(
+                sdkVersion = "263.7307.112-EAP-CANDIDATE",
+                bundledPlugins = commonPlugins + listOf(
+                    "JavaScript",
+                    "JavaScriptDebugger",
+                    // 2026.1 scooped "css" out of the JS plugin (which we depend on) into a separate package
+                    "com.intellij.css",
+                    "NodeJS",
+                    "com.intellij.database",
+                    // JCEF has been a separate bundled plugin since 2026.2
+                    "com.intellij.modules.jcef"
+                ),
+                marketplacePlugins = listOf(
+                    "Pythonid:263.7307.112",
+                    "org.jetbrains.plugins.go:263.7307.112",
+                    "com.intellij.modules.json:263.7307.112"
+                )
+            ),
+            rider = RiderProfile(
+                sdkVersion = "2026.3-SNAPSHOT",
+                bundledPlugins = commonPlugins,
+                netFrameworkTarget = "net472",
+                rdGenVersion = "2026.3.2",
+                nugetVersion = "2026.3.0-eap09"
+            )
         )
     ).associateBy { it.name }
 
