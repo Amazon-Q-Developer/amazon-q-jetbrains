@@ -24,8 +24,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
+import org.eclipse.lsp4j.jsonrpc.Endpoint
 import org.eclipse.lsp4j.jsonrpc.Launcher
-import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -146,7 +146,7 @@ open class CodeWhispererTestBase {
                 override val languageServer: AmazonQLanguageServer
                     get() = mockLanguageServer
 
-                override val rawEndpoint: RemoteEndpoint
+                override val rawEndpoint: Endpoint
                     get() = TODO("Not yet implemented")
 
                 override fun dispose() {}
