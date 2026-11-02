@@ -51,6 +51,7 @@ import org.eclipse.lsp4j.InitializedParams
 import org.eclipse.lsp4j.SynchronizationCapabilities
 import org.eclipse.lsp4j.TextDocumentClientCapabilities
 import org.eclipse.lsp4j.WorkspaceClientCapabilities
+import org.eclipse.lsp4j.jsonrpc.Endpoint
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
@@ -361,7 +362,10 @@ interface AmazonQServerInstanceFacade : Disposable {
     val languageServer: AmazonQLanguageServer
         get() = launcher.remoteProxy
 
-    val rawEndpoint: RemoteEndpoint
+    // Typed as Endpoint, not RemoteEndpoint: 2026.3 bundles an lsp4j whose RemoteEndpoint.request returns a
+    // JsonRpcRequestFuture, and a call compiled against it fails with NoSuchMethodError on the lsp4j we bundle.
+    // Endpoint.request returns CompletableFuture in every lsp4j version.
+    val rawEndpoint: Endpoint
         get() = launcher.remoteEndpoint
 }
 

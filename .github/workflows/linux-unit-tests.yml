@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ideProfileName: [ "2025.3", "2026.1", "2026.2" ]
+        ideProfileName: [ "2025.3", "2026.1", "2026.2", "2026.3" ]
     env:
       CI: true
       LOCAL_ENV_RUN: true
@@ -46,8 +46,8 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        # 262 test compile is blocked by a Java 25 inline-bytecode issue pending a Kotlin bump; buildPlugin still gates it
-        continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
+        # 262+ test compile is blocked by a Java 25 inline-bytecode issue pending a Kotlin bump; buildPlugin still gates it
+        continue-on-error: ${{ matrix.ideProfileName == '2026.2' || matrix.ideProfileName == '2026.3' }}
         # --no-parallel: amazonq submodules share one test sandbox; concurrent Test tasks corrupt the index (fatal on Gradle 9)
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &

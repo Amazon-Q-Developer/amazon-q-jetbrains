@@ -76,6 +76,13 @@
     -->
     <depends optional="true">com.intellij.modules.jcef</depends>
 
+    <!--
+      In 2026.3 (263) JetBrains moved ProblemsView out of the core platform into the bundled Problems View plugin
+      (com.intellij.problemsView). Without this dependency our classloader can't see ProblemsView, so code scan
+      results can't reach the Problems tool window. Optional because that plugin doesn't exist before 2026.3.
+    -->
+    <depends optional="true">com.intellij.problemsView</depends>
+
     <depends optional="true" config-file="amazonq-ext-codewithme.xml">com.jetbrains.codeWithMe</depends>
     <depends optional="true" config-file="amazonq-ext-java.xml">com.intellij.java</depends>
     <depends optional="true" config-file="amazonq-ext-nodejs.xml">JavaScriptDebugger</depends>

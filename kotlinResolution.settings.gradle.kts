@@ -6,7 +6,7 @@ dependencyResolutionManagement {
         maybeCreate("libs").apply {
             // pull value from IJ library list: https://github.com/JetBrains/intellij-community/blob/<mv>/.idea/libraries/kotlinx_coroutines_core.xml
             val version = when (providers.gradleProperty("ideProfileName").getOrNull() ?: return@apply) {
-                "2025.3", "2026.1", "2026.2" -> {
+                "2025.3", "2026.1", "2026.2", "2026.3" -> {
                     "1.10.1-intellij-5"
                 }
 

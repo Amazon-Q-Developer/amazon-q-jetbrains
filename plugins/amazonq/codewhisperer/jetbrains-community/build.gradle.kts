@@ -20,6 +20,11 @@ dependencies {
             bundledModule("intellij.platform.collaborationTools.auth.base")
             bundledModule("intellij.platform.collaborationTools.auth")
         }
+
+        // 2026.3 (263) moved ProblemsView out of the core platform into the bundled Problems View plugin
+        if (providers.gradleProperty("ideProfileName").get() >= "2026.3") {
+            bundledModule("intellij.platform.problemView.ui")
+        }
     }
 
     implementation(project(":plugin-core-q"))
