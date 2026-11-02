@@ -101,6 +101,8 @@ class InlineChatController(
     init {
         Disposer.register(this, listener)
         project.messageBus.connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener)
+        // This service can be created off the EDT, for example by AmazonQStartupActivity, but the selected editor must be read on the EDT.
+        scope.launch(EDT) { listener.attachToSelectedEditor() }
         project.messageBus.connect(this).subscribe(
             QRegionProfileSelectedListener.TOPIC,
             object : QRegionProfileSelectedListener {
