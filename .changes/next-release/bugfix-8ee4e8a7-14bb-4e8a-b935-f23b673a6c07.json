@@ -1,4 +1,0 @@
-{
-  "type" : "bugfix",
-  "description" : "Amazon Q: fixed a `NoClassDefFoundError: com/intellij/ui/jcef/JBCefApp` at project open when the bundled Web Browser (JCEF) plugin is disabled"
-}
