@@ -17,6 +17,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.UIUtil
 import software.amazon.q.core.utils.error
 import software.amazon.q.core.utils.getLogger
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.checkFileStillExists
 import software.aws.toolkits.resources.message
 import java.awt.BorderLayout
 import java.awt.event.MouseEvent
@@ -44,6 +45,7 @@ internal class CodeWhispererCodeScanHighlightingFilesPanel(private val project: 
                     val fileNode = (event.source as Tree).selectionPath?.lastPathComponent as? DefaultMutableTreeNode
                     val file = fileNode?.userObject as? VirtualFile ?: return false
                     runInEdt {
+                        if (!checkFileStillExists(project, file)) return@runInEdt
                         val editor = FileEditorManager.getInstance(project).openTextEditor(
                             OpenFileDescriptor(project, file),
                             true

@@ -24,6 +24,7 @@ import software.amazon.q.core.utils.error
 import software.amazon.q.core.utils.getLogger
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.IssueGroupingStrategy
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.IssueSeverity
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.checkFileStillExists
 import software.aws.toolkits.jetbrains.services.codewhisperer.layout.CodeWhispererLayoutConfig
 import software.aws.toolkits.jetbrains.services.codewhisperer.layout.CodeWhispererLayoutConfig.addHorizontalGlue
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererColorUtil.INACTIVE_TEXT_COLOR
@@ -401,6 +402,7 @@ internal class CodeWhispererCodeScanResultsView(private val project: Project) : 
         if (codeScanIssue.isInvalid) return
 
         runInEdt {
+            if (!checkFileStillExists(project, codeScanIssue.file)) return@runInEdt
             val editor = FileEditorManager.getInstance(project).openTextEditor(
                 OpenFileDescriptor(project, codeScanIssue.file, startOffset),
                 false

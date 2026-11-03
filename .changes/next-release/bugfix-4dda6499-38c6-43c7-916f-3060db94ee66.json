@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Amazon Q: fixed an `IllegalArgumentException: file is not valid` when opening a code issue whose file was deleted or rebuilt after the review"
+}

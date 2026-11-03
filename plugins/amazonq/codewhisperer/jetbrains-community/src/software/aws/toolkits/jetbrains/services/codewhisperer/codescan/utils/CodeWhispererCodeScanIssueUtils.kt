@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.JBColor
@@ -28,9 +29,11 @@ import software.amazon.awssdk.services.codewhispererruntime.model.CodeWhispererR
 import software.amazon.q.core.utils.convertMarkdownToHTML
 import software.amazon.q.core.utils.debug
 import software.amazon.q.core.utils.getLogger
+import software.amazon.q.core.utils.info
 import software.amazon.q.jetbrains.ToolkitPlaces
 import software.amazon.q.jetbrains.utils.applyPatch
 import software.amazon.q.jetbrains.utils.notifyError
+import software.amazon.q.jetbrains.utils.notifyWarn
 import software.amazon.q.jetbrains.utils.pluginAwareExecuteOnPooledThread
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.textDocument.InlineCompletionReference
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.textDocument.InlineCompletionReferencePosition
@@ -232,6 +235,26 @@ private fun createSuggestedFixSection(issue: CodeWhispererCodeScanIssue, suggest
         }
     }
     """.trimMargin()
+}
+
+/**
+ * Returns true if [file] still exists and can be opened.
+ *
+ * A code issue keeps the [VirtualFile] from review time. If the file was deleted, or deleted and
+ * recreated by a build, after the review, that object is no longer valid and opening it throws
+ * `IllegalArgumentException: file is not valid`. In that case, warn the user to run the review
+ * again and return false.
+ */
+internal fun checkFileStillExists(project: Project, file: VirtualFile): Boolean {
+    if (file.isValid) return true
+
+    LOG.info { "Not opening ${file.path}: the file was deleted or replaced after the review" }
+    notifyWarn(
+        title = message("codewhisperer.codescan.scan_display"),
+        content = message("codewhisperer.codescan.file_no_longer_exists", file.path),
+        project = project,
+    )
+    return false
 }
 
 fun explainIssue(issue: CodeWhispererCodeScanIssue) {
