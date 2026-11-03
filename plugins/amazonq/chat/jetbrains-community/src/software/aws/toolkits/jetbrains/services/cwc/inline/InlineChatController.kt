@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.JBColor
-import com.intellij.ui.jcef.JBCefApp
 import com.jetbrains.rd.util.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -53,6 +52,7 @@ import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.core.coroutines.EDT
 import software.amazon.q.jetbrains.core.gettingstarted.requestCredentialsForQ
 import software.amazon.q.jetbrains.core.webview.BrowserState
+import software.amazon.q.jetbrains.utils.isJcefSupported
 import software.aws.toolkits.jetbrains.services.amazonq.QWebviewPanel
 import software.aws.toolkits.jetbrains.services.amazonq.auth.AuthController
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfile
@@ -589,7 +589,7 @@ class InlineChatController(
         val authController = AuthController()
         val credentialState = authController.getAuthNeededStates(project).chat
         if (credentialState != null) {
-            if (!JBCefApp.isSupported()) {
+            if (!isJcefSupported()) {
                 requestCredentialsForQ(project, isReauth = false)
             } else {
                 runInEdt {

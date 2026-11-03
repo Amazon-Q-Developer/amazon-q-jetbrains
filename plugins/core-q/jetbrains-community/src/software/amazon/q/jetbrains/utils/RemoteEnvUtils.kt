@@ -30,14 +30,16 @@ private val isInternalAmznLinuxCompute by lazy {
 }
 
 /**
- * @return true if JCEF is present and usable in the current IDE.
+ * @return true if JCEF is present and usable in the current IDE. Call this instead of [JBCefApp.isSupported].
  *
- * Some products (e.g. DataGrip 2026.2) do not expose the `com.intellij.ui.jcef` classes to plugins.
- * Referencing [JBCefApp] there throws [NoClassDefFoundError] at link time, which is a [Throwable] but
- * not an [Exception], so it must be caught explicitly rather than relying on [JBCefApp.isSupported]
- * returning false. Kept in its own function so the risky class reference is isolated to one call site.
+ * Since 2026.2, JCEF ships as the bundled "Web Browser (JCEF)" plugin (`com.intellij.modules.jcef`).
+ * When the user disables that plugin, or the product does not expose the `com.intellij.ui.jcef` classes
+ * to plugins (e.g. DataGrip 2026.2), referencing [JBCefApp] throws [NoClassDefFoundError] at link time.
+ * That is a [Throwable] but not an [Exception], so it must be caught explicitly rather than relying on
+ * [JBCefApp.isSupported] returning false. This is the one place that checks JCEF availability; use other
+ * JCEF classes only after it returns true.
  */
-private fun isJcefSupported() = try {
+fun isJcefSupported(): Boolean = try {
     JBCefApp.isSupported()
 } catch (_: Throwable) {
     false

@@ -16,7 +16,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.jcef.JBCefApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -25,6 +24,7 @@ import software.amazon.q.core.utils.error
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.jetbrains.core.coroutines.EDT
 import software.amazon.q.jetbrains.isDeveloperMode
+import software.amazon.q.jetbrains.utils.isJcefSupported
 import software.amazon.q.jetbrains.utils.isRunningOnRemoteBackend
 import software.aws.toolkits.jetbrains.services.amazonq.apps.AmazonQAppInitContext
 import software.aws.toolkits.jetbrains.services.amazonq.apps.AppConnection
@@ -88,7 +88,7 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
     }
 
     init {
-        if (!JBCefApp.isSupported()) {
+        if (!isJcefSupported()) {
             // Fallback to an alternative browser-less solution
             if (isRunningOnRemoteBackend()) {
                 webviewContainer.add(JBTextArea("Amazon Q chat is not supported in this remote dev environment because it lacks JCEF webview support."))
