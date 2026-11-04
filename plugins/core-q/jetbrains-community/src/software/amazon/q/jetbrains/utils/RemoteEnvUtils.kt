@@ -1,6 +1,8 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// isJcefSupported() is the one allowed caller of JBCefApp.isSupported (see BannedPatternRule).
+@file:Suppress("BannedPattern")
 package software.amazon.q.jetbrains.utils
 
 import com.intellij.idea.AppMode
@@ -30,14 +32,10 @@ private val isInternalAmznLinuxCompute by lazy {
 }
 
 /**
- * @return true if JCEF is present and usable in the current IDE.
- *
- * Some products (e.g. DataGrip 2026.2) do not expose the `com.intellij.ui.jcef` classes to plugins.
- * Referencing [JBCefApp] there throws [NoClassDefFoundError] at link time, which is a [Throwable] but
- * not an [Exception], so it must be caught explicitly rather than relying on [JBCefApp.isSupported]
- * returning false. Kept in its own function so the risky class reference is isolated to one call site.
+ * Use instead of [JBCefApp.isSupported]. When JCEF is missing (Web Browser (JCEF) plugin disabled, or DataGrip 2026.2),
+ * referencing [JBCefApp] throws [NoClassDefFoundError], which is not an [Exception].
  */
-private fun isJcefSupported() = try {
+fun isJcefSupported(): Boolean = try {
     JBCefApp.isSupported()
 } catch (_: Throwable) {
     false
