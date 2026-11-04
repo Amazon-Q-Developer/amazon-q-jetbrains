@@ -47,6 +47,10 @@ class BannedPatternRule(private val patterns: List<BannedPattern>) : Rule() {
             BannedPattern(
                 """com\.intellij\.psi\.util\.PsiUtil$""".toRegex(),
                 "PsiUtil (java-api.jar) is not available in all IDEs, use PsiUtilCore or PsiManager instead (platform-api.jar)"
+            ),
+            BannedPattern(
+                """JBCefApp(\.|::)isSupported""".toRegex(),
+                "JBCefApp.isSupported throws NoClassDefFoundError when JCEF is missing, use software.amazon.q.jetbrains.utils.isJcefSupported() instead"
             )
         )
     }
