@@ -132,6 +132,12 @@ dependencies {
         if (profileName >= "2026.2") {
             bundledModule("intellij.platform.vcs.impl")
         }
+
+        // 2026.3 (263) took the RestService and UpdateChecker modules off the core platform classpath
+        if (profileName >= "2026.3") {
+            bundledModule("intellij.platform.builtInServer.impl")
+            bundledModule("intellij.platform.ide.updateChecker")
+        }
     }
 }
 
