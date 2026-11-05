@@ -3,6 +3,7 @@ name: Qodana
 on:
   workflow_dispatch:
   push:
+    # Keep feature/**: PRs into a feature branch are compared against this full scan.
     branches: [ main, feature/** ]
   pull_request:
     branches: [ '**' ]
@@ -13,7 +14,7 @@ concurrency:
 
 jobs:
   qodana:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       # PR check
