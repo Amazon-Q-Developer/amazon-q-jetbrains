@@ -168,12 +168,11 @@ object IdeVersions {
         Profile(
             name = "2026.3",
             gateway = ProductProfile(
-                // 2026.3 is still EAP; pinned to a build that has matching marketplace plugin builds
-                sdkVersion = "263.7307.112-EAP-CANDIDATE",
+                sdkVersion = "2026.3",
                 bundledPlugins = listOf("org.jetbrains.plugins.terminal")
             ),
             community = ProductProfile(
-                sdkVersion = "263.7307.112-EAP-CANDIDATE",
+                sdkVersion = "2026.3",
                 bundledPlugins = commonPlugins + listOf(
                     "com.intellij.java",
                     "com.intellij.gradle",
@@ -184,13 +183,13 @@ object IdeVersions {
                 ),
                 marketplacePlugins = listOf(
                     "org.toml.lang:263.7307.112",
-                    "PythonCore:263.7307.112",
-                    "Docker:263.7307.117",
-                    "com.intellij.modules.json:263.7307.112"
+                    "PythonCore:263.7307.200",
+                    "Docker:263.7307.215",
+                    "com.intellij.modules.json:263.7307.200"
                 )
             ),
             ultimate = ProductProfile(
-                sdkVersion = "263.7307.112-EAP-CANDIDATE",
+                sdkVersion = "2026.3",
                 bundledPlugins = commonPlugins + listOf(
                     "JavaScript",
                     "JavaScriptDebugger",
@@ -202,9 +201,9 @@ object IdeVersions {
                     "com.intellij.modules.jcef"
                 ),
                 marketplacePlugins = listOf(
-                    "Pythonid:263.7307.112",
-                    "org.jetbrains.plugins.go:263.7307.112",
-                    "com.intellij.modules.json:263.7307.112"
+                    "Pythonid:263.7307.200",
+                    "org.jetbrains.plugins.go:263.7307.200",
+                    "com.intellij.modules.json:263.7307.200"
                 )
             ),
             rider = RiderProfile(
