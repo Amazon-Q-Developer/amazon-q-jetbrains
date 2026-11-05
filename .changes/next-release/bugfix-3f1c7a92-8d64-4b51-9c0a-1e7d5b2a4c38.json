@@ -1,0 +1,4 @@
+{
+  "type" : "bugfix",
+  "description" : "Amazon Q: send every content root of a module to the language server, so projects with multiple attached folders (for example in DataGrip) no longer lose all but the first folder"
+}
