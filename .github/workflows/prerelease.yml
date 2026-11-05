@@ -19,7 +19,7 @@ jobs:
       matrix:
         build_target: [ ':plugin-amazonq:buildPlugin' ]
         version: [ '2025.3', '2026.1', '2026.2', '2026.3' ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,7 +55,7 @@ jobs:
           retention-days: 1
 
   generate_changelog:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       TAG_NAME: ${{ github.event.inputs.tag_name }}
     outputs:
@@ -108,7 +108,7 @@ jobs:
       AMAZON_Q_VERSION: ${{ needs.generate_changelog.outputs.version }}
       BRANCH: ${{ github.ref_name }}
       AMAZON_Q_CHANGES: ${{ needs.generate_changelog.outputs.changes }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:

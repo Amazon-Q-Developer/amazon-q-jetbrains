@@ -3,7 +3,8 @@ name: Qodana - Duplicated Code
 on:
   workflow_dispatch:
   push:
-    branches: [ main, feature/** ]
+    # Only main: for a branch with an open PR, the pull_request run already does this full scan (pr-mode: false).
+    branches: [ main ]
   pull_request:
     branches: [ '**' ]
 
@@ -13,7 +14,7 @@ concurrency:
 
 jobs:
   qodana:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       # PR check
