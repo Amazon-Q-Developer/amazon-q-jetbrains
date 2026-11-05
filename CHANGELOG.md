@@ -1,3 +1,6 @@
+# _4.11_ (2026-11-05)
+- **(Feature)** Add support for JetBrains 2026.3
+
 # _4.10_ (2026-10-28)
 - **(Bug Fix)** Amazon Q: fixed an `IllegalStateException: There is no scoping element in this thread` when applying the Amazon Q settings page on 2026.1+ IDEs
 
