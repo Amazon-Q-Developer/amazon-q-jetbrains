@@ -3,8 +3,10 @@
 
 package software.amazon.q.jetbrains.core.region
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import software.amazon.awssdk.regions.Region
@@ -60,7 +62,23 @@ private class MockRegionProvider : ToolkitRegionProvider() {
     companion object {
         private val AWS_CLASSIC = AwsPartition("aws", "AWS Classic", listOf(US_EAST_1))
         private val regions = mapOf(US_EAST_1.id to US_EAST_1)
-        fun getInstance(): MockRegionProvider = service<ToolkitRegionProvider>() as MockRegionProvider
+        fun getInstance(): MockRegionProvider {
+            // 2026.2 unit tests run in a bare application without plugin.xml, so the
+            // testServiceImplementation=MockRegionProvider registration is never applied. Register on demand;
+            // no-op on 2025.x-2026.1 where the descriptor already provides the mock.
+            val existing = ApplicationManager.getApplication().getServiceIfCreated(ToolkitRegionProvider::class.java)
+            if (existing is MockRegionProvider) {
+                return existing
+            }
+
+            return MockRegionProvider().also {
+                ApplicationManager.getApplication().registerOrReplaceServiceInstance(
+                    ToolkitRegionProvider::class.java,
+                    it,
+                    ApplicationManager.getApplication()
+                )
+            }
+        }
     }
 }
 
@@ -119,6 +137,16 @@ class MockRegionProviderExtension : MockRegionProviderBase(), AfterEachCallback 
         after()
     }
 }
+
+/**
+ * A fresh [MockRegionProvider] instance typed as [ToolkitRegionProvider] (the concrete type is private). Lets
+ * bare-app test setup (e.g. 2026.2) register the mock as the `ToolkitRegionProvider` service with the caller's own
+ * disposable — matching how the rest of the test services are scoped — instead of the app-lifetime registration
+ * [MockRegionProvider.getInstance] does. The mock ships working partition data (US_EAST_1 / AWS Classic), unlike
+ * the production `AwsRegionProvider`, which lazily loads `endpoints.json` and throws "Partition data is missing"
+ * in a sandbox.
+ */
+fun newMockRegionProvider(): ToolkitRegionProvider = MockRegionProvider()
 
 // dynamically get the default region from whatever is currently registered
 fun getDefaultRegion() = service<ToolkitRegionProvider>().defaultRegion()

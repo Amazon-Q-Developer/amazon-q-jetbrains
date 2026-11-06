@@ -5,7 +5,7 @@ package software.amazon.q.jetbrains.core.credentials.sso
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir
 import software.amazon.q.core.utils.readText
 import software.amazon.q.core.utils.test.assertPosixPermissions
 import software.amazon.q.core.utils.writeText
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -28,8 +29,8 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import kotlin.io.path.setPosixFilePermissions
 
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class)
 class DiskCacheTest {
-    @ExtendWith(ApplicationExtension::class)
     private val now = Instant.now()
     private val clock = Clock.fixed(now, ZoneOffset.UTC)
 

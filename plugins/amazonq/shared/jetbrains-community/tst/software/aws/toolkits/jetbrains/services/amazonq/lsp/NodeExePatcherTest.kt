@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.system.CpuArch
@@ -19,10 +20,12 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import software.amazon.q.core.rules.EnvironmentVariableHelper
 import software.amazon.q.core.utils.exists
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.aws.toolkits.jetbrains.services.cwc.controller.chat.telemetry.getStartUrl
 import software.aws.toolkits.jetbrains.settings.LspSettings
 import java.nio.file.Paths
@@ -40,7 +43,17 @@ class NodeExePatcherTest {
     @get:Rule
     val mockKRule = MockKRule(this)
 
+    @get:Rule
+    val disposableRule = DisposableRule()
+
     private val pathToNode = Paths.get("/path/to/node").toAbsolutePath().toString()
+
+    @Before
+    fun setUp() {
+        // 2026.2's bare test app no longer loads plugin.xml, so AwsSettings (resolved transitively via
+        // getStartUrl/NodeExePatcher) is missing; supply it (no-op on 2025.x-2026.1).
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+    }
 
     @Test
     fun `patches if environment variables are available`() {

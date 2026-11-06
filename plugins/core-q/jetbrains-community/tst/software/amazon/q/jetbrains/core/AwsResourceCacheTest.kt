@@ -52,15 +52,19 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @ExperimentalCoroutinesApi
 class AwsResourceCacheTest {
+    private val coreServices = CoreServicesRule()
     private val projectRule = ProjectRule()
     private val credentialsManager = MockCredentialManagerRule()
     private val regionProvider = MockRegionProviderRule()
 
-    // If we don't control the order manually, regionProvider can run before projectRule which causes a NPE
+    // If we don't control the order manually, regionProvider can run before projectRule which causes a NPE.
+    // coreServices runs after projectRule (which creates the Application) but before the mock rules, so
+    // plugin.xml-backed services exist before those rules resolve them (2026.2 builds a bare test app).
     @Rule
     @JvmField
     val ruleChain = RuleChain(
         projectRule,
+        coreServices,
         credentialsManager,
         regionProvider
     )
