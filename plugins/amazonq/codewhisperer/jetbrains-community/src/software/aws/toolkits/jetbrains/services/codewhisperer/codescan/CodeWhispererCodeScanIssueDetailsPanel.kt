@@ -19,6 +19,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.context.C
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.additionBackgroundColor
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.additionForegroundColor
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.applyFix
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.checkFileStillExists
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.codeBlockBackgroundColor
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.codeBlockBorderColor
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.codeBlockForegroundColor
@@ -98,6 +99,7 @@ internal class CodeWhispererCodeScanIssueDetailsPanel(
                     }
                     he.description.startsWith("amazonq://issue/openFile-") -> {
                         runInEdt {
+                            if (!checkFileStillExists(project, issue.file)) return@runInEdt
                             FileEditorManager.getInstance(project).openTextEditor(
                                 OpenFileDescriptor(project, issue.file),
                                 true

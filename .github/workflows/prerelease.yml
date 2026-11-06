@@ -18,8 +18,8 @@ jobs:
     strategy:
       matrix:
         build_target: [ ':plugin-amazonq:buildPlugin' ]
-        version: [ '2025.1', '2025.2', '2025.3', '2026.1', '2026.2' ]
-    runs-on: ubuntu-latest
+        version: [ '2025.3', '2026.1', '2026.2', '2026.3' ]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,7 +48,7 @@ jobs:
           dotnet-version: '6.x'
       - name: Generate artifact
         run: |
-          ./gradlew -PideProfileName=${{ matrix.version }} ${{ matrix.build_target }} ${{ matrix.version == '2026.2' && '--no-parallel' || '' }}
+          ./gradlew -PideProfileName=${{ matrix.version }} ${{ matrix.build_target }} ${{ (matrix.version == '2026.2' || matrix.version == '2026.3') && '--no-parallel' || '' }}
       - name: Fix artifact name
         env:
           BUILD_TARGET: "${{ matrix.build_target }}"
@@ -64,7 +64,7 @@ jobs:
           retention-days: 1
 
   generate_changelog:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       TAG_NAME: ${{ github.event.inputs.tag_name }}
     outputs:
@@ -117,7 +117,7 @@ jobs:
       AMAZON_Q_VERSION: ${{ needs.generate_changelog.outputs.version }}
       BRANCH: ${{ github.ref_name }}
       AMAZON_Q_CHANGES: ${{ needs.generate_changelog.outputs.changes }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:

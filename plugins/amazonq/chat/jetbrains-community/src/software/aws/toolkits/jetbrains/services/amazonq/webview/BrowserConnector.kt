@@ -125,6 +125,19 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 import java.util.function.Function
 
+internal const val PROGRAMMER_MODE_CARD_ID = "programmerModeCardId"
+internal const val CLIENT_DEPRECATION_NOTICE_ID = "client-deprecation-notice"
+
+internal fun acknowledgeChatPromptOption(
+    messageId: String?,
+    settings: MeetQSettings,
+) {
+    when (messageId) {
+        PROGRAMMER_MODE_CARD_ID -> settings.pairProgrammingAcknowledged = true
+        CLIENT_DEPRECATION_NOTICE_ID -> settings.deprecationNoticeAcknowledged = true
+    }
+}
+
 class BrowserConnector(
     private val serializer: MessageSerializer = MessageSerializer.getInstance(),
     private val themeBrowserAdapter: ThemeBrowserAdapter = ThemeBrowserAdapter(),
@@ -494,10 +507,10 @@ class BrowserConnector(
             }
 
             CHAT_PROMPT_OPTION_ACKNOWLEDGED -> {
-                val acknowledgedMessage = node.params?.get("messageId")
-                if (acknowledgedMessage?.asText() == "programmerModeCardId") {
-                    MeetQSettings.getInstance().pairProgrammingAcknowledged = true
-                }
+                acknowledgeChatPromptOption(
+                    node.params?.get("messageId")?.asText(),
+                    MeetQSettings.getInstance()
+                )
             }
 
             OPEN_SETTINGS -> {

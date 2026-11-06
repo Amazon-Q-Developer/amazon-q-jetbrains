@@ -4,12 +4,14 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.lsp
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -42,7 +44,10 @@ import software.amazon.q.core.utils.error
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.info
 import software.amazon.q.core.utils.warn
+import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
+import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManagerListener
+import software.amazon.q.jetbrains.core.credentials.logoutFromSsoConnection
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
 import software.amazon.q.jetbrains.utils.getCleanedContent
@@ -66,9 +71,12 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowO
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowSaveFileDialogParams
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.chat.ShowSaveFileDialogResult
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.ConnectionMetadata
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.Q_DEV_ACCESS_BLOCKED_NOTIFICATION_ID
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.ShowNotificationParams
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.LspEditorUtil
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.TelemetryParsingUtil
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.applyExtensionFilter
+import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
 import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
 import software.aws.toolkits.resources.message
@@ -77,6 +85,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -398,6 +407,97 @@ class AmazonQLanguageClientImpl(private val project: Project) : AmazonQLanguageC
             LOG.error(e) { "Cannot handle partial chat" }
         }
     }
+
+    /**
+     * Amazon Q Developer has blocked this identity: persist the service's message, then sign out.
+     *
+     * Detection has to come from the server. RTS gates Q Developer plugin traffic before the activity
+     * runs, keyed on the shared language-server user-agent, so a blocked identity fails every server
+     * request while the plugin's own SDK calls are exempt and succeed -- there is nothing the plugin
+     * could observe on its own. Sign-in itself never touches RTS either, so the block cannot surface
+     * during authentication.
+     *
+     * Persisting before signing out is deliberate: signing out is what causes the login webview to be
+     * shown, and the stored message is what that view then displays. Reversed, the explanation is
+     * discarded at the moment it is needed.
+     */
+    override fun showNotification(params: ShowNotificationParams) {
+        try {
+            if (!isQDevAccessBlockedNotification(params)) {
+                return
+            }
+
+            val message = params.content?.text?.trim()
+            if (message.isNullOrEmpty()) {
+                LOG.warn { "showNotification: access-blocked notification had no message, ignoring" }
+                return
+            }
+
+            LOG.warn { "Amazon Q Developer access is blocked for this identity" }
+            QRegionProfileManager.getInstance().setQDevAccessBlocked(message)
+
+            val connection = ToolkitConnectionManager.getInstance(project)
+                .activeConnectionForFeature(QConnection.getInstance()) as? AwsBearerTokenConnection
+            // No explicit UI call here: this module cannot depend on the chat module that owns the
+            // login webview, and it does not need to. Signing out causes that webview to be shown, and
+            // it reads the persisted message when it prepares. If there is no connection we are
+            // already signed out, so the next prepare will pick the blocked state up anyway.
+            val connectionToSignOut = connection ?: return
+
+            runInEdt {
+                // Deliberately not SsoLogoutAction: it is a user-facing action, so it emits a
+                // "signOut" UI-click metric that would misattribute this to the user, and for
+                // profile-managed IdC connections it opens a confirmation dialog. Neither fits a
+                // sign-out the service has forced. This is the same work that action performs.
+                logoutFromSsoConnection(project, connectionToSignOut)
+                ApplicationManager.getApplication().messageBus
+                    .syncPublisher(ToolkitConnectionManagerListener.TOPIC)
+                    .activeConnectionChanged(null)
+            }
+        } catch (e: Exception) {
+            // Must never throw: this runs on the LSP notification dispatch thread, and a failure here
+            // must not disturb the rest of the connection.
+            LOG.warn(e) { "Failed to handle access-blocked notification" }
+        }
+    }
+
+    /**
+     * Matches on [ShowNotificationParams.id] when present. The title fallback exists because the
+     * currently released server sends this without an id, leaving severity and title as the only
+     * discriminators; it is deliberately narrow (exact title AND error severity) so it cannot swallow
+     * unrelated notifications, and should be dropped once a server carrying the id is the minimum
+     * supported version.
+     */
+    /**
+     * The id the server set, recovered from what the client actually receives.
+     *
+     * The runtime does not forward the server's id verbatim: RouterByServerName replaces it with
+     * base64 of {"serverName":...,"id":...} so followups can be routed back to the originating server.
+     * The server's own id is therefore only reachable by decoding that envelope. Falls back to the raw
+     * value so a server sending a plain id still matches.
+     */
+    private fun serverNotificationId(id: String?): String? {
+        if (id == null) {
+            return null
+        }
+
+        return try {
+            val decoded = String(Base64.getDecoder().decode(id), StandardCharsets.UTF_8)
+            jacksonObjectMapper().readTree(decoded)?.get("id")?.asText() ?: id
+        } catch (e: Exception) {
+            // Not an envelope; treat the value as the id itself.
+            id
+        }
+    }
+
+    /**
+     * Matches on the id only. Matching on the title was tried and rejected: acting on this
+     * notification signs the user out, and "Amazon Q Developer" is a plausible title for any future
+     * error the server sends, so a text match would eventually sign out a working user. Every server
+     * able to deliver a notification at all sends the id, so there is nothing to fall back for.
+     */
+    private fun isQDevAccessBlockedNotification(params: ShowNotificationParams): Boolean =
+        serverNotificationId(params.id) == Q_DEV_ACCESS_BLOCKED_NOTIFICATION_ID
 
     override fun sendChatUpdate(params: LSPAny) {
         chatManager.notifyUi(

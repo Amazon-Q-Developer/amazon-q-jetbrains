@@ -1,0 +1,8 @@
+{
+  "date" : "2026-11-05",
+  "version" : "4.11",
+  "entries" : [ {
+    "type" : "feature",
+    "description" : "Add support for JetBrains 2026.3"
+  } ]
+}

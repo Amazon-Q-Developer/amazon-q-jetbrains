@@ -11,18 +11,20 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import software.aws.toolkits.jetbrains.services.cwc.inline.InlineChatController
 
-class InlineChatFileListener(project: Project, private val controller: InlineChatController) : FileEditorManagerListener, Disposable {
+class InlineChatFileListener(private val project: Project, private val controller: InlineChatController) : FileEditorManagerListener, Disposable {
     private var currentEditor: Editor? = null
     private var selectionListener: InlineChatSelectionListener? = null
 
-    init {
-        val editor = project.let { FileEditorManager.getInstance(it).selectedTextEditorWithRemotes.firstOrNull() }
-        if (editor != null) {
-            setupListenersForEditor(editor)
-            currentEditor = editor
-        }
+    // Attaches to the editor that was selected before this listener was subscribed, unless selectionChanged already attached.
+    @RequiresEdt
+    fun attachToSelectedEditor() {
+        if (currentEditor != null) return
+        val editor = FileEditorManager.getInstance(project).selectedTextEditorWithRemotes.firstOrNull() ?: return
+        setupListenersForEditor(editor)
+        currentEditor = editor
     }
 
     override fun selectionChanged(event: FileEditorManagerEvent) {

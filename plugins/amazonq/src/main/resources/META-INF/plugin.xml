@@ -5,6 +5,11 @@
     <id>amazon.q</id>
     <name>Amazon Q</name>
     <description><![CDATA[
+    <h2>Amazon Q Developer IDE plugins: end of support</h2>
+    <p>On April 30, 2027, AWS will discontinue support for Amazon Q Developer IDE plugins. For capabilities similar to Amazon Q Developer IDE plugins, <a href="https://kiro.dev">explore Kiro</a> to access the latest models and features, including agentic coding, chat and MCP support.</p>
+    <p><a href="https://aws.amazon.com/blogs/devops/amazon-q-developer-end-of-support-announcement/">Learn more</a></p>
+    <hr />
+
     <p>The most capable generative AI-powered assistant for building, operating, and transforming software, with advanced capabilities for managing data and AI</p>
 
     <h2>Agentic coding experience</h2>
@@ -61,6 +66,22 @@
     <resource-bundle>software.amazon.q.resources.MessagesBundle</resource-bundle>
 
     <depends>com.intellij.modules.lang</depends>
+
+    <!--
+      In 2026.2 (262) JetBrains moved JCEF out of the core platform into a separately-loaded bundled
+      plugin (id com.intellij.modules.jcef, holding com.intellij.ui.jcef.JBCefApp). Without this
+      dependency our classloader can't see JBCefApp and the Q webview/chat tool window is unavailable.
+      Optional so the plugin still loads where JCEF is absent (older platforms expose it via a plugin
+      alias; headless/remote setups may not ship it at all), degrading to no-webview instead of failing.
+    -->
+    <depends optional="true">com.intellij.modules.jcef</depends>
+
+    <!--
+      In 2026.3 (263) JetBrains moved ProblemsView out of the core platform into the bundled Problems View plugin
+      (com.intellij.problemsView). Without this dependency our classloader can't see ProblemsView, so code scan
+      results can't reach the Problems tool window. Optional because that plugin doesn't exist before 2026.3.
+    -->
+    <depends optional="true">com.intellij.problemsView</depends>
 
     <depends optional="true" config-file="amazonq-ext-codewithme.xml">com.jetbrains.codeWithMe</depends>
     <depends optional="true" config-file="amazonq-ext-java.xml">com.intellij.java</depends>

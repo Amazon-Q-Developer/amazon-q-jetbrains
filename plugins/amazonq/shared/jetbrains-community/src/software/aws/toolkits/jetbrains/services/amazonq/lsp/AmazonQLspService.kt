@@ -51,6 +51,7 @@ import org.eclipse.lsp4j.InitializedParams
 import org.eclipse.lsp4j.SynchronizationCapabilities
 import org.eclipse.lsp4j.TextDocumentClientCapabilities
 import org.eclipse.lsp4j.WorkspaceClientCapabilities
+import org.eclipse.lsp4j.jsonrpc.Endpoint
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.RemoteEndpoint
@@ -91,6 +92,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 // https://github.com/redhat-developer/lsp4ij/blob/main/src/main/java/com/redhat/devtools/lsp4ij/server/LSPProcessListener.java
@@ -313,6 +315,21 @@ class AmazonQLspService @VisibleForTesting constructor(
             executeIfRunning(runnable)
         }
 
+    /**
+     * Fire-and-forget variant of [executeIfRunning] for callers that are in a blocking context without a coroutine
+     * scope of their own (for example, settings `apply` callbacks running on the EDT). The work is launched on the
+     * service's own scope, so it is tied to the project lifecycle instead of the calling thread.
+     */
+    fun<T> launchIfRunning(runnable: suspend AmazonQLspService.(AmazonQLanguageServer) -> T): Job = cs.launch {
+        try {
+            executeIfRunning(runnable)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            LOG.warn(e) { "Failed to execute LSP request" }
+        }
+    }
+
     internal val dispatcher = ioDispatcher(20)
 
     companion object {
@@ -324,6 +341,13 @@ class AmazonQLspService @VisibleForTesting constructor(
         @Suppress("RedundantSuspendModifier")
         suspend fun <T> executeAsyncIfRunning(project: Project, runnable: suspend AmazonQLspService.(AmazonQLanguageServer) -> T): T? =
             project.serviceIfCreated<AmazonQLspService>()?.executeIfRunning(runnable)
+
+        /**
+         * Non-suspending counterpart of [executeAsyncIfRunning]; see [launchIfRunning]. Returns `null` when the
+         * service has not been created for [project], in which case nothing is scheduled.
+         */
+        fun <T> launchAsyncIfRunning(project: Project, runnable: suspend AmazonQLspService.(AmazonQLanguageServer) -> T): Job? =
+            project.serviceIfCreated<AmazonQLspService>()?.launchIfRunning(runnable)
     }
 }
 
@@ -338,7 +362,10 @@ interface AmazonQServerInstanceFacade : Disposable {
     val languageServer: AmazonQLanguageServer
         get() = launcher.remoteProxy
 
-    val rawEndpoint: RemoteEndpoint
+    // Typed as Endpoint, not RemoteEndpoint: 2026.3 bundles an lsp4j whose RemoteEndpoint.request returns a
+    // JsonRpcRequestFuture, and a call compiled against it fails with NoSuchMethodError on the lsp4j we bundle.
+    // Endpoint.request returns CompletableFuture in every lsp4j version.
+    val rawEndpoint: Endpoint
         get() = launcher.remoteEndpoint
 }
 

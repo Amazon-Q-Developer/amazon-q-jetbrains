@@ -1,6 +1,8 @@
 // Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// isJcefSupported() is the one allowed caller of JBCefApp.isSupported (see BannedPatternRule).
+@file:Suppress("BannedPattern")
 package software.amazon.q.jetbrains.utils
 
 import com.intellij.idea.AppMode
@@ -30,9 +32,19 @@ private val isInternalAmznLinuxCompute by lazy {
 }
 
 /**
+ * Use instead of [JBCefApp.isSupported]. When JCEF is missing (Web Browser (JCEF) plugin disabled, or DataGrip 2026.2),
+ * referencing [JBCefApp] throws [NoClassDefFoundError], which is not an [Exception].
+ */
+fun isJcefSupported(): Boolean = try {
+    JBCefApp.isSupported()
+} catch (_: Throwable) {
+    false
+}
+
+/**
  * On remote, only enabled experimentally and for internal
  */
-fun isQWebviewsAvailable() = JBCefApp.isSupported() && if (!isRunningOnRemoteBackend()) {
+fun isQWebviewsAvailable() = isJcefSupported() && if (!isRunningOnRemoteBackend()) {
     true
 } else {
     isDeveloperMode() || isInternalAmznLinuxCompute

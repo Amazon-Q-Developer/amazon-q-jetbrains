@@ -4,6 +4,7 @@
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.dependencies
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -27,13 +28,13 @@ class DefaultModuleDependenciesService(
             this
         )
         // project initiation with initial list of dependencies
-        syncAllModules()
+        scheduleSyncAllModules()
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {
         if (event.isCausedByFileTypesChange) return
         // call on change with updated dependencies
-        syncAllModules()
+        scheduleSyncAllModules()
     }
 
     override fun didChangeDependencyPaths(params: DidChangeDependencyPathsParams) {
@@ -44,25 +45,38 @@ class DefaultModuleDependenciesService(
         }
     }
 
+    /**
+     * The IDE delivers [rootsChanged] from inside a write action (for example when a Python SDK is committed on
+     * startup), and collecting dependencies calls provider APIs that assert they are run on a background thread
+     * with no write action held. Dispatch the collection onto our own scope instead of running it inline.
+     */
+    private fun scheduleSyncAllModules() {
+        cs.launch {
+            syncAllModules()
+        }
+    }
+
     private fun syncAllModules() {
         val paramsMap = mutableMapOf<Pair<String, String>, DidChangeDependencyPathsParams>()
 
-        ModuleManager.getInstance(project).modules.forEach { module ->
-            EP_NAME.forEachExtensionSafe {
-                if (it.isApplicable(module)) {
-                    val params = it.createParams(module)
-                    val key = params.moduleName to params.runtimeLanguage
+        runReadAction {
+            ModuleManager.getInstance(project).modules.forEach { module ->
+                EP_NAME.forEachExtensionSafe {
+                    if (it.isApplicable(module)) {
+                        val params = it.createParams(module)
+                        val key = params.moduleName to params.runtimeLanguage
 
-                    paramsMap.merge(key, params) { existing, new ->
-                        DidChangeDependencyPathsParams(
-                            moduleName = existing.moduleName,
-                            runtimeLanguage = existing.runtimeLanguage,
-                            paths = (existing.paths + new.paths).distinct(),
-                            includePatterns = (existing.includePatterns + new.includePatterns).distinct(),
-                            excludePatterns = (existing.excludePatterns + new.excludePatterns).distinct()
-                        )
+                        paramsMap.merge(key, params) { existing, new ->
+                            DidChangeDependencyPathsParams(
+                                moduleName = existing.moduleName,
+                                runtimeLanguage = existing.runtimeLanguage,
+                                paths = (existing.paths + new.paths).distinct(),
+                                includePatterns = (existing.includePatterns + new.includePatterns).distinct(),
+                                excludePatterns = (existing.excludePatterns + new.excludePatterns).distinct()
+                            )
+                        }
+                        return@forEachExtensionSafe
                     }
-                    return@forEachExtensionSafe
                 }
             }
         }

@@ -12,14 +12,12 @@ permissions:
 jobs:
   linux-unit-tests:
     name: Linux (${{ matrix.ideProfileName }})
-    runs-on: ubuntu-latest
-    # 2026.2 runs the full check + coverage under JDK 25, which is slower than the JDK-21 profiles (~30 min) and was
-    # overrunning the previous 45-min cap. The cap is a ceiling, not a fixed wait, so the faster profiles are unaffected.
-    timeout-minutes: 70
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        ideProfileName: [ "2025.2", "2025.3", "2026.1", "2026.2" ]
+        ideProfileName: [ "2025.3", "2026.1", "2026.2", "2026.3" ]
     env:
       CI: true
       LOCAL_ENV_RUN: true
@@ -55,11 +53,8 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        # 2026.2 unit tests have known pre-existing failures: the 262 platform changed how plugin extension points
-        # and services register in tests (~280 "Missing extension point" / "Cannot find service"). The same tests
-        # pass on 2026.1, so this is a 262 test-infra migration, tracked separately. Until that lands, 262 tests run
-        # and report but don't gate; buildPlugin (below) still gates 262 on a real compile. 251-261 gate fully.
-        continue-on-error: ${{ matrix.ideProfileName == '2026.2' }}
+        # 262+ test compile is blocked by a Java 25 inline-bytecode issue pending a Kotlin bump; buildPlugin still gates it
+        continue-on-error: ${{ matrix.ideProfileName == '2026.2' || matrix.ideProfileName == '2026.3' }}
         # --no-parallel: amazonq submodules share one test sandbox; concurrent Test tasks corrupt the index (fatal on Gradle 9)
         run: |
           Xvfb :99 -screen 0 1920x1080x24 &

@@ -27,87 +27,6 @@ object IdeVersions {
 
     private val ideProfiles = listOf(
         Profile(
-            name = "2025.1",
-            community = ProductProfile(
-                sdkVersion = "2025.1",
-                bundledPlugins = commonPlugins + listOf(
-                    "com.intellij.java",
-                    "com.intellij.gradle",
-                    "org.jetbrains.idea.maven",
-                ),
-                marketplacePlugins = listOf(
-                    "org.toml.lang:251.26927.47",
-                    "PythonCore:251.23774.460",
-                    "Docker:251.23774.466",
-                    "com.intellij.modules.json:251.27812.12"
-                )
-            ),
-            ultimate = ProductProfile(
-                sdkVersion = "2025.1",
-                bundledPlugins = commonPlugins + listOf(
-                    "JavaScript",
-                    "JavaScriptDebugger",
-                    "com.intellij.database",
-                    "com.jetbrains.codeWithMe",
-                    "intellij.grid.plugin",
-                    "intellij.charts"
-                ),
-                marketplacePlugins = listOf(
-                    "org.toml.lang:251.26927.47",
-                    "Pythonid:251.23774.460",
-                    "PythonCore:251.23774.460",
-                    "org.jetbrains.plugins.go:251.23774.435",
-                    "com.intellij.modules.json:251.27812.12"
-                )
-            ),
-            rider = RiderProfile(
-                sdkVersion = "2025.1",
-                bundledPlugins = commonPlugins,
-                netFrameworkTarget = "net472",
-                rdGenVersion = "2025.1.1",
-                nugetVersion = " 2025.1.0"
-            )
-        ),
-        Profile(
-            name = "2025.2",
-            community = ProductProfile(
-                sdkVersion = "2025.2",
-                bundledPlugins = commonPlugins + listOf(
-                    "com.intellij.java",
-                    "com.intellij.gradle",
-                    "org.jetbrains.idea.maven",
-                    "com.intellij.properties"
-                ),
-                marketplacePlugins = listOf(
-                    "org.toml.lang:252.23892.464",
-                    "PythonCore:252.23892.458",
-                    "Docker:252.23892.464",
-                    "com.intellij.modules.json:252.23892.360"
-                )
-            ),
-            ultimate = ProductProfile(
-                sdkVersion = "2025.2",
-                bundledPlugins = commonPlugins + listOf(
-                    "JavaScript",
-                    "JavaScriptDebugger",
-                    "com.intellij.database",
-                    "com.jetbrains.codeWithMe",
-                ),
-                marketplacePlugins = listOf(
-                    "Pythonid:252.23892.458",
-                    "org.jetbrains.plugins.go:252.23892.360",
-                    "com.intellij.modules.json:252.23892.360"
-                )
-            ),
-            rider = RiderProfile(
-                sdkVersion = "2025.2",
-                bundledPlugins = commonPlugins,
-                netFrameworkTarget = "net472",
-                rdGenVersion = "2025.2.2",
-                nugetVersion = "2025.2.0"
-            )
-        ),
-        Profile(
             name = "2025.3",
             gateway = ProductProfile(
                 sdkVersion = "2025.3",
@@ -198,39 +117,44 @@ object IdeVersions {
         Profile(
             name = "2026.2",
             gateway = ProductProfile(
-                // 2026.2 is still EAP; pinned to the build where compatible marketplace plugins exist
-                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                sdkVersion = "2026.2",
                 bundledPlugins = listOf("org.jetbrains.plugins.terminal")
             ),
             community = ProductProfile(
-                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                sdkVersion = "2026.2",
                 bundledPlugins = commonPlugins + listOf(
                     "com.intellij.java",
                     "com.intellij.gradle",
                     "org.jetbrains.idea.maven",
-                    "com.intellij.properties"
+                    "com.intellij.properties",
+                    // JCEF split out of the platform into its own bundled plugin in 2026.2; needed on the
+                    // compile classpath. The runtime edge is already declared in amazonq's plugin.xml.
+                    "com.intellij.modules.jcef"
                 ),
                 marketplacePlugins = listOf(
-                    "org.toml.lang:262.7581.3",
-                    "PythonCore:262.7581.18",
-                    "Docker:262.7581.3",
-                    "com.intellij.modules.json:262.7581.18"
+                    "org.toml.lang:262.8665.176",
+                    "PythonCore:262.8665.258",
+                    "Docker:262.8665.185",
+                    "com.intellij.modules.json:262.8665.176"
                 )
             ),
             ultimate = ProductProfile(
-                sdkVersion = "262.7581.18-EAP-CANDIDATE",
+                sdkVersion = "2026.2",
                 bundledPlugins = commonPlugins + listOf(
                     "JavaScript",
                     "JavaScriptDebugger",
                     // 2026.1 scooped "css" out of the JS plugin (which we depend on) into a separate package
                     "com.intellij.css",
                     "NodeJS",
-                    "com.intellij.database"
+                    "com.intellij.database",
+                    // JCEF split out of the platform into its own bundled plugin in 2026.2; needed on the
+                    // compile classpath. The runtime edge is already declared in amazonq's plugin.xml.
+                    "com.intellij.modules.jcef"
                 ),
                 marketplacePlugins = listOf(
-                    "Pythonid:262.7581.18",
-                    "org.jetbrains.plugins.go:262.7581.18",
-                    "com.intellij.modules.json:262.7581.18"
+                    "Pythonid:262.8665.258",
+                    "org.jetbrains.plugins.go:262.8665.258",
+                    "com.intellij.modules.json:262.8665.176"
                 )
             ),
             rider = RiderProfile(
@@ -239,6 +163,55 @@ object IdeVersions {
                 netFrameworkTarget = "net472",
                 rdGenVersion = "2026.2.4",
                 nugetVersion = "2026.2.0-eap06"
+            )
+        ),
+        Profile(
+            name = "2026.3",
+            gateway = ProductProfile(
+                sdkVersion = "2026.3",
+                bundledPlugins = listOf("org.jetbrains.plugins.terminal")
+            ),
+            community = ProductProfile(
+                sdkVersion = "2026.3",
+                bundledPlugins = commonPlugins + listOf(
+                    "com.intellij.java",
+                    "com.intellij.gradle",
+                    "org.jetbrains.idea.maven",
+                    "com.intellij.properties",
+                    // JCEF has been a separate bundled plugin since 2026.2
+                    "com.intellij.modules.jcef"
+                ),
+                marketplacePlugins = listOf(
+                    "org.toml.lang:263.7307.112",
+                    "PythonCore:263.7307.200",
+                    "Docker:263.7307.215",
+                    "com.intellij.modules.json:263.7307.200"
+                )
+            ),
+            ultimate = ProductProfile(
+                sdkVersion = "2026.3",
+                bundledPlugins = commonPlugins + listOf(
+                    "JavaScript",
+                    "JavaScriptDebugger",
+                    // 2026.1 scooped "css" out of the JS plugin (which we depend on) into a separate package
+                    "com.intellij.css",
+                    "NodeJS",
+                    "com.intellij.database",
+                    // JCEF has been a separate bundled plugin since 2026.2
+                    "com.intellij.modules.jcef"
+                ),
+                marketplacePlugins = listOf(
+                    "Pythonid:263.7307.200",
+                    "org.jetbrains.plugins.go:263.7307.200",
+                    "com.intellij.modules.json:263.7307.200"
+                )
+            ),
+            rider = RiderProfile(
+                sdkVersion = "2026.3-SNAPSHOT",
+                bundledPlugins = commonPlugins,
+                netFrameworkTarget = "net472",
+                rdGenVersion = "2026.3.2",
+                nugetVersion = "2026.3.0-eap09"
             )
         )
     ).associateBy { it.name }

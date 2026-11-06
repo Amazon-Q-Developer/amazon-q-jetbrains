@@ -43,7 +43,7 @@ export class IdeClient {
                 result = new ListProfileSuccessResult(msg.profiles)
                 break
             case 'failed':
-                result = new ListProfileFailureResult(msg.errorMessage)
+                result = new ListProfileFailureResult(msg.errorMessage, msg.notAcceptingNewCustomers === true)
                 break
             case 'pending':
                 result = new ListProfilePendingResult()

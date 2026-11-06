@@ -77,4 +77,39 @@ class BannedPatternRuleTest {
         )
             .hasSize(0)
     }
+
+    @Test
+    fun forbidJBCefAppIsSupported() {
+        val rule = BannedPatternRule(BannedPatternRule.DEFAULT_PATTERNS)
+        val expectedMessage = "JBCefApp.isSupported throws NoClassDefFoundError when JCEF is missing, " +
+            "use software.amazon.q.jetbrains.utils.isJcefSupported() instead"
+        assertThat(
+            rule.lint(
+                """
+            import com.intellij.ui.jcef.JBCefApp
+            fun hasJcef() = JBCefApp.isSupported()
+            val hasJcefCheck = JBCefApp::isSupported
+                """.trimIndent()
+            )
+        )
+            .hasSize(2)
+            .allMatch { it.id == "BannedPattern" && it.message == expectedMessage }
+            .anyMatch { it.location.source.line == 2 && it.location.source.column == 17 }
+            .anyMatch { it.location.source.line == 3 && it.location.source.column == 20 }
+    }
+
+    @Test
+    fun allowIsJcefSupported() {
+        val rule = BannedPatternRule(BannedPatternRule.DEFAULT_PATTERNS)
+        assertThat(
+            rule.lint(
+                """
+            import com.intellij.ui.jcef.JBCefApp
+            import software.amazon.q.jetbrains.utils.isJcefSupported
+            fun createClient() = if (isJcefSupported()) JBCefApp.getInstance().createClient() else null
+                """.trimIndent()
+            )
+        )
+            .hasSize(0)
+    }
 }

@@ -3,6 +3,7 @@
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.dependencies
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -22,6 +23,7 @@ import io.mockk.runs
 import io.mockk.verify
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -235,6 +237,69 @@ class DefaultModuleDependenciesServiceTest {
                 }
             )
         }
+    }
+
+    @Test
+    fun `rootsChanged does not collect dependencies on the calling thread`() = runTest {
+        // Arrange
+        val module = mockk<Module>()
+        val params = DidChangeDependencyPathsParams(
+            moduleName = "testModule",
+            runtimeLanguage = "java",
+            paths = listOf("/path/to/dependency.jar"),
+            includePatterns = emptyList(),
+            excludePatterns = emptyList()
+        )
+        val event = mockk<ModuleRootEvent>()
+
+        every { mockModuleManager.modules } returns arrayOf(module)
+        every { event.isCausedByFileTypesChange } returns false
+
+        prepDependencyProvider(listOf(Pair(module, params)))
+
+        sut = DefaultModuleDependenciesService(project, this)
+        sut.rootsChanged(event)
+
+        // the IDE can deliver rootsChanged inside a write action, so neither the initial sync nor the
+        // rootsChanged sync may touch the providers before the work is dispatched onto our own scope
+        verify(exactly = 0) { mockDependencyProvider.createParams(module) }
+
+        advanceUntilIdle()
+
+        verify(exactly = 2) { mockDependencyProvider.createParams(module) }
+    }
+
+    @Test
+    fun `dependency collection holds a read action`() = runTest {
+        // Arrange
+        val module = mockk<Module>()
+        val params = DidChangeDependencyPathsParams(
+            moduleName = "testModule",
+            runtimeLanguage = "java",
+            paths = listOf("/path/to/dependency.jar"),
+            includePatterns = emptyList(),
+            excludePatterns = emptyList()
+        )
+        var readAccessAllowed = false
+
+        every { mockModuleManager.modules } returns arrayOf(module)
+        every { mockDependencyProvider.isApplicable(module) } returns true
+        every { mockDependencyProvider.createParams(module) } answers {
+            readAccessAllowed = ApplicationManager.getApplication().isReadAccessAllowed
+            params
+        }
+        every {
+            EP_NAME.forEachExtensionSafe(any<Consumer<ModuleDependencyProvider>>())
+        } answers {
+            firstArg<Consumer<ModuleDependencyProvider>>().accept(mockDependencyProvider)
+        }
+
+        sut = DefaultModuleDependenciesService(project, this)
+
+        advanceUntilIdle()
+
+        // providers read the project model (SDKs, order entries, VFS children), which is only legal under a read action
+        assertThat(readAccessAllowed).isTrue()
     }
 
     private fun prepDependencyProvider(moduleParamPairs: List<Pair<Module, DidChangeDependencyPathsParams>>) {

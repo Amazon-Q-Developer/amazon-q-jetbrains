@@ -22,6 +22,18 @@ import software.aws.toolkits.jetbrains.settings.MeetQSettings
 import java.nio.file.Path
 import java.nio.file.Paths
 
+internal data class ChatPromptAcknowledgements(
+    val disclaimerAcknowledged: Boolean,
+    val pairProgrammingAcknowledged: Boolean,
+    val deprecationNoticeAcknowledged: Boolean,
+)
+
+internal fun chatPromptAcknowledgements(settings: MeetQSettings) = ChatPromptAcknowledgements(
+    disclaimerAcknowledged = settings.disclaimerAcknowledged,
+    pairProgrammingAcknowledged = settings.pairProgrammingAcknowledged,
+    deprecationNoticeAcknowledged = settings.deprecationNoticeAcknowledged,
+)
+
 /**
  * Displays the web view for the Amazon Q tool window
  */
@@ -111,6 +123,7 @@ class Browser(parent: Disposable, private val mynahAsset: Path, val project: Pro
         val postMessageToJavaJsCode = receiveMessageQuery.inject("JSON.stringify(message)")
         val connectorAdapterPath = "${LocalAssetJBCefRequestHandler.PROTOCOL}://${LocalAssetJBCefRequestHandler.AUTHORITY}/mynah/js/connectorAdapter.js"
         val mynahResource = assetRequestHandler.createResource(mynahAsset.fileName.toString(), mynahAsset.inputStream())
+        val acknowledgements = chatPromptAcknowledgements(MeetQSettings.getInstance())
 
         // https://github.com/highlightjs/highlight.js/issues/1387
         // language=HTML
@@ -142,8 +155,9 @@ class Browser(parent: Disposable, private val mynahAsset: Path, val project: Pro
                         agenticMode: true,
                         quickActionCommands: [],
                         modelSelectionEnabled: true,
-                        disclaimerAcknowledged: ${MeetQSettings.getInstance().disclaimerAcknowledged},
-                        pairProgrammingAcknowledged: ${MeetQSettings.getInstance().pairProgrammingAcknowledged}
+                        disclaimerAcknowledged: ${acknowledgements.disclaimerAcknowledged},
+                        pairProgrammingAcknowledged: ${acknowledgements.pairProgrammingAcknowledged},
+                        deprecationNoticeAcknowledged: ${acknowledgements.deprecationNoticeAcknowledged}
                         },
                         hybridChatConnector,
                         ${CodeWhispererFeatureConfigService.getInstance().getFeatureConfigJsonString()}                     
