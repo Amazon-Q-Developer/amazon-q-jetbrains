@@ -5,6 +5,7 @@ package software.aws.toolkits.jetbrains.services.amazonq.lsp.model
 
 import com.intellij.openapi.project.Project
 import software.amazon.q.jetbrains.services.telemetry.ClientMetadata
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.workspace.WorkspaceTrust
 
 data class ExtendedClientMetadata(
     val aws: AwsMetadata,
@@ -30,6 +31,8 @@ data class QCapabilities(
     val codeReviewInChat: Boolean,
     val displayFindings: Boolean,
     val workspaceFilePath: String?,
+    /** `trusted` or `restricted`; the language server starts local MCP servers only when trusted. */
+    val workspaceTrust: String,
 )
 
 data class WindowCapabilities(
@@ -81,6 +84,7 @@ fun createExtendedClientMetadata(project: Project): ExtendedClientMetadata {
                     codeReviewInChat = true,
                     displayFindings = true,
                     workspaceFilePath = project.workspaceFile?.path,
+                    workspaceTrust = WorkspaceTrust.state(project),
                 ),
                 window = WindowCapabilities(
                     showSaveFileDialog = true,

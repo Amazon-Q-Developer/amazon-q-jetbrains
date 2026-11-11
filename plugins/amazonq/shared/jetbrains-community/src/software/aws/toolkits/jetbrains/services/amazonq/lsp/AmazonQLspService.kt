@@ -79,6 +79,7 @@ import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.createExtended
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.textdocument.TextDocumentServiceHandler
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.util.WorkspaceFolderUtil.createWorkspaceFolders
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.workspace.WorkspaceServiceHandler
+import software.aws.toolkits.jetbrains.services.amazonq.lsp.workspace.WorkspaceTrustHandler
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QDefaultServiceConfig
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QEndpoints
 import software.aws.toolkits.jetbrains.settings.LspSettings
@@ -611,6 +612,9 @@ private class AmazonQServerInstance(private val project: Project, private val cs
                     Disposer.register(this, it)
                 }
                 DefaultModuleDependenciesService(project, cs).also {
+                    Disposer.register(this, it)
+                }
+                WorkspaceTrustHandler(project, cs).also {
                     Disposer.register(this, it)
                 }
             }
