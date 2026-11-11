@@ -1,3 +1,6 @@
+# _4.12_ (2026-11-11)
+- **(Bug Fix)** Amazon Q local MCP servers start only after the project is trusted
+
 # _4.11_ (2026-11-05)
 - **(Feature)** Add support for JetBrains 2026.3
 
