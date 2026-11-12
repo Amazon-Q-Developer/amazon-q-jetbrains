@@ -4,12 +4,15 @@
 package software.amazon.q.jetbrains.ui
 
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import java.util.concurrent.CountDownLatch
 import javax.swing.DefaultComboBoxModel
 
@@ -17,6 +20,16 @@ class AsyncComboBoxTest {
     @Rule
     @JvmField
     val applicationRule = ApplicationRule()
+
+    @Rule
+    @JvmField
+    val disposableRule = DisposableRule()
+
+    @Before
+    fun setUp() {
+        // 2026.2 builds a bare test app without plugin.xml services; AsyncComboBox needs PluginCoroutineScopeTracker.
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+    }
 
     @Test
     fun `can populate combobox`() {

@@ -43,6 +43,7 @@ import software.amazon.awssdk.services.codewhispererruntime.model.Transformation
 import software.amazon.q.core.TokenConnectionSettings
 import software.amazon.q.core.credentials.ToolkitBearerTokenProvider
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
 import software.amazon.q.jetbrains.core.credentials.sso.PKCEAuthorizationGrantToken
@@ -258,6 +259,20 @@ open class CodeWhispererCodeModernizerTestBase(
         }
 
         project = projectRule.project
+        // 262's bare test app doesn't load plugin.xml service registrations; register what the getInstance(...) calls
+        // below need so they resolve. No-op on 251-261 (services already present).
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(project, disposableRule.disposable)
+        // 262's bare test app doesn't load codetransform's own plugin.xml <projectService> registrations, so the
+        // spy(X.getInstance(project)) calls below can't resolve them. Pre-register concrete instances; no-op on
+        // 251-261 where the services already exist (replaceService just swaps them for the spies anyway).
+        project.replaceService(CodeTransformTelemetryManager::class.java, CodeTransformTelemetryManager(project), disposableRule.disposable)
+        project.replaceService(GumbyClient::class.java, GumbyClient(project), disposableRule.disposable)
+        project.replaceService(CodeModernizerSessionState::class.java, CodeModernizerSessionState(), disposableRule.disposable)
+        project.replaceService(CodeModernizerManager::class.java, CodeModernizerManager(project), disposableRule.disposable)
+        // the panel manager's toolbar action group must exist before it's constructed
+        registerCodeModernizerToolbarGroup(disposableRule.disposable)
+        project.replaceService(CodeModernizerBottomWindowPanelManager::class.java, CodeModernizerBottomWindowPanelManager(project), disposableRule.disposable)
         toolkitConnectionManager = spy(ToolkitConnectionManager.getInstance(project))
 
         val provider = mock<BearerTokenProvider> { }

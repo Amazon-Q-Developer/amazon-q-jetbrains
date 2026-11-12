@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import com.intellij.testFramework.utils.io.createFile
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
@@ -19,11 +19,13 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import software.amazon.q.jetbrains.core.CoreServicesExtension
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.getTextFromUrl
 import java.nio.file.Path
 import java.nio.file.Paths
 
-@ExtendWith(ApplicationExtension::class, MockitoExtension::class, MockKExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class, MockitoExtension::class, MockKExtension::class)
 class ManifestFetcherTest {
 
     private lateinit var manifestFetcher: ManifestFetcher
@@ -31,6 +33,11 @@ class ManifestFetcherTest {
 
     @BeforeEach
     fun setup() {
+        // The 2026.2 bare test application no longer loads the plugin descriptor, so the
+        // amazon.q.flare.endpoint registry key is undefined and ManifestFetcher's endpoint/ETag lookups
+        // throw, changing fetch results. Register the plugin.xml <registryKey> entries so behavior matches
+        // the descriptor-backed platforms. No-op on 2025.x-2026.1 where the descriptor already provides them.
+        CoreTestHelper.registerMissingRegistryKeys()
         manifestFetcher = spy(ManifestFetcher())
         manifest = Manifest()
     }

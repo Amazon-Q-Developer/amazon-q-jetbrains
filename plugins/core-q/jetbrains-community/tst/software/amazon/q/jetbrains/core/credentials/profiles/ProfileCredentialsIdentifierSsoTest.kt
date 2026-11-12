@@ -3,7 +3,8 @@
 
 package software.amazon.q.jetbrains.core.credentials.profiles
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -12,12 +13,13 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.mockito.kotlin.mock
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.awssdk.services.ssooidc.model.SsoOidcException
+import software.amazon.q.jetbrains.core.CoreServicesExtension
 import software.amazon.q.jetbrains.core.MockClientManagerExtension
 import software.amazon.q.jetbrains.core.credentials.sso.DiskCache
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.InteractiveBearerTokenProvider
 import software.amazon.q.jetbrains.core.credentials.sso.bearer.NoTokenInitializedException
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class, CoreServicesExtension::class)
 class ProfileCredentialsIdentifierSsoTest {
     private val sut = ProfileCredentialsIdentifierSso("", "", "", null)
 
@@ -46,11 +48,19 @@ class ProfileCredentialsIdentifierSsoTest {
         val cache = mock<DiskCache>()
         mockClientManager.create<SsoOidcClient>()
 
-        // IllegalStateException instead of more general base Exception so we know if the type changes
-        val exception = assertThrows<NoTokenInitializedException> {
-            InteractiveBearerTokenProvider("", "us-east-1", listOf("scopes"), cache = cache, id = "test").resolveToken()
+        // InteractiveBearerTokenProvider is Disposable and registers a message-bus connection under itself in its
+        // constructor, so it must be disposed or it leaks (surfaced as an engine-level "Memory leak detected"
+        // only in full-suite runs).
+        val provider = InteractiveBearerTokenProvider("", "us-east-1", listOf("scopes"), cache = cache, id = "test")
+        try {
+            // IllegalStateException instead of more general base Exception so we know if the type changes
+            val exception = assertThrows<NoTokenInitializedException> {
+                provider.resolveToken()
+            }
+            assertThat(sut.handleValidationException(exception)).isNotNull()
+        } finally {
+            Disposer.dispose(provider)
         }
-        assertThat(sut.handleValidationException(exception)).isNotNull()
     }
 
     @Test

@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.IdeaTestUtil.getMockJdk21
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.mockito.Mockito.mockStatic
@@ -28,7 +27,10 @@ class CodeTransformProjectUtilsTest : CodeWhispererCodeModernizerTestBase() {
         super.setup()
         mockStatic(LanguageLevelProjectExtension::class.java)
 
-        sdkMock = getMockJdk21()
+        // IdeaTestUtil.getMockJdk21() resolves a JDK from a Maven repository on 262 (needs org.eclipse.aether, which
+        // isn't on the bare test-app classpath -> NoClassDefFoundError). The test only needs an Sdk whose version
+        // parses to JDK_21, so mock it directly.
+        sdkMock = mock<Sdk> { on { versionString } doReturn "21.0.0" }
         languageLevelProjectExtensionMock = mock<LanguageLevelProjectExtension>()
 
         whenever(LanguageLevelProjectExtension.getInstance(project)).doReturn(languageLevelProjectExtensionMock)

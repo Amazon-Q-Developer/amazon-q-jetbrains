@@ -13,6 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import software.amazon.q.core.credentials.aCredentialsIdentifier
 import software.amazon.q.core.region.anAwsRegion
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.region.MockRegionProviderRule
 import software.amazon.q.jetbrains.settings.AwsSettings
 import software.amazon.q.jetbrains.settings.AwsSettingsRule
@@ -46,8 +47,12 @@ class CredentialsRegionHandlerTest {
 
     @Before
     fun setup() {
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
         sut = DefaultCredentialsRegionHandler(projectRule.project)
-        AwsSettings.getInstance().useDefaultCredentialRegion = UseAwsCredentialRegion.Always
+        // Prime AwsSettingsRule's lazy `settings` while the service is registered; otherwise its teardown
+        // resolves AwsSettings.getInstance() for the first time after disposableRule has already removed it.
+        settingsRule.settings.useDefaultCredentialRegion = UseAwsCredentialRegion.Always
     }
 
     @Test

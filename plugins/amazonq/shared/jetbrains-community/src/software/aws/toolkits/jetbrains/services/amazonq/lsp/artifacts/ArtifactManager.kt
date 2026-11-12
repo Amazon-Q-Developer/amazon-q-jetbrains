@@ -64,8 +64,8 @@ class ArtifactManager @NonInjectable internal constructor(private val manifestFe
                     Telemetry.languageserver.setup.use { all ->
                         all.id("q")
                         all.languageServerSetupStage(LanguageServerSetupStage.All)
-                        all.metadata("credentialStartUrl", getStartUrl(project))
                         all.result(MetricResult.Succeeded)
+                        all.metadata("credentialStartUrl", getStartUrl(project))
 
                         try {
                             val lspVersions = Telemetry.languageserver.setup.use { telemetry ->

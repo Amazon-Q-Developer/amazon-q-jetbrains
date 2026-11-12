@@ -4,14 +4,17 @@
 package software.amazon.q.jetbrains.core.credentials
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TestActionEvent
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import software.amazon.q.core.credentials.aToolkitCredentialsProvider
 import software.amazon.q.core.region.anAwsRegion
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockResourceCacheRule
 import software.amazon.q.jetbrains.core.dummyResource
 import software.amazon.q.jetbrains.utils.spinUntil
@@ -29,7 +32,17 @@ class RefreshConnectionActionTest {
     @Rule
     val resourceCache = MockResourceCacheRule()
 
+    @JvmField
+    @Rule
+    val disposableRule = DisposableRule()
+
     private val sut = RefreshConnectionAction()
+
+    @Before
+    fun setUp() {
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
+        CoreTestHelper.registerMissingProjectServices(projectRule.project, disposableRule.disposable)
+    }
 
     @Test
     fun refreshActionClearsCacheAndUpdatesConnectionState() {
