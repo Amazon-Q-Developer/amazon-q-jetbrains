@@ -44,7 +44,16 @@ export default defineComponent({
             }
         },
         requireConfirmationCodeOrNot(): boolean {
-            return this.selectedLoginOption?.requiresBrowser() === true && this.authorizationCode?.length !== 0
+            // Only the device-code flow produces a user confirmation code. The PKCE flow (the
+            // default in commercial regions) never sets one, so `authorizationCode` stays
+            // undefined. `undefined?.length !== 0` is true, which previously rendered an empty
+            // "CONFIRMATION CODE" block and made it look like the sign-in was waiting for a code
+            // that would never appear.
+            return (
+                this.selectedLoginOption?.requiresBrowser() === true &&
+                this.authorizationCode != null &&
+                this.authorizationCode.length !== 0
+            )
         },
         authenticatingText(): string {
             if (this.selectedLoginOption?.id === LoginIdentifier.IAM_CREDENTIAL) {
