@@ -13,7 +13,6 @@ jobs:
   windows-unit-tests:
     name: Windows (${{ matrix.ideProfileName }})
     runs-on: windows-latest
-    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -30,8 +29,7 @@ jobs:
         with:
           java-version: 21
           distribution: 'corretto'
-          # No cache: 'gradle'. On Windows its post-job save always failed after minutes of compressing,
-          # because the Gradle daemon still locks files in ~/.gradle/caches (actions/setup-java#633).
+          cache: 'gradle'
 
       - name: Configure Gradle properties
         shell: pwsh
