@@ -16,6 +16,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import software.amazon.awssdk.services.ssooidc.SsoOidcClient
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.pinning.ConnectionPinningManager
 import software.amazon.q.jetbrains.core.credentials.pinning.FeatureWithPinnedConnection
@@ -46,6 +47,7 @@ class DefaultToolkitConnectionManagerTest {
 
     @Before
     fun setUp() {
+        CoreTestHelper.registerMissingServices(disposableRule.disposable)
         mockClientManager.create<SsoOidcClient>()
         sut = DefaultToolkitConnectionManager(projectRule.project)
     }

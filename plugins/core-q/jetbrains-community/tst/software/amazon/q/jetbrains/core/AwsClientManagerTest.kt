@@ -20,6 +20,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -58,6 +59,10 @@ import kotlin.reflect.jvm.isAccessible
 
 class AwsClientManagerTest {
     private val projectRule = ProjectRule()
+
+    // 2026.2 builds a bare test app without plugin.xml services; register AwsSettings and the
+    // amazon.q.sdk.clientCustomizer EP after the app exists but before the mock rules resolve them.
+    private val coreServices = CoreServicesRule()
     private val disposableRule = DisposableRule()
     private val temporaryDirectory = TemporaryFolder()
     private val regionProvider = MockRegionProviderRule()
@@ -72,12 +77,19 @@ class AwsClientManagerTest {
     @JvmField
     val ruleChain = RuleChain(
         projectRule,
+        coreServices,
         temporaryDirectory,
         credentialManager,
         regionProvider,
         projectSettingsRule,
         disposableRule
     )
+
+    @Before
+    fun setUp() {
+        // AwsClientManager needs the real SdkClientProvider (AwsSdkClient), which 2026.2's bare app no longer provides.
+        MockClientManager.useRealImplementations(disposableRule.disposable)
+    }
 
     @Test
     fun canGetAnInstanceOfAClient() {

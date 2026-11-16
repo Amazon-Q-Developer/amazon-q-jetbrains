@@ -25,10 +25,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDKs
         uses: actions/setup-java@v4
         with:
-          java-version: 21
+          # Install both: 251-261 profiles target JDK 21, 2026.2 targets JDK 25. The Gradle toolchain (see
+          # toolkit-jvm-conventions.gradle.kts) selects the right one per profile, so CI never picks a JDK itself.
+          # 21 is listed last so it becomes JAVA_HOME and launches Gradle; 25 is forked to only for 2026.2.
+          java-version: |
+            25
+            21
           distribution: 'corretto'
           # No cache: 'gradle'. On Windows its post-job save always failed after minutes of compressing,
           # because the Gradle daemon still locks files in ~/.gradle/caches (actions/setup-java#633).
@@ -40,6 +45,8 @@ jobs:
           @"
           org.gradle.jvmargs=-Xmx4g
           kotlin.daemon.jvmargs=-Xmx4g
+          # let the Gradle toolchain discover the JDKs setup-java installed (it doesn't auto-detect these paths)
+          org.gradle.java.installations.fromEnv=JAVA_HOME_21_X64,JAVA_HOME_25_X64
           "@ | Add-Content -Path "$env:USERPROFILE\.gradle\gradle.properties"
 
       - name: Run tests

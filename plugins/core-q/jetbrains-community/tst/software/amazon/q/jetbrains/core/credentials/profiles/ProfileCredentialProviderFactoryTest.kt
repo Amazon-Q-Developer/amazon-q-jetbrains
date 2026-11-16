@@ -50,6 +50,7 @@ import software.amazon.q.core.credentials.SsoSessionIdentifier
 import software.amazon.q.core.credentials.ToolkitBearerTokenProvider
 import software.amazon.q.core.rules.SystemPropertyHelper
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreServicesRule
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.InteractiveCredential
@@ -83,6 +84,7 @@ class ProfileCredentialProviderFactoryTest {
     val ruleChain = RuleChain(
         temporaryFolder,
         ApplicationRule(),
+        CoreServicesRule(),
         systemPropertyHelper,
         notificationListener,
         disposableRule,

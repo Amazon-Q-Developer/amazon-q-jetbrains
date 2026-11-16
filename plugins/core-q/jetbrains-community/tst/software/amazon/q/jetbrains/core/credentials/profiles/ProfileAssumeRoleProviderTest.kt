@@ -26,17 +26,19 @@ import software.amazon.awssdk.services.sts.model.AssumeRoleResponse
 import software.amazon.awssdk.utils.SdkAutoCloseable
 import software.amazon.q.core.region.anAwsRegion
 import software.amazon.q.core.utils.test.aString
+import software.amazon.q.jetbrains.core.CoreServicesRule
 import software.amazon.q.jetbrains.core.MockClientManagerRule
 import java.time.Duration
 import java.time.Instant
 
 class ProfileAssumeRoleProviderTest {
     private val application = ApplicationRule()
+    private val coreServices = CoreServicesRule()
     private val clientManager = MockClientManagerRule()
 
     @Rule
     @JvmField
-    val ruleChain = RuleChain(application, clientManager)
+    val ruleChain = RuleChain(application, coreServices, clientManager)
 
     private val mfaToken = "SomeToken"
     private lateinit var parentProvider: AwsCredentialsProvider

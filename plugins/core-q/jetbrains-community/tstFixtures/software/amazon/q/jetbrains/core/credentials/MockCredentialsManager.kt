@@ -3,7 +3,7 @@
 
 package software.amazon.q.jetbrains.core.credentials
 
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ApplicationRule
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -21,6 +21,7 @@ import software.amazon.q.core.credentials.ToolkitCredentialsProvider
 import software.amazon.q.core.region.AwsRegion
 import software.amazon.q.core.utils.test.aString
 import software.amazon.q.jetbrains.core.region.getDefaultRegion
+import software.amazon.q.jetbrains.utils.getOrRegisterMockService
 import software.amazon.q.jetbrains.utils.rules.ClearableLazy
 
 @Deprecated("Use MockCredentialManagerRule")
@@ -85,7 +86,8 @@ class MockCredentialsManager : CredentialManager() {
 
     companion object {
         @Suppress("DEPRECATION")
-        fun getInstance(): MockCredentialsManager = service<CredentialManager>() as MockCredentialsManager
+        fun getInstance(): MockCredentialsManager =
+            ApplicationManager.getApplication().getOrRegisterMockService(CredentialManager::class.java) { MockCredentialsManager() }
     }
 
     class MockCredentialIdentifier(override val displayName: String, val credentials: AwsCredentialsProvider, override val defaultRegionId: String?) :

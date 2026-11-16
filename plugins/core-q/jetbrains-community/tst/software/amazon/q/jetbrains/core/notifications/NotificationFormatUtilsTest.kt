@@ -6,19 +6,17 @@ package software.amazon.q.jetbrains.core.notifications
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Rule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -29,11 +27,13 @@ import java.io.InputStream
 import java.nio.file.Paths
 import java.util.stream.Stream
 
-@ExtendWith(ApplicationExtension::class)
+@TestApplication
 class NotificationFormatUtilsTest {
-    @Rule
-    @JvmField
-    val projectRule = ProjectRule()
+    // Open the project through a JUnit 5 fixture so it is closed on teardown. The previous `@Rule ProjectRule`
+    // is a JUnit 4 rule that never fires under JUnit 5, leaking a ProjectImpl (surfaced as an engine-level
+    // "leaked instance of ProjectImpl" only in full-suite runs).
+    private val projectFixture = projectFixture()
+    private val project get() = projectFixture.get()
 
     private lateinit var mockSystemDetails: SystemDetails
     private lateinit var mockSystemDetailsWithNoPlugin: SystemDetails
@@ -72,7 +72,7 @@ class NotificationFormatUtilsTest {
 
         mockkStatic("software.amazon.q.jetbrains.core.notifications.RulesEngineKt")
         every { getCurrentSystemAndConnectionDetails() } returns mockSystemDetails
-        every { getConnectionDetailsForFeature(projectRule.project, BearerTokenFeatureSet.Q) } returns FeatureAuthDetails(
+        every { getConnectionDetailsForFeature(project, BearerTokenFeatureSet.Q) } returns FeatureAuthDetails(
             "Idc",
             "us-west-2",
             "Connected"
@@ -114,7 +114,7 @@ class NotificationFormatUtilsTest {
     @Test
     fun `If plugin is not present, notification is not shown`() {
         every { getCurrentSystemAndConnectionDetails() } returns mockSystemDetailsWithNoPlugin
-        val shouldShow = RulesEngine.displayNotification(projectRule.project, pluginNotPresentData)
+        val shouldShow = RulesEngine.displayNotification(project, pluginNotPresentData)
         assertThat(shouldShow).isFalse
     }
 
@@ -123,7 +123,7 @@ class NotificationFormatUtilsTest {
     fun `The notification is shown`(notification: String, expectedData: NotificationData) {
         val notificationData = mapper.readValue<NotificationData>(notification)
         assertThat(notificationData).isEqualTo(expectedData)
-        val shouldShow = RulesEngine.displayNotification(projectRule.project, notificationData)
+        val shouldShow = RulesEngine.displayNotification(project, notificationData)
         assertThat(shouldShow).isTrue
     }
 
@@ -132,7 +132,7 @@ class NotificationFormatUtilsTest {
     fun `The notification is not shown`(notification: String, expectedData: NotificationData) {
         val notificationData = mapper.readValue<NotificationData>(notification)
         assertThat(notificationData).isEqualTo(expectedData)
-        val shouldShow = RulesEngine.displayNotification(projectRule.project, notificationData)
+        val shouldShow = RulesEngine.displayNotification(project, notificationData)
         assertThat(shouldShow).isFalse
     }
 

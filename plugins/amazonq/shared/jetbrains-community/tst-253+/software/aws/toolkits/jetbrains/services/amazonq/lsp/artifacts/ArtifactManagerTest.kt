@@ -17,6 +17,7 @@ import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
+import software.amazon.q.jetbrains.core.CoreTestHelper
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts.ArtifactManager.SupportedManifestVersionRange
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,6 +31,11 @@ class ArtifactManagerTest : BasePlatformTestCase() {
 
     override fun setUp() {
         super.setUp()
+        // 2026.2 builds tests on a bare application that doesn't load plugin.xml, so the application and
+        // project services ArtifactManager resolves (e.g. AwsSettings, ToolkitConnectionManager via getStartUrl)
+        // are absent. Register them on the test disposable.
+        CoreTestHelper.registerMissingServices(testRootDisposable)
+        CoreTestHelper.registerMissingProjectServices(project, testRootDisposable)
         tempDir = Files.createTempDirectory("artifact-test")
         artifactHelper = spyk(ArtifactHelper(tempDir, 3))
         manifestFetcher = spyk(ManifestFetcher())

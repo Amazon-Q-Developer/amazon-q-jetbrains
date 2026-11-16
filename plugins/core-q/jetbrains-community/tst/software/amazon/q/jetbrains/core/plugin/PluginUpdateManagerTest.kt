@@ -28,15 +28,17 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import software.amazon.q.core.utils.tryOrNull
 import software.amazon.q.jetbrains.AwsToolkit.TOOLKIT_PLUGIN_ID
+import software.amazon.q.jetbrains.core.CoreServicesRule
 import software.amazon.q.jetbrains.settings.AwsSettings
 
 class PluginUpdateManagerTest {
     val applicationRule = ApplicationRule()
+    val coreServices = CoreServicesRule()
     val disposableRule = DisposableRule()
 
     @Rule
     @JvmField
-    val ruleChain = RuleChain(applicationRule, disposableRule)
+    val ruleChain = RuleChain(applicationRule, coreServices, disposableRule)
 
     private lateinit var sut: PluginUpdateManager
     private val testIdeaPluginDescriptorToolkit = getPluginDescriptorForIdAndVersion(TOOLKIT_PLUGIN_ID, "1.84")

@@ -3,7 +3,7 @@
 
 package software.amazon.q.jetbrains.core.notifications
 
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.impl.TestApplicationExtension
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -18,7 +18,7 @@ import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 
-@ExtendWith(ApplicationExtension::class)
+@ExtendWith(TestApplicationExtension::class)
 class NotificationResourceResolverTest {
     private lateinit var urlFetcher: UrlFetcher
     private lateinit var sut: DefaultRemoteResourceResolver
