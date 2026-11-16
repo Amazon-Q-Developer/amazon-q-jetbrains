@@ -7,7 +7,12 @@ package software.aws.toolkits.jetbrains.services.amazonq.lsp
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.ToNumberPolicy
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -17,14 +22,19 @@ import com.intellij.testFramework.replaceService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import migration.software.amazon.q.jetbrains.settings.AwsSettings
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.eclipse.lsp4j.ConfigurationItem
 import org.eclipse.lsp4j.ConfigurationParams
+import org.eclipse.lsp4j.MessageActionItem
+import org.eclipse.lsp4j.MessageType
+import org.eclipse.lsp4j.ShowMessageRequestParams
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import software.amazon.awssdk.services.toolkittelemetry.model.MetricUnit
@@ -35,6 +45,7 @@ import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
 import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
 import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.services.telemetry.TelemetryService
+import software.amazon.q.jetbrains.utils.notify
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.ConnectionMetadata
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.credentials.SsoProfileData
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.model.aws.window.ShowNotificationContent
@@ -46,6 +57,8 @@ import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
 import java.util.Base64
 import kotlin.random.Random
 import kotlin.random.nextInt
+
+private const val NOTIFICATION_UTILS = "software.amazon.q.jetbrains.utils.NotificationUtilsKt"
 
 @ExtendWith(ApplicationExtension::class)
 class AmazonQLanguageClientImplTest {
@@ -503,6 +516,33 @@ class AmazonQLanguageClientImplTest {
             }
             """.trimIndent()
         )
+    }
+
+    @Test
+    fun `showMessageRequest closes the notification when an action is chosen`() {
+        val actions = slot<Collection<AnAction>>()
+        mockkStatic(NOTIFICATION_UTILS)
+        try {
+            every { notify(any(), any(), any(), any(), capture(actions)) } returns Unit
+
+            val allow = MessageActionItem("Allow")
+            val deny = MessageActionItem("Deny")
+            val result = sut.showMessageRequest(
+                ShowMessageRequestParams(listOf(allow, deny)).apply {
+                    type = MessageType.Info
+                    message = "Start MCP servers in this folder?"
+                }
+            )
+
+            val notification = Notification("test", "title", "content", NotificationType.INFORMATION)
+            val action = actions.captured.filterIsInstance<NotificationAction>().single { it.templateText == "Deny" }
+            action.actionPerformed(mockk<AnActionEvent>(relaxed = true), notification)
+
+            assertThat(notification.isExpired).isTrue()
+            assertThat(result.getNow(null)).isEqualTo(deny)
+        } finally {
+            unmockkStatic(NOTIFICATION_UTILS)
+        }
     }
 
     private fun configurationParams(vararg attributes: String) = ConfigurationParams(
