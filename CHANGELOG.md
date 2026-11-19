@@ -1,3 +1,6 @@
+# _4.13_ (2026-11-19)
+- **(Deprecation)** An upcoming release will remove support for IDEs based on the 2025.3 platform
+
 # _4.12_ (2026-11-11)
 - **(Bug Fix)** Amazon Q local MCP servers start only after the project is trusted
 
