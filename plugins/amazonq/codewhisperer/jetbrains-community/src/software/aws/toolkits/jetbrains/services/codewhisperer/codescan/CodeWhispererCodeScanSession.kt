@@ -405,6 +405,21 @@ internal fun resolveScanFindingFile(projectRootPath: String, projectName: String
     return if (resolved != root && resolved.startsWith(root)) resolved else null
 }
 
+/**
+ * True when [candidatePath] resolves to a real file strictly inside [rootPath], following symlinks
+ * and "." / ".." via [Path.toRealPath]. A path that does not exist, resolves to the root itself, or
+ * cannot be resolved returns false, so a traversal or a symlink that escapes the project root is
+ * never treated as being inside it. Used as the last-line check before writing a fix to disk.
+ */
+internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Boolean =
+    try {
+        val root = Path.of(rootPath).toRealPath()
+        val candidate = Path.of(candidatePath).toRealPath()
+        candidate != root && candidate.startsWith(root)
+    } catch (e: Exception) {
+        false
+    }
+
 sealed class CodeScanResponse {
     abstract val responseContext: CodeScanResponseContext
 

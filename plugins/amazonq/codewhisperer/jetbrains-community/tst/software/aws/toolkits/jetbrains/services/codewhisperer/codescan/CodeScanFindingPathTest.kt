@@ -4,9 +4,11 @@
 package software.aws.toolkits.jetbrains.services.codewhisperer.codescan
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.nio.file.Files
 import kotlin.io.path.Path
 
 class CodeScanFindingPathTest {
@@ -75,5 +77,83 @@ class CodeScanFindingPathTest {
         val resolved = resolveScanFindingFile(root().toString(), projectName, projectName)
 
         assertThat(resolved).isNull()
+    }
+
+    // --- isRealPathWithinRoot: symlink-aware write-sink guard (follows "..", ".", and symlinks) ---
+
+    @Test
+    fun `isRealPathWithinRoot accepts a real file inside the root`() {
+        val proj = projectRoot.newFolder("project").toPath()
+        val file = Files.createDirectories(proj.resolve("src")).resolve("App.kt")
+        Files.writeString(file, "x")
+
+        assertThat(isRealPathWithinRoot(proj.toString(), file.toString())).isTrue()
+    }
+
+    @Test
+    fun `isRealPathWithinRoot rejects an absolute path outside the root`() {
+        val proj = projectRoot.newFolder("project").toPath()
+        val outside = projectRoot.newFolder("outside").toPath()
+        val secret = outside.resolve("secret.txt")
+        Files.writeString(secret, "x")
+
+        assertThat(isRealPathWithinRoot(proj.toString(), secret.toString())).isFalse()
+    }
+
+    @Test
+    fun `isRealPathWithinRoot rejects a dot-dot path that escapes the root`() {
+        val proj = projectRoot.newFolder("project").toPath()
+        val outside = projectRoot.newFolder("outside").toPath()
+        Files.writeString(outside.resolve("secret.txt"), "x")
+
+        // proj/../outside/secret.txt resolves to a real file outside the project root.
+        val escaping = proj.resolve("..").resolve("outside").resolve("secret.txt").toString()
+        assertThat(isRealPathWithinRoot(proj.toString(), escaping)).isFalse()
+    }
+
+    @Test
+    fun `isRealPathWithinRoot accepts a symlink inside the root that points inside the root`() {
+        val proj = projectRoot.newFolder("project").toPath()
+        val target = Files.createDirectories(proj.resolve("real")).resolve("target.txt")
+        Files.writeString(target, "x")
+        val link = proj.resolve("good-link")
+        try {
+            Files.createSymbolicLink(link, target)
+        } catch (e: Exception) {
+            Assume.assumeNoException("symlinks not supported on this platform", e)
+        }
+
+        assertThat(isRealPathWithinRoot(proj.toString(), link.toString())).isTrue()
+    }
+
+    @Test
+    fun `isRealPathWithinRoot rejects a symlink inside the root that points outside the root`() {
+        val proj = projectRoot.newFolder("project").toPath()
+        val outside = projectRoot.newFolder("outside").toPath()
+        val secret = outside.resolve("secret.txt")
+        Files.writeString(secret, "x")
+        val link = proj.resolve("evil-link")
+        try {
+            Files.createSymbolicLink(link, secret)
+        } catch (e: Exception) {
+            Assume.assumeNoException("symlinks not supported on this platform", e)
+        }
+
+        // The link lives inside the project, but its real target is outside — it must be rejected.
+        assertThat(isRealPathWithinRoot(proj.toString(), link.toString())).isFalse()
+    }
+
+    @Test
+    fun `isRealPathWithinRoot rejects a path that does not exist`() {
+        val proj = projectRoot.newFolder("project").toPath()
+
+        assertThat(isRealPathWithinRoot(proj.toString(), proj.resolve("missing.txt").toString())).isFalse()
+    }
+
+    @Test
+    fun `isRealPathWithinRoot rejects the root itself`() {
+        val proj = projectRoot.newFolder("project").toPath()
+
+        assertThat(isRealPathWithinRoot(proj.toString(), proj.toString())).isFalse()
     }
 }

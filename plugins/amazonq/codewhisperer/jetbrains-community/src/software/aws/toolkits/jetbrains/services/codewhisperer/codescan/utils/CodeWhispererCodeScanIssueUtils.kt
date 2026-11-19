@@ -14,12 +14,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,6 +43,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhisp
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.context.CodeScanIssueDetailsDisplayType
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isRealPathWithinRoot
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.language.CodeWhispererProgrammingLanguage
@@ -390,11 +389,12 @@ fun sendCodeRemediationTelemetryToServiceApi(
 }
 
 fun applySuggestedFix(project: Project, issue: CodeWhispererCodeScanIssue) {
-    // Defense in depth: refuse to patch a file outside the project's content roots, regardless of
-    // which producer registered the issue. Uses the same containment check as issue registration,
-    // guarding against a service-/LLM-supplied path that reached this write sink.
-    if (!runReadAction { ProjectFileIndex.getInstance(issue.project).isInContent(issue.file) }) {
-        LOG.warn { "Skipping Apply fix: the target file is outside the project" }
+    // Defense in depth: refuse to patch a file that resolves outside the project once "..", "." and
+    // symlinks are followed, regardless of which producer registered the issue. Guards against a
+    // service-/LLM-supplied path that reached this write sink.
+    val projectRoot = issue.project.basePath ?: issue.project.guessProjectDir()?.path
+    if (projectRoot == null || !isRealPathWithinRoot(projectRoot, issue.file.path)) {
+        LOG.warn { "Skipping Apply fix: the target file resolves outside the project" }
         return
     }
     try {
