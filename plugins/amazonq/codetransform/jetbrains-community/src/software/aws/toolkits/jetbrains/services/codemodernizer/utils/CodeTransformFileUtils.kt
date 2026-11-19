@@ -18,6 +18,7 @@ import software.amazon.q.core.utils.exists
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.info
 import software.amazon.q.core.utils.putNextEntry
+import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.core.coroutines.getCoroutineBgContext
 import software.aws.toolkits.jetbrains.services.codemodernizer.CodeModernizerManager.Companion.LOG
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.HIL_ARTIFACT_DIR_NAME
@@ -165,21 +166,21 @@ internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
 /**
  * Unzips a zip into a dir. Returns the true when successfully unzips the file pointed to by [zipFilePath] to [destDir]
  *
- * @throws IllegalArgumentException if an entry has an invalid name or resolves outside [destDir]. Extraction stops at
- * that entry, so [destDir] can still hold the entries extracted before it.
+ * @throws IllegalArgumentException if an entry has an invalid name or resolves outside [destDir]. Every entry is
+ * checked before any is written, so nothing is extracted in that case.
  */
 fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, extractOnlySources: Boolean = false): Boolean {
     if (!zipFilePath.exists()) return false
     val zipFile = ZipFile(zipFilePath.toFile())
     zipFile.use { file ->
-        file.entries().asSequence()
+        val entriesToExtract = file.entries().asSequence()
             .filterNot { it.isDirectory }
-            .map { zipEntry ->
+            .mapNotNull { zipEntry ->
                 var fileName = zipEntry.name
                 if (extractOnlySources) {
                     // used to copy just the source code for client-side build
                     if (!fileName.startsWith("sources")) {
-                        return@map
+                        return@mapNotNull null
                     }
                 }
                 if (isSqlMetadata) {
@@ -187,14 +188,30 @@ fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, 
                     // this change puts the files directly under the root of the target directory, which is what we want
                     fileName = zipEntry.name.substringAfterLast(File.separatorChar)
                 }
-                val destPath = resolveZipEntryUnderRoot(destDir, fileName)
-                destPath.createParentDirectories()
-                FileOutputStream(destPath.toFile()).use { targetFile ->
-                    zipFile.getInputStream(zipEntry).copyTo(targetFile)
-                }
+                zipEntry to resolveZipEntryUnderRoot(destDir, fileName)
             }.toList()
+        entriesToExtract.forEach { (zipEntry, destPath) ->
+            destPath.createParentDirectories()
+            FileOutputStream(destPath.toFile()).use { targetFile ->
+                file.getInputStream(zipEntry).copyTo(targetFile)
+            }
+        }
     }
     return true
+}
+
+/**
+ * Extracts the SQL metadata zip at [zipPath] into [destDir] and returns its `.sct` file. Returns null when the zip has
+ * no `.sct` file or [unzipFile] rejects one of its entries; in the second case nothing is extracted.
+ */
+fun extractSctMetadataFile(zipPath: Path, destDir: File): File? {
+    try {
+        unzipFile(zipPath, destDir.toPath(), isSqlMetadata = true)
+    } catch (e: IllegalArgumentException) {
+        getLogger<CodeTransformChatController>().warn { "Could not extract the SQL metadata zip: ${e.message}" }
+        return null
+    }
+    return destDir.listFiles { file -> file.name.endsWith(".sct") }?.firstOrNull()
 }
 
 suspend fun zipToPath(byteArrayList: List<ByteArray>, outputDirPath: Path? = null): Pair<Path, Int> {

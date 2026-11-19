@@ -116,12 +116,12 @@ import software.aws.toolkits.jetbrains.services.codemodernizer.panels.managers.C
 import software.aws.toolkits.jetbrains.services.codemodernizer.session.ChatSessionStorage
 import software.aws.toolkits.jetbrains.services.codemodernizer.session.Session
 import software.aws.toolkits.jetbrains.services.codemodernizer.state.CodeModernizerSessionState
+import software.aws.toolkits.jetbrains.services.codemodernizer.utils.extractSctMetadataFile
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.getJavaModulesWithSQL
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.getModuleOrProjectNameForFile
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.isCodeTransformAvailable
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.toVirtualFile
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.tryGetJdk
-import software.aws.toolkits.jetbrains.services.codemodernizer.utils.unzipFile
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.validateCustomVersionsFile
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.validateSctMetadata
 import software.aws.toolkits.jetbrains.services.cwc.messages.ChatMessageType
@@ -375,9 +375,7 @@ class CodeTransformChatController(
             val selectedZipFile = FileChooser.chooseFile(descriptor, null, null) ?: return@withContext
             val extractedZip = createTempDirectory("codeTransformSQLMetadata", null)
 
-            unzipFile(selectedZipFile.toNioPath(), extractedZip.toPath(), true)
-
-            val sctFile = extractedZip.listFiles { file -> file.name.endsWith(".sct") }?.firstOrNull()
+            val sctFile = extractSctMetadataFile(selectedZipFile.toNioPath(), extractedZip)
 
             val metadataValidationResult = validateSctMetadata(sctFile)
 

@@ -145,4 +145,53 @@ class CodeTransformFileUtilsTest {
         assertThat(unzipFile(zip, dest, isSqlMetadata = true)).isTrue()
         assertThat(dest.resolve("meta.sct")).exists()
     }
+
+    @Test
+    fun `unzipFile writes no entry when one entry is rejected`() {
+        val zip = folder.newFile("mixed.zip").toPath()
+        ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
+            listOf("first.txt", "../outside.txt", "last.txt").forEach { name ->
+                zos.putNextEntry(ZipEntry(name))
+                zos.write("x".toByteArray())
+                zos.closeEntry()
+            }
+        }
+        val dest = folder.newFolder("out").toPath()
+
+        assertThatThrownBy { unzipFile(zip, dest) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+        assertThat(dest.resolve("first.txt").exists()).isFalse()
+        assertThat(dest.resolve("last.txt").exists()).isFalse()
+        assertThat(dest.parent.resolve("outside.txt").exists()).isFalse()
+    }
+
+    @Test
+    fun `extractSctMetadataFile returns the sct file from a metadata zip`() {
+        val zip = folder.newFile("metadata.zip").toPath()
+        ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
+            zos.putNextEntry(ZipEntry("project.sct"))
+            zos.write("<project/>".toByteArray())
+            zos.closeEntry()
+        }
+        val dest = folder.newFolder("sql")
+
+        assertThat(extractSctMetadataFile(zip, dest)).isEqualTo(dest.resolve("project.sct"))
+    }
+
+    @Test
+    fun `extractSctMetadataFile returns null and extracts nothing when an entry is rejected`() {
+        val zip = folder.newFile("metadata-rejected.zip").toPath()
+        ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
+            // ".." is rejected on every platform, also after the SQL metadata flattening to the last name segment.
+            listOf("project.sct", "..").forEach { name ->
+                zos.putNextEntry(ZipEntry(name))
+                zos.write("x".toByteArray())
+                zos.closeEntry()
+            }
+        }
+        val dest = folder.newFolder("sql")
+
+        assertThat(extractSctMetadataFile(zip, dest)).isNull()
+        assertThat(dest.listFiles()).isEmpty()
+    }
 }
