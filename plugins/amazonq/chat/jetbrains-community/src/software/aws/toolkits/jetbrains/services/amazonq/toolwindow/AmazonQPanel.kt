@@ -175,16 +175,10 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
 
                                             setDragAndDropOverlayVisible(browserInstance, false)
 
-                                            // Pass the (attacker-controlled) file names and messages to the
-                                            // webview as properly escaped JS string literals. See
-                                            // toJsStringLiteralArg for why wrapping the JSON in single quotes
-                                            // is unsafe.
-                                            val dropArg = toJsStringLiteralArg(OBJECT_MAPPER, validImages)
-                                            executeJavaScript(browserInstance, "window.handleNativeDrop($dropArg)")
+                                            callWebviewFunction(browserInstance, "handleNativeDrop", validImages)
 
                                             if (errorMessages.isNotEmpty()) {
-                                                val notifyArg = toJsStringLiteralArg(OBJECT_MAPPER, errorMessages)
-                                                executeJavaScript(browserInstance, "window.handleNativeNotify($notifyArg)")
+                                                callWebviewFunction(browserInstance, "handleNativeNotify", errorMessages)
                                             }
 
                                             dtde.dropComplete(true)
@@ -288,6 +282,7 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
         }
     }
 
+    // Runs a fixed script. Use callWebviewFunction for any call that passes data.
     private fun executeJavaScript(browserInstance: Browser, jsCommand: String) {
         try {
             browserInstance.jcefBrowser.cefBrowser.executeJavaScript(
@@ -300,8 +295,12 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
         }
     }
 
+    private fun callWebviewFunction(browserInstance: Browser, functionName: String, argument: Any) {
+        executeJavaScript(browserInstance, webviewFunctionCall(OBJECT_MAPPER, functionName, argument))
+    }
+
     private fun setDragAndDropOverlayVisible(browserInstance: Browser, visible: Boolean) {
-        executeJavaScript(browserInstance, "window.setDragAndDropVisible(${toJsStringLiteralArg(OBJECT_MAPPER, visible)})")
+        callWebviewFunction(browserInstance, "setDragAndDropVisible", visible)
     }
 
     private fun validateImageFile(file: File, allowedTypes: Set<String>, maxFileSize: Double, maxDimension: Int): String? {

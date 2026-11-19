@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 import java.io.File
 
@@ -79,7 +80,7 @@ class DragAndDropJsPayloadTest {
     }
 
     @Test
-    fun `double quotes, angle brackets and backslashes are neutralised`() {
+    fun `double quotes and backslashes cannot terminate the literal`() {
         val malicious = """/tmp/a"</script><img src=x onerror=alert(1)>\end.png"""
         val arg = toJsStringLiteralArg(mapper, listOf(malicious))
         assertThat(isSelfContainedStringLiteral(arg)).isTrue()
@@ -142,5 +143,23 @@ class DragAndDropJsPayloadTest {
         assertThat(decodeArg<Boolean>(toJsStringLiteralArg(mapper, true))).isTrue()
         assertThat(decodeArg<Boolean>(toJsStringLiteralArg(mapper, false))).isFalse()
         assertThat(isSelfContainedStringLiteral(toJsStringLiteralArg(mapper, true))).isTrue()
+    }
+
+    @Test
+    fun `a webview function call passes exactly one encoded argument`() {
+        val name = """C:\Users\me\it's "a" name.png"""
+        val script = webviewFunctionCall(mapper, "handleNativeDrop", listOf(name))
+        assertThat(script).startsWith("window.handleNativeDrop(").endsWith(")")
+        val arg = script.removePrefix("window.handleNativeDrop(").removeSuffix(")")
+        assertThat(isSelfContainedStringLiteral(arg)).isTrue()
+        assertThat(decodeArg<List<String>>(arg)).containsExactly(name)
+    }
+
+    @Test
+    fun `a webview function call rejects a name that is not an identifier`() {
+        for (functionName in listOf("", "a.b", "a();b", "1abc", "handleNativeDrop ")) {
+            assertThatThrownBy { webviewFunctionCall(mapper, functionName, true) }
+                .isInstanceOf(IllegalArgumentException::class.java)
+        }
     }
 }
