@@ -668,7 +668,9 @@ class BrowserConnector(
                         val file = LocalFileSystem.getInstance().findFileByIoFile(
                             Path.of(aggregatedIssue.filePath).toFile()
                         )
-                        if (file != null && !file.isDirectory && runReadAction { ProjectFileIndex.getInstance(project).isInContent(file) }) {
+                        if (file != null && !file.isDirectory &&
+                            runReadAction { ProjectFileIndex.getInstance(project).isInContent(file.canonicalFile ?: file) }
+                        ) {
                             scannedFiles.add(file)
                             runReadAction {
                                 FileDocumentManager.getInstance().getDocument(file)
