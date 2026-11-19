@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.codemodernizer.utils
 
+import com.intellij.openapi.util.SystemInfo
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Rule
@@ -50,6 +51,20 @@ class CodeTransformFileUtilsTest {
         val root = folder.newFolder("dest").toPath()
         assertThatThrownBy { resolveZipEntryUnderRoot(root, "sources/..") }
             .isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot applies the platform meaning of a backslash`() {
+        val root = folder.newFolder("dest").toPath()
+        if (SystemInfo.isWindows) {
+            // `\` separates segments on Windows, so the `..` segment leaves the destination.
+            assertThatThrownBy { resolveZipEntryUnderRoot(root, "..\\outside.txt") }
+                .isInstanceOf(IllegalArgumentException::class.java)
+        } else {
+            // Elsewhere `\` is part of the file name, so the entry stays in the destination.
+            assertThat(resolveZipEntryUnderRoot(root, "..\\outside.txt"))
+                .isEqualTo(root.toAbsolutePath().normalize().resolve("..\\outside.txt"))
+        }
     }
 
     @Test

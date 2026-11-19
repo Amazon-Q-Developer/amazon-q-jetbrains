@@ -156,14 +156,17 @@ internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
     } catch (e: InvalidPathException) {
         throw IllegalArgumentException("Code Transform zip entry has an invalid name: $safeName")
     }
-    if (destPath == root || !destPath.startsWith(root)) {
-        throw IllegalArgumentException("Code Transform zip entry resolves outside the extraction directory: $safeName")
+    require(destPath != root && destPath.startsWith(root)) {
+        "Code Transform zip entry resolves outside the extraction directory: $safeName"
     }
     return destPath
 }
 
 /**
  * Unzips a zip into a dir. Returns the true when successfully unzips the file pointed to by [zipFilePath] to [destDir]
+ *
+ * @throws IllegalArgumentException if an entry has an invalid name or resolves outside [destDir]. Extraction stops at
+ * that entry, so [destDir] can still hold the entries extracted before it.
  */
 fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, extractOnlySources: Boolean = false): Boolean {
     if (!zipFilePath.exists()) return false
