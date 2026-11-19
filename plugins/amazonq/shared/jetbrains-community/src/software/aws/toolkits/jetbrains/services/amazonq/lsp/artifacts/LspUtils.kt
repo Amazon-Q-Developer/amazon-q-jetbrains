@@ -76,6 +76,30 @@ fun moveFilesFromSourceToDestination(sourceDir: Path, targetDir: Path) {
     }
 }
 
+/**
+ * Resolves the zip entry named [entryName] under [destDir] and verifies it does not escape that directory.
+ *
+ * `extractZipFile` builds each output path by joining the entry name onto the destination directory. A
+ * remote archive — the Flare language-server zip is fetched from a CDN and extracted at IDE startup — can
+ * carry an entry whose name contains `..` segments (or otherwise resolves outside the destination): a
+ * zip-slip (CWE-22) that would let the archive write or overwrite files anywhere the IDE user can write.
+ * The joined path is normalized and required to stay under the normalized destination; an entry that
+ * escapes throws, which aborts the whole extraction rather than writing a single file outside [destDir].
+ * A leading-slash entry name (how a top-level entry stringifies when walked from the zip root) still
+ * resolves under [destDir], so legitimate archives are unaffected.
+ */
+internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
+    val root = destDir.toAbsolutePath().normalize()
+    val destPath = Paths.get(root.toString(), entryName).normalize()
+    if (!destPath.startsWith(root)) {
+        throw LspException(
+            "Zip entry '$entryName' resolves outside the extraction directory",
+            LspException.ErrorCode.UNZIP_FAILED,
+        )
+    }
+    return destPath
+}
+
 fun extractZipFile(zipFilePath: Path, destDir: Path) {
     if (!zipFilePath.exists()) {
         throw FileNotFoundException("Zip file not found: $zipFilePath")
@@ -91,12 +115,14 @@ fun extractZipFile(zipFilePath: Path, destDir: Path) {
                 paths
                     .filter { !it.isDirectory() }
                     .forEach { zipEntry ->
-                        val destPath = Paths.get(destDir.toString(), zipEntry.toString())
+                        val destPath = resolveZipEntryUnderRoot(destDir, zipEntry.toString())
                         destPath.createParentDirectories()
                         Files.copy(zipEntry, destPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
                     }
             }
         }
+    } catch (e: LspException) {
+        throw e
     } catch (e: Exception) {
         throw LspException("Failed to extract zip file: ${e.message}", LspException.ErrorCode.UNZIP_FAILED, cause = e)
     }

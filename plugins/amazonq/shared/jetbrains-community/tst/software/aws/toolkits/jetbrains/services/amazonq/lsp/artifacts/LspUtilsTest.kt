@@ -5,6 +5,7 @@ package software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts
 
 import com.intellij.testFramework.utils.io.createDirectory
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -17,6 +18,7 @@ import software.amazon.q.jetbrains.utils.satisfiesKt
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.zip.ZipOutputStream
@@ -99,5 +101,81 @@ class LspUtilsTest {
             assertPosixPermissions(target.resolve("regularFile"), "rw-r--r--")
             assertPosixPermissions(target.resolve("executableFile"), "rwxr-xr-x")
         }
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot keeps a normal nested entry under the destination`(@TempDir tempDir: Path) {
+        val root = tempDir.resolve("target")
+        assertThat(resolveZipEntryUnderRoot(root, "sub/file.txt"))
+            .isEqualTo(root.resolve("sub/file.txt").normalize())
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot keeps a leading-slash entry under the destination`(@TempDir tempDir: Path) {
+        // Walking a zip from its root stringifies a top-level entry with a leading '/', which the real
+        // archive relies on (see the `/file4` entry in `extractZipFile works`). It must stay inside.
+        val root = tempDir.resolve("target")
+        assertThat(resolveZipEntryUnderRoot(root, "/file4"))
+            .isEqualTo(root.resolve("file4").normalize())
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot rejects a parent-traversal entry`(@TempDir tempDir: Path) {
+        val root = tempDir.resolve("target")
+        // Red control: without the containment check, the same join escapes the destination.
+        assertThat(Paths.get(root.toString(), "../evil.txt").normalize().startsWith(root.normalize())).isFalse()
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../evil.txt") }
+            .isInstanceOf(LspException::class.java)
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot rejects deep and leading-slash traversal`(@TempDir tempDir: Path) {
+        val root = tempDir.resolve("target")
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../../../../../../etc/passwd") }
+            .isInstanceOf(LspException::class.java)
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "/../../etc/passwd") }
+            .isInstanceOf(LspException::class.java)
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot rejects a sibling whose name shares the destination prefix`(@TempDir tempDir: Path) {
+        // `../target-evil` sits next to, not under, `target`; a string-prefix check would wrongly accept it,
+        // but a component-wise startsWith does not.
+        val root = tempDir.resolve("target")
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../target-evil/x.txt") }
+            .isInstanceOf(LspException::class.java)
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot resolves a relative destination to an absolute path under it`() {
+        // Covers the toAbsolutePath() handling: with a plain normalize() a relative root rejects every entry.
+        val relativeRoot = Paths.get("build", "tmp", "zsroot-relative")
+        val absoluteRoot = relativeRoot.toAbsolutePath().normalize()
+        assertThat(resolveZipEntryUnderRoot(relativeRoot, "sub/file.txt"))
+            .isEqualTo(absoluteRoot.resolve("sub/file.txt"))
+        assertThatThrownBy { resolveZipEntryUnderRoot(relativeRoot, "../escape.txt") }
+            .isInstanceOf(LspException::class.java)
+    }
+
+    @Test
+    fun `extractZipFile aborts on a zip-slip entry and writes nothing outside the destination`(@TempDir tempDir: Path) {
+        val source = tempDir.resolve("source").also { it.createDirectory() }
+        val target = tempDir.resolve("target").also { it.createDirectory() }
+        source.resolve("good.txt").writeText("good")
+
+        val sourceZip = tempDir.resolve("source.zip")
+        ZipOutputStream(Files.newOutputStream(sourceZip)).use { zip ->
+            zip.putNextEntry("good.txt", source.resolve("good.txt"))
+            // A crafted entry name that tries to climb out of the extraction directory.
+            zip.putNextEntry("../escaped.txt", source.resolve("good.txt"))
+        }
+
+        // Extraction aborts rather than writing outside the target. On current runtimes the JDK zip
+        // filesystem rejects the `..` entry name itself (resolveZipEntryUnderRoot is the containment guard
+        // for the entry shapes and older runtimes where zipfs does not); either way nothing escapes.
+        // `tempDir` is the target's parent, i.e. where `../escaped.txt` would land.
+        assertThatThrownBy { extractZipFile(sourceZip, target) }
+            .isInstanceOf(LspException::class.java)
+        assertThat(tempDir.resolve("escaped.txt")).doesNotExist()
     }
 }
