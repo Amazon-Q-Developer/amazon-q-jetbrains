@@ -42,6 +42,7 @@ import software.aws.toolkits.resources.message
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.io.path.Path
@@ -139,6 +140,29 @@ fun parseBuildFile(buildFile: VirtualFile?): String? {
 }
 
 /**
+ * Resolves [entryName] under [destDir] and verifies it does not escape that directory. unzipFile extracts
+ * archives downloaded from the transformation service with java.util.zip.ZipFile, which does not reject
+ * traversal entry names, so a `..` (or absolute) entry would otherwise write outside [destDir] — a zip-slip
+ * (CWE-22) that could overwrite arbitrary files the IDE can write. The resolved path is normalized and
+ * required to stay under the normalized destination; an entry that escapes throws and aborts the extraction.
+ */
+internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
+    val root = destDir.toAbsolutePath().normalize()
+    // entryName is attacker-controlled; strip control characters and line separators and truncate it before it
+    // can reach logs or telemetry through an exception message.
+    val safeName = entryName.take(100).filter { !it.isISOControl() && it != '\u2028' && it != '\u2029' }
+    val destPath = try {
+        root.resolve(entryName).normalize()
+    } catch (e: InvalidPathException) {
+        throw IllegalArgumentException("Code Transform zip entry has an invalid name: $safeName")
+    }
+    if (destPath == root || !destPath.startsWith(root)) {
+        throw IllegalArgumentException("Code Transform zip entry resolves outside the extraction directory: $safeName")
+    }
+    return destPath
+}
+
+/**
  * Unzips a zip into a dir. Returns the true when successfully unzips the file pointed to by [zipFilePath] to [destDir]
  */
 fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, extractOnlySources: Boolean = false): Boolean {
@@ -160,7 +184,7 @@ fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, 
                     // this change puts the files directly under the root of the target directory, which is what we want
                     fileName = zipEntry.name.substringAfterLast(File.separatorChar)
                 }
-                val destPath = destDir.resolve(fileName)
+                val destPath = resolveZipEntryUnderRoot(destDir, fileName)
                 destPath.createParentDirectories()
                 FileOutputStream(destPath.toFile()).use { targetFile ->
                     zipFile.getInputStream(zipEntry).copyTo(targetFile)
