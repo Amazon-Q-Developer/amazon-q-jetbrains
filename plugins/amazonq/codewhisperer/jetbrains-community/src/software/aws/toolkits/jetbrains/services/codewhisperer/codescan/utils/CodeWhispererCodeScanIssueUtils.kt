@@ -14,10 +14,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,6 +32,7 @@ import software.amazon.q.core.utils.convertMarkdownToHTML
 import software.amazon.q.core.utils.debug
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.info
+import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.ToolkitPlaces
 import software.amazon.q.jetbrains.utils.applyPatch
 import software.amazon.q.jetbrains.utils.notifyError
@@ -387,6 +390,13 @@ fun sendCodeRemediationTelemetryToServiceApi(
 }
 
 fun applySuggestedFix(project: Project, issue: CodeWhispererCodeScanIssue) {
+    // Defense in depth: refuse to patch a file outside the project's content roots, regardless of
+    // which producer registered the issue. Uses the same containment check as issue registration,
+    // guarding against a service-/LLM-supplied path that reached this write sink.
+    if (!runReadAction { ProjectFileIndex.getInstance(issue.project).isInContent(issue.file) }) {
+        LOG.warn { "Skipping Apply fix: the target file is outside the project" }
+        return
+    }
     try {
         val manager = CodeWhispererCodeReferenceManager.getInstance(issue.project)
         WriteCommandAction.runWriteCommandAction(issue.project) {
