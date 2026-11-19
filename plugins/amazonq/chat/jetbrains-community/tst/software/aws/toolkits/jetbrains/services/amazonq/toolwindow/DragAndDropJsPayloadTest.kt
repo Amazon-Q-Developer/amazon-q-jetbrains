@@ -156,6 +156,16 @@ class DragAndDropJsPayloadTest {
     }
 
     @Test
+    fun `a webview function call without arguments has an empty argument list`() {
+        assertThat(webviewFunctionCall(mapper, "resetTopBarClicked")).isEqualTo("window.resetTopBarClicked()")
+    }
+
+    @Test
+    fun `a webview function call encodes each argument separately`() {
+        assertThat(webviewFunctionCall(mapper, "update", "a", true)).isEqualTo("""window.update("\"a\"","true")""")
+    }
+
+    @Test
     fun `a webview function call rejects a name that is not an identifier`() {
         for (functionName in listOf("", "a.b", "a();b", "1abc", "handleNativeDrop ")) {
             assertThatThrownBy { webviewFunctionCall(mapper, functionName, true) }

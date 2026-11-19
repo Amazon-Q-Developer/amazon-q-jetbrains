@@ -171,7 +171,7 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
                                                 validImages.subList(20, validImages.size).clear()
                                             }
 
-                                            executeJavaScript(browserInstance, "window.resetTopBarClicked()")
+                                            callWebviewFunction(browserInstance, "resetTopBarClicked")
 
                                             setDragAndDropOverlayVisible(browserInstance, false)
 
@@ -282,21 +282,14 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
         }
     }
 
-    // Runs a fixed script. Use callWebviewFunction for any call that passes data.
-    private fun executeJavaScript(browserInstance: Browser, jsCommand: String) {
+    // This panel builds every webview script with webviewFunctionCall, so data always reaches the webview encoded.
+    private fun callWebviewFunction(browserInstance: Browser, functionName: String, vararg arguments: Any) {
         try {
-            browserInstance.jcefBrowser.cefBrowser.executeJavaScript(
-                jsCommand,
-                browserInstance.jcefBrowser.cefBrowser.url,
-                0
-            )
+            val cefBrowser = browserInstance.jcefBrowser.cefBrowser
+            cefBrowser.executeJavaScript(webviewFunctionCall(OBJECT_MAPPER, functionName, *arguments), cefBrowser.url, 0)
         } catch (e: Exception) {
-            LOG.error { "Failed to execute JavaScript: $jsCommand - ${e.message}" }
+            LOG.error { "Failed to call webview function $functionName: ${e.message}" }
         }
-    }
-
-    private fun callWebviewFunction(browserInstance: Browser, functionName: String, argument: Any) {
-        executeJavaScript(browserInstance, webviewFunctionCall(OBJECT_MAPPER, functionName, argument))
     }
 
     private fun setDragAndDropOverlayVisible(browserInstance: Browser, visible: Boolean) {

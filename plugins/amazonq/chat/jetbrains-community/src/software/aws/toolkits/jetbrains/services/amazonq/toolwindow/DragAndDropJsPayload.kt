@@ -27,10 +27,11 @@ internal fun toJsStringLiteralArg(mapper: ObjectMapper, value: Any): String =
         .replace("\u2029", "\\u2029")
 
 /**
- * Builds the script that calls the webview function `window.<functionName>` with [argument] encoded by
- * [toJsStringLiteralArg]. Build every webview call that passes data with this function.
+ * Builds the script that calls the webview function `window.<functionName>`, passing each of [arguments] encoded by
+ * [toJsStringLiteralArg]. The webview function must `JSON.parse` each argument. AmazonQPanel builds all of its webview
+ * calls with this function, so data always reaches the webview encoded.
  */
-internal fun webviewFunctionCall(mapper: ObjectMapper, functionName: String, argument: Any): String {
+internal fun webviewFunctionCall(mapper: ObjectMapper, functionName: String, vararg arguments: Any): String {
     require(JS_IDENTIFIER.matches(functionName)) { "Not a JavaScript identifier: $functionName" }
-    return "window.$functionName(${toJsStringLiteralArg(mapper, argument)})"
+    return arguments.joinToString(separator = ",", prefix = "window.$functionName(", postfix = ")") { toJsStringLiteralArg(mapper, it) }
 }
