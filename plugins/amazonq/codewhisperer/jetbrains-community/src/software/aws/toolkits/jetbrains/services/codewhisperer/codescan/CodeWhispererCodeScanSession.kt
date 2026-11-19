@@ -318,12 +318,11 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
             LOG.debug { "Total code review issues returned from service: ${scanRecommendations.size}" }
         }
         return scanRecommendations.mapNotNull { recommendation ->
+            val projectRootPath = sessionContext.sessionConfig.projectRoot.path
             val file = try {
-                resolveScanFindingFile(
-                    sessionContext.sessionConfig.projectRoot.path,
-                    sessionContext.project.name,
-                    recommendation.filePath
-                )?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
+                resolveScanFindingFile(projectRootPath, sessionContext.project.name, recommendation.filePath)
+                    ?.takeIf { isRealPathWithinRoot(projectRootPath, it.toString()) }
+                    ?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
             } catch (e: Exception) {
                 LOG.debug { "Cannot find file at location ${recommendation.filePath}" }
                 null
