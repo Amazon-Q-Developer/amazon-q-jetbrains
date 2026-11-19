@@ -94,7 +94,7 @@ internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
     if (!destPath.startsWith(root)) {
         throw LspException(
             "Zip entry '$entryName' resolves outside the extraction directory",
-            LspException.ErrorCode.UNZIP_FAILED,
+            LspException.ErrorCode.UNZIP_ENTRY_OUTSIDE_DESTINATION,
         )
     }
     return destPath

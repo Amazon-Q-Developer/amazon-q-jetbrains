@@ -12,6 +12,7 @@ class LspException(message: String, private val errorCode: ErrorCode, cause: Thr
         TARGET_NOT_FOUND,
         NO_COMPATIBLE_LSP_VERSION,
         UNZIP_FAILED,
+        UNZIP_ENTRY_OUTSIDE_DESTINATION,
     }
 
     override fun toString(): String = buildString {

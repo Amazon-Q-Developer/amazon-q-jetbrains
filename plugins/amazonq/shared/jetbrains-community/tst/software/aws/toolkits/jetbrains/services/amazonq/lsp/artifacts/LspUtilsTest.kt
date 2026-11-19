@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.utils.io.createDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -130,6 +131,13 @@ class LspUtilsTest {
     }
 
     @Test
+    fun `resolveZipEntryUnderRoot reports a rejected entry with its own error code`(@TempDir tempDir: Path) {
+        val error = catchThrowable { resolveZipEntryUnderRoot(tempDir.resolve("target"), "../outside.txt") }
+        assertThat(error).isInstanceOf(LspException::class.java)
+        assertThat(error.toString()).contains("[UNZIP_ENTRY_OUTSIDE_DESTINATION]")
+    }
+
+    @Test
     fun `resolveZipEntryUnderRoot rejects deep and leading-slash traversal`(@TempDir tempDir: Path) {
         val root = tempDir.resolve("target")
         assertThatThrownBy { resolveZipEntryUnderRoot(root, "../../../../../../etc/passwd") }
@@ -149,7 +157,7 @@ class LspUtilsTest {
 
     @Test
     fun `resolveZipEntryUnderRoot resolves a relative destination to an absolute path under it`() {
-        // Covers the toAbsolutePath() handling: with a plain normalize() a relative root rejects every entry.
+        // Covers the toAbsolutePath() handling: the resolved path is absolute even when the destination is relative.
         val relativeRoot = Paths.get("build", "tmp", "zsroot-relative")
         val absoluteRoot = relativeRoot.toAbsolutePath().normalize()
         assertThat(resolveZipEntryUnderRoot(relativeRoot, "sub/file.txt"))
@@ -210,9 +218,11 @@ class LspUtilsTest {
 
         if (SystemInfo.isWindows) {
             // The zip file system accepts this name, so the containment check is what stops the extraction.
+            // extractZipFile must pass the check's exception on unchanged, keeping its own error code.
             assertThatThrownBy { extractZipFile(sourceZip, target) }
                 .isInstanceOf(LspException::class.java)
                 .hasMessageContaining("resolves outside the extraction directory")
+                .hasToString("LSP Error [UNZIP_ENTRY_OUTSIDE_DESTINATION]: Zip entry '/..\\outside.txt' resolves outside the extraction directory")
         } else {
             extractZipFile(sourceZip, target)
             assertThat(target.resolve("..\\outside.txt")).hasContent("good")
