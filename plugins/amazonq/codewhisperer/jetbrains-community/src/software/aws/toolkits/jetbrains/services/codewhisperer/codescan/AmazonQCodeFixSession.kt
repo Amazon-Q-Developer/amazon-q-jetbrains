@@ -25,6 +25,7 @@ import software.amazon.q.core.utils.error
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.info
 import software.amazon.q.core.utils.putNextEntry
+import software.amazon.q.core.utils.warn
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
@@ -49,6 +50,15 @@ class AmazonQCodeFixSession(val project: Project) {
 
         try {
             currentCoroutineContext.ensureActive()
+
+            // Defense in depth: do not read/zip/upload a file that resolves outside the project.
+            if (!isIssueFileInsideProject(project, issue.file)) {
+                LOG.warn { "Skipping code fix: the target file resolves outside the project" }
+                return CodeFixResponse(
+                    getCodeFixJobResponse = null,
+                    failureResponse = "The code fix targets a file outside the project."
+                )
+            }
 
             /**
              * * Step 1: Generate zip

@@ -11,7 +11,9 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
@@ -418,6 +420,18 @@ internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Bool
     } catch (e: Exception) {
         false
     }
+
+/**
+ * True when [file] belongs to [project]: it lives under one of the project's content roots AND its
+ * real path (symlinks and "." / ".." resolved) stays inside that content root. Shared guard for every
+ * sink that reads or writes a finding's file ([applySuggestedFix], ignoreSingleIssue, the code-fix zip),
+ * so a service-/LLM-supplied path — or one swapped to a symlink after the finding was registered —
+ * cannot act on a file outside the project.
+ */
+internal fun isIssueFileInsideProject(project: Project, file: VirtualFile): Boolean {
+    val contentRoot = runReadAction { ProjectFileIndex.getInstance(project).getContentRootForFile(file) } ?: return false
+    return isRealPathWithinRoot(contentRoot.path, file.path)
+}
 
 sealed class CodeScanResponse {
     abstract val responseContext: CodeScanResponseContext

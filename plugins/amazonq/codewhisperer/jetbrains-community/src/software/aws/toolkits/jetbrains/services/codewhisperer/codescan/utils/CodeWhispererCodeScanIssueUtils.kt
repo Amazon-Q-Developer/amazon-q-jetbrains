@@ -43,7 +43,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhisp
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.context.CodeScanIssueDetailsDisplayType
-import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isRealPathWithinRoot
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileInsideProject
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.language.CodeWhispererProgrammingLanguage
@@ -389,12 +389,15 @@ fun sendCodeRemediationTelemetryToServiceApi(
 }
 
 fun applySuggestedFix(project: Project, issue: CodeWhispererCodeScanIssue) {
-    // Defense in depth: refuse to patch a file that resolves outside the project once "..", "." and
-    // symlinks are followed, regardless of which producer registered the issue. Guards against a
-    // service-/LLM-supplied path that reached this write sink.
-    val projectRoot = issue.project.basePath ?: issue.project.guessProjectDir()?.path
-    if (projectRoot == null || !isRealPathWithinRoot(projectRoot, issue.file.path)) {
+    // Defense in depth: refuse to patch a file that is not inside the project's content roots once
+    // "..", "." and symlinks are resolved, regardless of which producer registered the issue.
+    if (!isIssueFileInsideProject(issue.project, issue.file)) {
         LOG.warn { "Skipping Apply fix: the target file resolves outside the project" }
+        notifyWarn(
+            "Apply fix",
+            "The suggested fix targets a file outside the project and was not applied.",
+            issue.project
+        )
         return
     }
     try {

@@ -70,6 +70,7 @@ import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.utils.isQConnected
 import software.amazon.q.jetbrains.utils.isQExpired
 import software.amazon.q.jetbrains.utils.isRunningOnRemoteBackend
+import software.amazon.q.jetbrains.utils.notifyWarn
 import software.aws.toolkits.jetbrains.ProblemsViewMutator
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.listeners.CodeWhispererCodeScanDocumentListener
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.listeners.CodeWhispererCodeScanEditorMouseMotionListener
@@ -204,6 +205,15 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
     }
 
     fun ignoreSingleIssue(issue: CodeWhispererCodeScanIssue) {
+        if (!isIssueFileInsideProject(project, issue.file)) {
+            LOG.warn { "Skipping ignore comment: the target file resolves outside the project" }
+            notifyWarn(
+                "Ignore finding",
+                "This finding targets a file outside the project and was not modified.",
+                project
+            )
+            return
+        }
         val document = issue.document
         var commentString: String? = null
         var insertOffset: Int? = null
