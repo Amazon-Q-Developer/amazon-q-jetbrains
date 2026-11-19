@@ -3,6 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.utils.io.createDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -177,5 +178,45 @@ class LspUtilsTest {
         assertThatThrownBy { extractZipFile(sourceZip, target) }
             .isInstanceOf(LspException::class.java)
         assertThat(tempDir.resolve("escaped.txt")).doesNotExist()
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot applies the platform meaning of a backslash`(@TempDir tempDir: Path) {
+        // The zip file system keeps `\` as an ordinary character, so a walked entry can look like this.
+        val root = tempDir.resolve("target")
+        val entryName = "/..\\outside.txt"
+        if (SystemInfo.isWindows) {
+            // `\` separates segments on Windows, so the `..` segment leaves the destination.
+            assertThatThrownBy { resolveZipEntryUnderRoot(root, entryName) }
+                .isInstanceOf(LspException::class.java)
+                .hasMessageContaining("resolves outside the extraction directory")
+        } else {
+            // Elsewhere `\` is part of the file name, so the entry stays in the destination.
+            assertThat(resolveZipEntryUnderRoot(root, entryName)).isEqualTo(root.resolve("..\\outside.txt"))
+        }
+    }
+
+    @Test
+    fun `extractZipFile keeps a backslash entry name inside the destination`(@TempDir tempDir: Path) {
+        val source = tempDir.resolve("source").also { it.createDirectory() }
+        val target = tempDir.resolve("target").also { it.createDirectory() }
+        source.resolve("good.txt").writeText("good")
+
+        val sourceZip = tempDir.resolve("source.zip")
+        ZipOutputStream(Files.newOutputStream(sourceZip)).use { zip ->
+            zip.putNextEntry("good.txt", source.resolve("good.txt"))
+            zip.putNextEntry("..\\outside.txt", source.resolve("good.txt"))
+        }
+
+        if (SystemInfo.isWindows) {
+            // The zip file system accepts this name, so the containment check is what stops the extraction.
+            assertThatThrownBy { extractZipFile(sourceZip, target) }
+                .isInstanceOf(LspException::class.java)
+                .hasMessageContaining("resolves outside the extraction directory")
+        } else {
+            extractZipFile(sourceZip, target)
+            assertThat(target.resolve("..\\outside.txt")).hasContent("good")
+        }
+        assertThat(tempDir.resolve("outside.txt")).doesNotExist()
     }
 }
