@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefJSQuery.Response
@@ -667,7 +668,7 @@ class BrowserConnector(
                         val file = LocalFileSystem.getInstance().findFileByIoFile(
                             Path.of(aggregatedIssue.filePath).toFile()
                         )
-                        if (file?.isDirectory == false) {
+                        if (file != null && !file.isDirectory && runReadAction { ProjectFileIndex.getInstance(project).isInContent(file) }) {
                             scannedFiles.add(file)
                             runReadAction {
                                 FileDocumentManager.getInstance().getDocument(file)

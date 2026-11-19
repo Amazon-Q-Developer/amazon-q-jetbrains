@@ -319,9 +319,11 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
         }
         return scanRecommendations.mapNotNull { recommendation ->
             val file = try {
-                LocalFileSystem.getInstance().findFileByIoFile(
-                    Path.of(sessionContext.sessionConfig.projectRoot.path, recommendation.filePath.substringAfter(sessionContext.project.name)).toFile()
-                )
+                resolveScanFindingFile(
+                    sessionContext.sessionConfig.projectRoot.path,
+                    sessionContext.project.name,
+                    recommendation.filePath
+                )?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
             } catch (e: Exception) {
                 LOG.debug { "Cannot find file at location ${recommendation.filePath}" }
                 null
@@ -389,6 +391,18 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
         const val SERVER_SIDE_ENCRYPTION_AWS_KMS_KEY_ID = "x-amz-server-side-encryption-aws-kms-key-id"
         const val SERVER_SIDE_ENCRYPTION_CONTEXT = "x-amz-server-side-encryption-context"
     }
+}
+
+/**
+ * Resolves a code-scan finding's reported [filePath] against the project root and returns the
+ * resolved path only when it stays strictly inside [projectRootPath]. Findings whose path escapes
+ * the project root (for example via "..") resolve to null so a traversal cannot be mapped to a
+ * file outside the project.
+ */
+internal fun resolveScanFindingFile(projectRootPath: String, projectName: String, filePath: String): Path? {
+    val root = Path.of(projectRootPath).toAbsolutePath().normalize()
+    val resolved = Path.of(root.toString(), filePath.substringAfter(projectName)).toAbsolutePath().normalize()
+    return if (resolved != root && resolved.startsWith(root)) resolved else null
 }
 
 sealed class CodeScanResponse {
