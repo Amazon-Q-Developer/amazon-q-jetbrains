@@ -175,12 +175,16 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
 
                                             setDragAndDropOverlayVisible(browserInstance, false)
 
-                                            val json = OBJECT_MAPPER.writeValueAsString(validImages)
-                                            executeJavaScript(browserInstance, "window.handleNativeDrop('$json')")
+                                            // Pass the (attacker-controlled) file names and messages to the
+                                            // webview as properly escaped JS string literals. See
+                                            // toJsStringLiteralArg for why wrapping the JSON in single quotes
+                                            // is unsafe.
+                                            val dropArg = toJsStringLiteralArg(OBJECT_MAPPER, validImages)
+                                            executeJavaScript(browserInstance, "window.handleNativeDrop($dropArg)")
 
                                             if (errorMessages.isNotEmpty()) {
-                                                val errorJson = OBJECT_MAPPER.writeValueAsString(errorMessages)
-                                                executeJavaScript(browserInstance, "window.handleNativeNotify('$errorJson')")
+                                                val notifyArg = toJsStringLiteralArg(OBJECT_MAPPER, errorMessages)
+                                                executeJavaScript(browserInstance, "window.handleNativeNotify($notifyArg)")
                                             }
 
                                             dtde.dropComplete(true)
@@ -297,7 +301,7 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
     }
 
     private fun setDragAndDropOverlayVisible(browserInstance: Browser, visible: Boolean) {
-        executeJavaScript(browserInstance, "window.setDragAndDropVisible('$visible')")
+        executeJavaScript(browserInstance, "window.setDragAndDropVisible(${toJsStringLiteralArg(OBJECT_MAPPER, visible)})")
     }
 
     private fun validateImageFile(file: File, allowedTypes: Set<String>, maxFileSize: Double, maxDimension: Int): String? {
