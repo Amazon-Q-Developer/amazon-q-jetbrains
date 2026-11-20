@@ -6,14 +6,18 @@ package software.aws.toolkits.jetbrains.services.amazonq.webview
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.replaceService
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.mockito.Mockito.mockStatic
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -31,10 +35,16 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhisp
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.Description
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.Recommendation
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileInsideProject
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
 import software.aws.toolkits.jetbrains.settings.MeetQSettings
+import java.nio.file.Files
 
 class BrowserConnectorTest : AmazonQTestBase() {
+    @Rule
+    @JvmField
+    val tempFolder = TemporaryFolder()
+
     private lateinit var browserConnector: BrowserConnector
     private lateinit var mockCodeScanManager: CodeWhispererCodeScanManager
     private lateinit var mockLocalFileSystem: LocalFileSystem
@@ -154,16 +164,15 @@ class BrowserConnectorTest : AmazonQTestBase() {
             on { getLineStartOffset(0) } doReturn 0
             on { getLineEndOffset(0) } doReturn 10
         }
-        val mockProjectFileIndex = mock<ProjectFileIndex> {
-            on { isInContent(any()) } doReturn true
-        }
 
-        mockStatic(LocalFileSystem::class.java).use { localFileSystemMock ->
-            localFileSystemMock.`when`<LocalFileSystem> { LocalFileSystem.getInstance() }.thenReturn(mockLocalFileSystem)
-            whenever(mockLocalFileSystem.findFileByIoFile(any())) doReturn mockVirtualFile
+        // The light test project has no content root on disk, so stub the project check for the mocked file.
+        mockkStatic(::isIssueFileInsideProject)
+        try {
+            every { isIssueFileInsideProject(project, mockVirtualFile) } returns true
 
-            mockStatic(ProjectFileIndex::class.java).use { projectFileIndexMock ->
-                projectFileIndexMock.`when`<ProjectFileIndex> { ProjectFileIndex.getInstance(project) } doReturn mockProjectFileIndex
+            mockStatic(LocalFileSystem::class.java).use { localFileSystemMock ->
+                localFileSystemMock.`when`<LocalFileSystem> { LocalFileSystem.getInstance() }.thenReturn(mockLocalFileSystem)
+                whenever(mockLocalFileSystem.findFileByIoFile(any())) doReturn mockVirtualFile
 
                 mockStatic(FileDocumentManager::class.java).use { fileDocumentManagerMock ->
                     fileDocumentManagerMock.`when`<FileDocumentManager> { FileDocumentManager.getInstance() } doReturn mockFileDocumentManager
@@ -206,61 +215,51 @@ class BrowserConnectorTest : AmazonQTestBase() {
                         eq(CodeWhispererConstants.CodeAnalysisScope.AGENTIC)
                     )
 
-                    assertThat(issuesCaptor.firstValue.isNotEmpty())
-                    assertThat(issuesCaptor.firstValue[0].title == "Test Issue")
+                    assertThat(issuesCaptor.firstValue).isNotEmpty()
+                    assertThat(issuesCaptor.firstValue[0].title).isEqualTo("Test Issue")
                 }
             }
+        } finally {
+            unmockkStatic(::isIssueFileInsideProject)
         }
     }
 
     @Test
     fun `parseFindingsMessages should skip files outside the project content roots`() {
-        val mockVirtualFile = mock<VirtualFile> {
-            on { isDirectory } doReturn false
-        }
-        val mockProjectFileIndex = mock<ProjectFileIndex> {
-            on { isInContent(any()) } doReturn false
-        }
+        val outsideFile = tempFolder.newFile("file.kt").toPath()
+        Files.writeString(outsideFile, "class Outside\n")
+        val filePath = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile)).path
 
-        mockStatic(LocalFileSystem::class.java).use { localFileSystemMock ->
-            localFileSystemMock.`when`<LocalFileSystem> { LocalFileSystem.getInstance() } doReturn mockLocalFileSystem
-            whenever(mockLocalFileSystem.findFileByIoFile(any())) doReturn mockVirtualFile
+        val issue = FlareCodeScanIssue(
+            startLine = 1, endLine = 1, comment = null, title = "Outside Issue",
+            description = Description("Test description", "Test text"), detectorId = "test-detector",
+            detectorName = "Test Detector", findingId = "test-finding-id", ruleId = null,
+            relatedVulnerabilities = emptyList(), severity = "HIGH",
+            recommendation = Recommendation("Fix this", "https://example.com"), suggestedFixes = emptyList(),
+            scanJobId = "test-job-id", language = "kotlin", autoDetected = false,
+            filePath = filePath, findingContext = "test context"
+        )
 
-            mockStatic(ProjectFileIndex::class.java).use { projectFileIndexMock ->
-                projectFileIndexMock.`when`<ProjectFileIndex> { ProjectFileIndex.getInstance(project) } doReturn mockProjectFileIndex
-
-                val issue = FlareCodeScanIssue(
-                    startLine = 1, endLine = 1, comment = null, title = "Outside Issue",
-                    description = Description("Test description", "Test text"), detectorId = "test-detector",
-                    detectorName = "Test Detector", findingId = "test-finding-id", ruleId = null,
-                    relatedVulnerabilities = emptyList(), severity = "HIGH",
-                    recommendation = Recommendation("Fix this", "https://example.com"), suggestedFixes = emptyList(),
-                    scanJobId = "test-job-id", language = "kotlin", autoDetected = false,
-                    filePath = "/outside/project/file.kt", findingContext = "test context"
-                )
-
-                val aggregatedIssue = AggregatedCodeScanIssue("/outside/project/file.kt", listOf(issue))
-                val findingsMessage = """
+        val aggregatedIssue = AggregatedCodeScanIssue(filePath, listOf(issue))
+        val findingsMessage = """
+        {
+            "additionalMessages": [
                 {
-                    "additionalMessages": [
-                        {
-                            "messageId": "test_codeReviewFindings",
-                            "body": "${jacksonObjectMapper().writeValueAsString(listOf(aggregatedIssue)).replace("\"", "\\\"")}"
-                        }
-                    ]
+                    "messageId": "test_codeReviewFindings",
+                    "body": "${jacksonObjectMapper().writeValueAsString(listOf(aggregatedIssue)).replace("\"", "\\\"")}"
                 }
-                """.trimIndent()
-
-                browserConnector.parseFindingsMessages(findingsMessage)
-
-                verify(mockProjectFileIndex).isInContent(mockVirtualFile)
-                verify(mockCodeScanManager, never()).addOnDemandIssues(
-                    any(),
-                    any(),
-                    eq(CodeWhispererConstants.CodeAnalysisScope.AGENTIC)
-                )
-            }
+            ]
         }
+        """.trimIndent()
+
+        browserConnector.parseFindingsMessages(findingsMessage)
+
+        // The file exists and has a document, so only the project check keeps it from being reported.
+        verify(mockCodeScanManager, never()).addOnDemandIssues(
+            any(),
+            any(),
+            eq(CodeWhispererConstants.CodeAnalysisScope.AGENTIC)
+        )
     }
 
     @Test

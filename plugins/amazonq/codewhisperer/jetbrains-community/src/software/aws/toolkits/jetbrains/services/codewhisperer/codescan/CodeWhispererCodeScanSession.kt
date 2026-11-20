@@ -11,7 +11,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.delay
@@ -410,7 +410,7 @@ internal fun resolveScanFindingFile(projectRootPath: String, projectName: String
  * True when [candidatePath] resolves to a real file strictly inside [rootPath], following symlinks
  * and "." / ".." via [Path.toRealPath]. A path that does not exist, resolves to the root itself, or
  * cannot be resolved returns false, so a traversal or a symlink that escapes the project root is
- * never treated as being inside it. Used as the last-line check before writing a fix to disk.
+ * never treated as being inside it.
  */
 internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Boolean =
     try {
@@ -422,15 +422,14 @@ internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Bool
     }
 
 /**
- * True when [file] belongs to [project]: it lives under one of the project's content roots AND its
- * real path (symlinks and "." / ".." resolved) stays inside that content root. Shared guard for every
- * sink that reads or writes a finding's file ([applySuggestedFix], ignoreSingleIssue, the code-fix zip),
- * so a service-/LLM-supplied path — or one swapped to a symlink after the finding was registered —
- * cannot act on a file outside the project.
+ * True when the real path of [file] (symlinks and "." / ".." resolved) is strictly inside the real path of one of
+ * [project]'s content roots. Real paths are compared, so the result does not depend on whether the project or the
+ * file is reached through a symlinked folder. Shared check for every place that reads or writes a finding's file:
+ * agentic review findings, [applySuggestedFix], ignoreSingleIssue and the code-fix zip.
  */
-internal fun isIssueFileInsideProject(project: Project, file: VirtualFile): Boolean {
-    val contentRoot = runReadAction { ProjectFileIndex.getInstance(project).getContentRootForFile(file) } ?: return false
-    return isRealPathWithinRoot(contentRoot.path, file.path)
+fun isIssueFileInsideProject(project: Project, file: VirtualFile): Boolean {
+    val contentRoots = runReadAction { ProjectRootManager.getInstance(project).contentRoots }
+    return contentRoots.any { isRealPathWithinRoot(it.path, file.path) }
 }
 
 sealed class CodeScanResponse {

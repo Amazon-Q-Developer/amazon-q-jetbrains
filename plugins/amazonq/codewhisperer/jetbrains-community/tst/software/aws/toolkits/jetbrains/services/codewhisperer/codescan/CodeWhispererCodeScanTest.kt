@@ -3,13 +3,21 @@
 
 package software.aws.toolkits.jetbrains.services.codewhisperer.codescan
 
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.test.runTest
 import org.apache.commons.codec.digest.DigestUtils
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assume
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.rules.TemporaryFolder
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.internal.verification.Times
 import org.mockito.kotlin.any
@@ -30,18 +38,26 @@ import software.amazon.q.jetbrains.utils.rules.PythonCodeInsightTestFixtureRule
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.sessionconfig.CodeScanSessionConfig
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.sessionconfig.Payload
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.sessionconfig.PayloadContext
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.utils.applySuggestedFix
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants.TOTAL_MILLIS_IN_SECOND
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.getTelemetryErrorMessage
 import software.aws.toolkits.telemetry.CodewhispererLanguage
 import java.io.File
 import java.io.FileInputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.Base64
 import java.util.UUID
 import kotlin.io.path.relativeTo
 import kotlin.test.assertNotNull
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix as ScanSuggestedFix
 
 class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsightTestFixtureRule()) {
+    @Rule
+    @JvmField
+    val outsideFolder = TemporaryFolder()
+
     private lateinit var psifile: PsiFile
     private lateinit var file: File
     private lateinit var sessionConfigSpy: CodeScanSessionConfig
@@ -172,6 +188,133 @@ class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsigh
         val res = codeScanSessionSpy.mapToCodeScanIssues(recommendations, project, "jobId")
         assertThat(res).hasSize(1)
     }
+
+    @Test
+    fun `mapToCodeScanIssues drops a finding whose path leaves the project`() {
+        val outside = outsideFile().toNioPath()
+        val escapingPath = sessionConfigSpy.projectRoot.toNioPath().relativize(outside).toString().replace('\\', '/')
+
+        val res = codeScanSessionSpy.mapToCodeScanIssues(listOf(findingAt(escapingPath)), project, "jobId")
+
+        assertThat(res).isEmpty()
+    }
+
+    @Test
+    fun `mapToCodeScanIssues drops a finding whose file links outside the project`() {
+        val link = sessionConfigSpy.projectRoot.toNioPath().resolve("linked.py")
+        createSymbolicLinkOrSkip(link, outsideFile().toNioPath())
+        checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(link))
+
+        val res = codeScanSessionSpy.mapToCodeScanIssues(listOf(findingAt("linked.py")), project, "jobId")
+
+        assertThat(res).isEmpty()
+    }
+
+    @Test
+    fun `isIssueFileInsideProject accepts a project file and rejects a file outside the project`() {
+        assertThat(isIssueFileInsideProject(project, psifile.virtualFile)).isTrue()
+        assertThat(isIssueFileInsideProject(project, outsideFile())).isFalse()
+    }
+
+    @Test
+    fun `isIssueFileInsideProject compares real paths instead of link paths`() {
+        val projectDir = psifile.virtualFile.parent.toNioPath()
+        val linkToOutside = projectDir.resolve("link-to-outside.py")
+        val linkToProject = outsideFolder.root.toPath().resolve("link-to-project")
+        createSymbolicLinkOrSkip(linkToOutside, outsideFile().toNioPath())
+        createSymbolicLinkOrSkip(linkToProject, projectDir)
+        val fileSystem = LocalFileSystem.getInstance()
+
+        // The link is in the project, but the file it points to is not.
+        assertThat(isIssueFileInsideProject(project, checkNotNull(fileSystem.refreshAndFindFileByNioFile(linkToOutside)))).isFalse()
+        // The link is outside the project, but the file reached through it is in the project.
+        assertThat(isIssueFileInsideProject(project, checkNotNull(fileSystem.refreshAndFindFileByNioFile(linkToProject.resolve("test.py"))))).isTrue()
+    }
+
+    @Test
+    fun `applySuggestedFix does not change a file outside the project`() {
+        val content = "first line\nsecond line\nforth line"
+        val fix = ScanSuggestedFix("fix", "@@ -1,3 +1,3 @@\n first line\n-second line\n+third line\n forth line")
+        val issue = issueFor(outsideFile(content), listOf(fix))
+
+        runInEdtAndWait { applySuggestedFix(project, issue) }
+
+        assertThat(runReadAction { issue.document.text }).isEqualTo(content)
+    }
+
+    @Test
+    fun `ignoreSingleIssue does not change a file outside the project`() {
+        val content = "first line\nsecond line\n"
+        val issue = issueFor(outsideFile(content))
+
+        scanManagerSpy.ignoreSingleIssue(issue)
+        runInEdtAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+
+        assertThat(runReadAction { issue.document.text }).isEqualTo(content)
+    }
+
+    private fun outsideFile(content: String = "print('outside')\n"): VirtualFile {
+        val path = outsideFolder.newFile("outside.py").toPath()
+        Files.writeString(path, content)
+        return checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path))
+    }
+
+    private fun createSymbolicLinkOrSkip(link: Path, target: Path) {
+        try {
+            Files.createSymbolicLink(link, target)
+        } catch (e: Exception) {
+            Assume.assumeNoException("symlinks are not supported on this platform", e)
+        }
+    }
+
+    private fun findingAt(filePath: String) = """
+        [
+            {
+                "filePath": "$filePath",
+                "startLine": 1,
+                "endLine": 1,
+                "title": "test",
+                "description": {
+                    "text": "global variable",
+                    "markdown": "### global variable"
+                },
+                "detectorId": "detectorId",
+                "detectorName": "detectorName",
+                "findingId": "findingId",
+                "relatedVulnerabilities": [],
+                "codeSnippet": [],
+                "severity": "Low",
+                "remediation": {
+                    "recommendation": {
+                        "text": "recommendationText",
+                        "url": "recommendationUrl"
+                    },
+                    "suggestedFixes": []
+                }
+            }
+        ]
+    """.trimIndent()
+
+    private fun issueFor(file: VirtualFile, suggestedFixes: List<ScanSuggestedFix> = emptyList()) = CodeWhispererCodeScanIssue(
+        project = project,
+        file = file,
+        startLine = 1,
+        startCol = 1,
+        endLine = 1,
+        endCol = 1,
+        title = "test",
+        description = Description("global variable", "### global variable"),
+        detectorId = "detectorId",
+        detectorName = "detectorName",
+        findingId = "findingId",
+        ruleId = null,
+        relatedVulnerabilities = emptyList(),
+        severity = "Low",
+        recommendation = Recommendation("recommendationText", "recommendationUrl"),
+        suggestedFixes = suggestedFixes,
+        codeSnippet = emptyList(),
+        scanJobId = "jobId",
+    )
 
     @Test
     fun `test getTelemetryErrorMessage should return the correct error message`() {

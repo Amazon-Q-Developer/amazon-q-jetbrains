@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefJSQuery.Response
@@ -114,6 +113,7 @@ import software.aws.toolkits.jetbrains.services.amazonqCodeScan.auth.isCodeScanA
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.isCodeTransformAvailable
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanIssue
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileInsideProject
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
 import software.aws.toolkits.jetbrains.services.codewhisperer.settings.CodeWhispererConfigurable
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
@@ -668,9 +668,7 @@ class BrowserConnector(
                         val file = LocalFileSystem.getInstance().findFileByIoFile(
                             Path.of(aggregatedIssue.filePath).toFile()
                         )
-                        if (file != null && !file.isDirectory &&
-                            runReadAction { ProjectFileIndex.getInstance(project).isInContent(file.canonicalFile ?: file) }
-                        ) {
+                        if (file != null && !file.isDirectory && isIssueFileInsideProject(project, file)) {
                             scannedFiles.add(file)
                             runReadAction {
                                 FileDocumentManager.getInstance().getDocument(file)
