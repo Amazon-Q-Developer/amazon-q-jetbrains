@@ -20,6 +20,7 @@
 
         <postStartupActivity implementation="software.aws.toolkits.jetbrains.services.amazonq.startup.AmazonQStartupActivity"/>
         <actionPromoter order="last" implementation="software.aws.toolkits.jetbrains.services.cwc.inline.InlineChatActionPromoter"/>
+        <actionPromoter order="last" implementation="software.aws.toolkits.jetbrains.services.amazonq.toolwindow.shortcut.ShellCommandShortcutActionPromoter"/>
     </extensions>
 
     <extensions defaultExtensionNs="amazon.q">
@@ -34,6 +35,34 @@
         </group>
         <!-- TODO: q.openchat will eventually be in amazonq, aws.toolkit.q.sign.in will eventually be in core. -->
         <action id="q.openchat" class="software.aws.toolkits.jetbrains.services.amazonq.QOpenPanelAction"/>
+
+        <!--
+            Shortcuts for the run / reject / stop buttons the chat UI shows for a shell command.
+            Chords match the Amazon Q VS Code extension. Each chord is also an IntelliJ default
+            (Complete Current Statement, Replace in Files, Navigate to Last Edit Location), so the
+            actions are only enabled while the chat window has focus and a promoter decides the
+            winner in that case. Outside chat the IDE keeps its own binding.
+        -->
+        <action id="aws.toolkit.jetbrains.services.amazonq.shellcommand.run"
+                class="software.aws.toolkits.jetbrains.services.amazonq.toolwindow.shortcut.RunShellCommandShortcutAction">
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta shift ENTER"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift ENTER"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift ENTER"/>
+        </action>
+
+        <action id="aws.toolkit.jetbrains.services.amazonq.shellcommand.reject"
+                class="software.aws.toolkits.jetbrains.services.amazonq.toolwindow.shortcut.RejectShellCommandShortcutAction">
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta shift R"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift R"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift R"/>
+        </action>
+
+        <action id="aws.toolkit.jetbrains.services.amazonq.shellcommand.stop"
+                class="software.aws.toolkits.jetbrains.services.amazonq.toolwindow.shortcut.StopShellCommandShortcutAction">
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="meta shift BACK_SPACE"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta shift BACK_SPACE"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control shift BACK_SPACE"/>
+        </action>
 
         <group id="aws.toolkit.q.sign.in">
             <action id="q.sign.in" class="software.aws.toolkits.jetbrains.services.amazonq.explorerActions.SignInToQAction"/>
