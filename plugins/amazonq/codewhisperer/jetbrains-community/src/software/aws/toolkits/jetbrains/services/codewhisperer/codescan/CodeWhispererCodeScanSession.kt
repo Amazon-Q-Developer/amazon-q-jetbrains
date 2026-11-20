@@ -424,8 +424,8 @@ internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Bool
 /**
  * True when the real path of [file] (symlinks and "." / ".." resolved) is strictly inside the real path of one of
  * [project]'s content roots. Real paths are compared, so the result does not depend on whether the project or the
- * file is reached through a symlinked folder. Shared check for every place that reads or writes a finding's file:
- * agentic review findings, [applySuggestedFix], ignoreSingleIssue and the code-fix zip.
+ * file is reached through a symlinked folder. Used for agentic review findings, applySuggestedFix,
+ * ignoreSingleIssue and the code-fix zip.
  */
 fun isIssueFileInsideProject(project: Project, file: VirtualFile): Boolean {
     val contentRoots = runReadAction { ProjectRootManager.getInstance(project).contentRoots }
