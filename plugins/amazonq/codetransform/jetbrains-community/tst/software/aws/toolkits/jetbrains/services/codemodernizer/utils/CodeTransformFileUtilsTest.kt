@@ -28,20 +28,20 @@ class CodeTransformFileUtilsTest {
     }
 
     @Test
-    fun `resolveZipEntryUnderRoot rejects a parent-traversal entry`() {
+    fun `resolveZipEntryUnderRoot rejects a parent entry that resolves outside the destination`() {
         val root = folder.newFolder("dest").toPath()
-        // Red control: the raw resolve the old code used escapes the destination.
-        assertThat(root.resolve("../evil.txt").normalize().startsWith(root.toAbsolutePath().normalize())).isFalse()
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../evil.txt") }
+        // Control: the raw resolve the old code used resolves outside the destination.
+        assertThat(root.resolve("../outside.txt").normalize().startsWith(root.toAbsolutePath().normalize())).isFalse()
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../outside.txt") }
             .isInstanceOf(IllegalArgumentException::class.java)
     }
 
     @Test
     fun `resolveZipEntryUnderRoot rejects absolute and sibling-prefix entries`() {
         val root = folder.newFolder("dest").toPath()
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "/etc/cron.d/evil") }
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "/outside/file.txt") }
             .isInstanceOf(IllegalArgumentException::class.java)
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../dest-evil/x.txt") }
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../dest-sibling/x.txt") }
             .isInstanceOf(IllegalArgumentException::class.java)
     }
 
@@ -70,12 +70,12 @@ class CodeTransformFileUtilsTest {
     fun `resolveZipEntryUnderRoot rejects a name with control characters without leaking them`() {
         val root = folder.newFolder("dest").toPath()
         // Invalid-path branch (NUL): resolve() throws before the containment check; the message must still be sanitized.
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "a\u0000\nINJECT.txt") }
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "a\u0000\nSECOND.txt") }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessageNotContaining("\u0000")
             .hasMessageNotContaining("\n")
-        // Escape branch: a traversal name carrying a newline must also be sanitized in the thrown message.
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../a\nINJECT") }
+        // Escape branch: a parent entry carrying a newline must also be sanitized in the thrown message.
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../a\nSECOND") }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessageNotContaining("\n")
     }
@@ -96,15 +96,15 @@ class CodeTransformFileUtilsTest {
     }
 
     @Test
-    fun `unzipFile aborts on a zip-slip entry and writes nothing outside the destination`() {
-        val zip = folder.newFile("evil.zip").toPath()
+    fun `unzipFile aborts on an entry that resolves outside the destination and writes nothing outside it`() {
+        val zip = folder.newFile("outside.zip").toPath()
         ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
             zos.putNextEntry(ZipEntry("good.txt"))
             zos.write("ok".toByteArray())
             zos.closeEntry()
             // java.util.zip.ZipFile returns this name verbatim (no normalization), so the guard must stop it.
             zos.putNextEntry(ZipEntry("../escaped.txt"))
-            zos.write("pwned".toByteArray())
+            zos.write("outside".toByteArray())
             zos.closeEntry()
         }
         val dest = folder.newFolder("out").toPath()
@@ -116,10 +116,10 @@ class CodeTransformFileUtilsTest {
 
     @Test
     fun `unzipFile with extractOnlySources rejects a source entry that escapes`() {
-        val zip = folder.newFile("evil-sources.zip").toPath()
+        val zip = folder.newFile("outside-sources.zip").toPath()
         ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
             zos.putNextEntry(ZipEntry("sources/../../escaped.txt"))
-            zos.write("pwned".toByteArray())
+            zos.write("outside".toByteArray())
             zos.closeEntry()
         }
         val dest = folder.newFolder("out").toPath()

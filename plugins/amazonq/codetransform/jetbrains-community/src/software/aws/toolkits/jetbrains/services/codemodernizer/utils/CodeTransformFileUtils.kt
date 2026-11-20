@@ -148,13 +148,13 @@ fun parseBuildFile(buildFile: VirtualFile?): String? {
 /**
  * Resolves [entryName] under [destDir] and verifies it does not escape that directory. unzipFile extracts
  * archives downloaded from the transformation service with java.util.zip.ZipFile, which does not reject
- * traversal entry names, so a `..` (or absolute) entry would otherwise write outside [destDir] — a zip-slip
- * (CWE-22) that could overwrite arbitrary files the IDE can write. The resolved path is normalized and
- * required to stay under the normalized destination; an entry that escapes throws and aborts the extraction.
+ * parent-relative or absolute entry names, so a `..` (or absolute) entry would otherwise write outside
+ * [destDir] and could overwrite files the IDE can write. The resolved path is normalized and required to
+ * stay under the normalized destination; an entry that escapes throws and aborts the extraction.
  */
 internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
     val root = destDir.toAbsolutePath().normalize()
-    // entryName is attacker-controlled; strip control characters and line separators and truncate it before it
+    // entryName comes from the archive; strip control characters and line separators and truncate it before it
     // can reach logs or telemetry through an exception message.
     val safeName = entryName.take(100).filter { !it.isISOControl() && it != '\u2028' && it != '\u2029' }
     val destPath = try {
