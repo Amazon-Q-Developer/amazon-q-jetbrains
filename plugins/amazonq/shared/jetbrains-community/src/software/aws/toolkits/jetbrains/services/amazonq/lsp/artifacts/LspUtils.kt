@@ -85,8 +85,8 @@ fun moveFilesFromSourceToDestination(sourceDir: Path, targetDir: Path) {
  *
  * `extractZipFile` builds each output path by joining the entry name onto the destination directory. A
  * remote archive — the Flare language-server zip is fetched from a CDN and extracted at IDE startup — can
- * carry an entry whose name contains `..` segments (or otherwise resolves outside the destination): a
- * zip-slip (CWE-22) that would let the archive write or overwrite files anywhere the IDE user can write.
+ * carry an entry whose name contains `..` segments (or otherwise resolves outside the destination), which
+ * would otherwise let extraction write or overwrite files outside [destDir].
  * The joined path is normalized and required to stay under the normalized destination; an entry that
  * escapes throws, which aborts the whole extraction rather than writing a single file outside [destDir].
  * An entry name that is not a valid path on this platform (for example `/C:/x` on Windows) is rejected with the

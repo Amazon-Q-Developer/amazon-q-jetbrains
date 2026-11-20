@@ -122,11 +122,11 @@ class LspUtilsTest {
     }
 
     @Test
-    fun `resolveZipEntryUnderRoot rejects a parent-traversal entry`(@TempDir tempDir: Path) {
+    fun `resolveZipEntryUnderRoot rejects a parent entry that resolves outside the destination`(@TempDir tempDir: Path) {
         val root = tempDir.resolve("target")
-        // Red control: without the containment check, the same join escapes the destination.
-        assertThat(Paths.get(root.toString(), "../evil.txt").normalize().startsWith(root.normalize())).isFalse()
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../evil.txt") }
+        // Control: without the containment check, the same join resolves outside the destination.
+        assertThat(Paths.get(root.toString(), "../outside.txt").normalize().startsWith(root.normalize())).isFalse()
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../outside.txt") }
             .isInstanceOf(LspException::class.java)
     }
 
@@ -148,34 +148,35 @@ class LspUtilsTest {
 
     @Test
     fun `resolveZipEntryUnderRoot keeps line breaks and long names out of the exception message`(@TempDir tempDir: Path) {
-        // A forged log line plus padding. Windows rejects the control character as an invalid path, other
-        // platforms reject the traversal; both messages carry the same truncated, filtered name.
-        val entryName = "../a\nFORGED\u2028" + "x".repeat(500)
+        // A line break and a line separator, plus padding. Windows rejects the control character as an invalid
+        // path, other platforms reject the entry for resolving outside the destination; both messages carry the
+        // same truncated, filtered name.
+        val entryName = "../a\nSECOND\u2028" + "x".repeat(500)
         val error = catchThrowable { resolveZipEntryUnderRoot(tempDir.resolve("target"), entryName) }
         assertThat(error).isInstanceOf(LspException::class.java)
         assertThat(error.toString()).contains("[UNZIP_ENTRY_OUTSIDE_DESTINATION]")
         assertThat(error.message)
-            .contains("'../aFORGED${"x".repeat(88)}'")
+            .contains("'../aSECOND${"x".repeat(88)}'")
             .doesNotContain("\n")
             .doesNotContain("\u2028")
             .doesNotContain("x".repeat(89))
     }
 
     @Test
-    fun `resolveZipEntryUnderRoot rejects deep and leading-slash traversal`(@TempDir tempDir: Path) {
+    fun `resolveZipEntryUnderRoot rejects deep and leading-slash parent entries`(@TempDir tempDir: Path) {
         val root = tempDir.resolve("target")
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../../../../../../etc/passwd") }
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../../../../../../outside/file.txt") }
             .isInstanceOf(LspException::class.java)
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "/../../etc/passwd") }
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "/../../outside/file.txt") }
             .isInstanceOf(LspException::class.java)
     }
 
     @Test
     fun `resolveZipEntryUnderRoot rejects a sibling whose name shares the destination prefix`(@TempDir tempDir: Path) {
-        // `../target-evil` sits next to, not under, `target`; a string-prefix check would wrongly accept it,
+        // `../target-sibling` sits next to, not under, `target`; a string-prefix check would wrongly accept it,
         // but a component-wise startsWith does not.
         val root = tempDir.resolve("target")
-        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../target-evil/x.txt") }
+        assertThatThrownBy { resolveZipEntryUnderRoot(root, "../target-sibling/x.txt") }
             .isInstanceOf(LspException::class.java)
     }
 
@@ -191,7 +192,7 @@ class LspUtilsTest {
     }
 
     @Test
-    fun `extractZipFile aborts on a zip-slip entry and writes nothing outside the destination`(@TempDir tempDir: Path) {
+    fun `extractZipFile aborts on an entry that resolves outside the destination and writes nothing outside it`(@TempDir tempDir: Path) {
         val source = tempDir.resolve("source").also { it.createDirectory() }
         val target = tempDir.resolve("target").also { it.createDirectory() }
         source.resolve("good.txt").writeText("good")
@@ -199,7 +200,7 @@ class LspUtilsTest {
         val sourceZip = tempDir.resolve("source.zip")
         ZipOutputStream(Files.newOutputStream(sourceZip)).use { zip ->
             zip.putNextEntry("good.txt", source.resolve("good.txt"))
-            // A crafted entry name that tries to climb out of the extraction directory.
+            // An entry name that resolves outside the extraction directory.
             zip.putNextEntry("../escaped.txt", source.resolve("good.txt"))
         }
 

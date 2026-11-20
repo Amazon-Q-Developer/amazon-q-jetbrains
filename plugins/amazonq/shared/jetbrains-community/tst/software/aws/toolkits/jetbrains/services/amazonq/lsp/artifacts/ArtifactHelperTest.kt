@@ -13,13 +13,17 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts.ArtifactManager.SupportedManifestVersionRange
+import software.aws.toolkits.jetbrains.services.cwc.controller.chat.telemetry.getStartUrl
 import java.nio.file.Path
 
 @ExtendWith(ApplicationExtension::class)
@@ -45,6 +49,11 @@ class ArtifactHelperTest {
             every { basePath } returns tempDir.toString()
             every { name } returns "TestProject"
         }
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -216,6 +225,33 @@ class ArtifactHelperTest {
         every { extractZipFile(any(), any()) } just Runs
 
         assertThat(runBlocking { artifactHelper.tryDownloadLspArtifacts(mockProject, version, target) }).isEqualTo(null)
+    }
+
+    @Test
+    fun `tryDownloadLspArtifacts records telemetry when extraction rejects a zip entry outside the destination`() {
+        val version = Version(serverVersion = "1.0.0")
+        val target = VersionTarget(contents = contents)
+        val spyArtifactHelper = spyk(artifactHelper)
+        val rejection = LspException(
+            "Zip entry '../outside.txt' resolves outside the extraction directory",
+            LspException.ErrorCode.UNZIP_ENTRY_OUTSIDE_DESTINATION
+        )
+
+        every { spyArtifactHelper.downloadLspArtifacts(mockProject, any(), any()) } returns true
+        mockkStatic("software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts.LspUtilsKt")
+        every { moveFilesFromSourceToDestination(any(), any()) } just Runs
+        every { extractZipFile(any(), any()) } throws rejection
+        mockkStatic(::getStartUrl)
+        every { getStartUrl(any()) } returns null
+
+        val result = runBlocking { spyArtifactHelper.tryDownloadLspArtifacts(mockProject, version, target) }
+
+        // The rejection still fails the install (null result, bundled fallback upstream), but it is now
+        // recorded distinctly instead of being swallowed into the generic DOWNLOAD_FAILED. download is stubbed,
+        // so recordArtifactExtractionFailure is the only caller of getStartUrl: one call per attempt proves the
+        // extraction-failure telemetry fires and that the retry count (maxDownloadAttempts = 3) is unchanged.
+        assertThat(result).isNull()
+        verify(exactly = 3) { getStartUrl(mockProject) }
     }
 
     @Test
