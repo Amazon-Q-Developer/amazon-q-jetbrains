@@ -30,10 +30,16 @@ jobs:
           fetch-depth: 0
       - name: Maximize Build Space
         if: runner.os == 'Linux'
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          large-packages: false
+        # Removes what jlumbroso/free-disk-space removed when this step passed it
+        # tool-cache: false and large-packages: false: the Android SDK, .NET, Haskell and Docker images.
+        shell: bash
+        run: |
+          df -h /
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc /usr/local/.ghcup || true
+          sudo docker image prune --all --force || true
+          df -h /
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2025.1.1
         env:
