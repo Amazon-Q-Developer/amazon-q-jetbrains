@@ -125,6 +125,9 @@ class Browser(parent: Disposable, private val mynahAsset: Path, val project: Pro
         val mynahResource = assetRequestHandler.createResource(mynahAsset.fileName.toString(), mynahAsset.inputStream())
         val acknowledgements = chatPromptAcknowledgements(MeetQSettings.getInstance())
 
+        // AmazonQPanel calls the window.handleNativeDrop, handleNativeNotify and setDragAndDropVisible handlers below with
+        // arguments encoded by webviewFunctionCall (WebviewFunctionCall.kt), so each handler must keep its JSON.parse.
+        // Call any new handler that takes data through webviewFunctionCall too.
         // https://github.com/highlightjs/highlight.js/issues/1387
         // language=HTML
         val jsScripts = """

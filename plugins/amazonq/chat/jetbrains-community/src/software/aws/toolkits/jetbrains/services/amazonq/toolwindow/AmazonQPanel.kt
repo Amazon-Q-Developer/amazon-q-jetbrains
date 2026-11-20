@@ -171,24 +171,23 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
                                                 validImages.subList(20, validImages.size).clear()
                                             }
 
-                                            executeJavaScript(browserInstance, "window.resetTopBarClicked()")
+                                            callWebviewFunction(browserInstance, "resetTopBarClicked")
 
                                             setDragAndDropOverlayVisible(browserInstance, false)
 
-                                            val json = OBJECT_MAPPER.writeValueAsString(validImages)
-                                            executeJavaScript(browserInstance, "window.handleNativeDrop('$json')")
+                                            // True once the script is handed to the browser; the webview handles it asynchronously.
+                                            val dropIssued = callWebviewFunction(browserInstance, "handleNativeDrop", validImages)
 
                                             if (errorMessages.isNotEmpty()) {
-                                                val errorJson = OBJECT_MAPPER.writeValueAsString(errorMessages)
-                                                executeJavaScript(browserInstance, "window.handleNativeNotify('$errorJson')")
+                                                callWebviewFunction(browserInstance, "handleNativeNotify", errorMessages)
                                             }
 
-                                            dtde.dropComplete(true)
+                                            dtde.dropComplete(dropIssued)
                                         } else {
                                             dtde.dropComplete(false)
                                         }
                                     } catch (e: Exception) {
-                                        LOG.error { "Failed to handle file drop operation: ${e.message}" }
+                                        LOG.error(e) { "Failed to handle file drop operation" }
                                         dtde.dropComplete(false)
                                     }
                                 }
@@ -284,20 +283,22 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
         }
     }
 
-    private fun executeJavaScript(browserInstance: Browser, jsCommand: String) {
-        try {
-            browserInstance.jcefBrowser.cefBrowser.executeJavaScript(
-                jsCommand,
-                browserInstance.jcefBrowser.cefBrowser.url,
-                0
-            )
-        } catch (e: Exception) {
-            LOG.error { "Failed to execute JavaScript: $jsCommand - ${e.message}" }
-        }
-    }
+    // This panel builds every webview script with webviewFunctionCall, so data always reaches the webview encoded.
+    // Returns false when the script could not be sent to the browser.
+    private fun callWebviewFunction(browserInstance: Browser, functionName: String, vararg arguments: Any): Boolean =
+        runWebviewFunctionCall(
+            OBJECT_MAPPER,
+            functionName,
+            arguments,
+            execute = { script ->
+                val cefBrowser = browserInstance.jcefBrowser.cefBrowser
+                cefBrowser.executeJavaScript(script, cefBrowser.url, 0)
+            },
+            onFailure = { e -> LOG.error(e) { "Failed to call webview function $functionName" } },
+        )
 
     private fun setDragAndDropOverlayVisible(browserInstance: Browser, visible: Boolean) {
-        executeJavaScript(browserInstance, "window.setDragAndDropVisible('$visible')")
+        callWebviewFunction(browserInstance, "setDragAndDropVisible", visible)
     }
 
     private fun validateImageFile(file: File, allowedTypes: Set<String>, maxFileSize: Double, maxDimension: Int): String? {
