@@ -319,12 +319,12 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
         if (isProjectScope()) {
             LOG.debug { "Total code review issues returned from service: ${scanRecommendations.size}" }
         }
+        val projectRootPath = sessionContext.sessionConfig.projectRoot.path
         return scanRecommendations.mapNotNull { recommendation ->
-            val projectRootPath = sessionContext.sessionConfig.projectRoot.path
             val file = try {
                 resolveScanFindingFile(projectRootPath, sessionContext.project.name, recommendation.filePath)
-                    ?.takeIf { isRealPathWithinRoot(projectRootPath, it.toString()) }
                     ?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
+                    ?.takeIf { isIssueFileInsideProject(sessionContext.project, it) }
             } catch (e: Exception) {
                 LOG.debug { "Cannot find file at location ${recommendation.filePath}" }
                 null
@@ -424,7 +424,7 @@ internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Bool
 /**
  * True when the real path of [file] (symlinks and "." / ".." resolved) is strictly inside the real path of one of
  * [project]'s content roots. Real paths are compared, so the result does not depend on whether the project or the
- * file is reached through a symlinked folder. Used for agentic review findings, applySuggestedFix,
+ * file is reached through a symlinked folder. Used for code-scan and agentic review findings, applySuggestedFix,
  * ignoreSingleIssue and the code-fix zip.
  */
 fun isIssueFileInsideProject(project: Project, file: VirtualFile): Boolean {

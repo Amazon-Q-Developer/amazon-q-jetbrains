@@ -211,6 +211,17 @@ class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsigh
     }
 
     @Test
+    fun `mapToCodeScanIssues drops a finding for a file outside the project content roots`() {
+        val outside = outsideFile()
+        // A file scan of a file outside the project uses that file's folder as its root.
+        sessionConfigSpy.stub { onGeneric { sessionConfigSpy.projectRoot }.thenReturn(checkNotNull(outside.parent)) }
+
+        val res = codeScanSessionSpy.mapToCodeScanIssues(listOf(findingAt(outside.name)), project, "jobId")
+
+        assertThat(res).isEmpty()
+    }
+
+    @Test
     fun `isIssueFileInsideProject accepts a project file and rejects a file outside the project`() {
         assertThat(isIssueFileInsideProject(project, psifile.virtualFile)).isTrue()
         assertThat(isIssueFileInsideProject(project, outsideFile())).isFalse()
