@@ -42,11 +42,16 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.util.content
 import software.aws.toolkits.resources.message
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.io.path.Path
+
+// Zip entry names separate folders with '/' on every platform; some Windows archivers write '\' instead.
+private const val ZIP_ENTRY_SEPARATOR = '/'
+private const val BACKSLASH_ENTRY_SEPARATOR = '\\'
 
 fun filterOnlyParentFiles(filePaths: Set<VirtualFile>): List<VirtualFile> {
     if (filePaths.isEmpty()) return emptyList()
@@ -185,8 +190,13 @@ fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, 
                 }
                 if (isSqlMetadata) {
                     // when manually compressing ZIP files, the files get unzipped under a subdirectory where we extract them to,
-                    // this change puts the files directly under the root of the target directory, which is what we want
-                    fileName = zipEntry.name.substringAfterLast(File.separatorChar)
+                    // this change puts the files directly under the root of the target directory, which is what we want.
+                    // Flatten on both entry separators, not on File.separatorChar, so the result is the same on every platform.
+                    fileName = zipEntry.name.substringAfterLast(ZIP_ENTRY_SEPARATOR).substringAfterLast(BACKSLASH_ENTRY_SEPARATOR)
+                    if (fileName.isEmpty()) {
+                        // a folder entry written with '\', which ZipEntry.isDirectory does not recognize
+                        return@mapNotNull null
+                    }
                 }
                 zipEntry to resolveZipEntryUnderRoot(destDir, fileName)
             }.toList()
@@ -202,13 +212,19 @@ fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, 
 
 /**
  * Extracts the SQL metadata zip at [zipPath] into [destDir] and returns its `.sct` file. Returns null when the zip has
- * no `.sct` file or [unzipFile] rejects one of its entries; in the second case nothing is extracted.
+ * no `.sct` file, when [unzipFile] rejects one of its entries (nothing is extracted in that case), or when the file
+ * cannot be read as a zip.
  */
 fun extractSctMetadataFile(zipPath: Path, destDir: File): File? {
     try {
         unzipFile(zipPath, destDir.toPath(), isSqlMetadata = true)
     } catch (e: IllegalArgumentException) {
         getLogger<CodeTransformChatController>().warn { "Could not extract the SQL metadata zip: ${e.message}" }
+        return null
+    } catch (e: IOException) {
+        // The user can select any file, for example one that is not a zip or a truncated zip. The exception message
+        // can contain a path built from an entry name, so log only the exception type.
+        getLogger<CodeTransformChatController>().warn { "Could not read the SQL metadata zip: ${e.javaClass.name}" }
         return null
     }
     return destDir.listFiles { file -> file.name.endsWith(".sct") }?.firstOrNull()

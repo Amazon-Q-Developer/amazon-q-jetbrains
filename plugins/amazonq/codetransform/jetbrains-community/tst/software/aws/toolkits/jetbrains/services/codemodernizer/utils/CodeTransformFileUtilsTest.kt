@@ -9,7 +9,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -131,19 +130,52 @@ class CodeTransformFileUtilsTest {
     }
 
     @Test
+    fun `unzipFile with extractOnlySources extracts source entries and skips the others`() {
+        val zip = folder.newFile("client-build.zip").toPath()
+        ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
+            listOf("sources/Foo.java", "manifest.json").forEach { name ->
+                zos.putNextEntry(ZipEntry(name))
+                zos.write("x".toByteArray())
+                zos.closeEntry()
+            }
+        }
+        val dest = folder.newFolder("out").toPath()
+
+        assertThat(unzipFile(zip, dest, extractOnlySources = true)).isTrue()
+        assertThat(dest.resolve("sources/Foo.java")).exists()
+        assertThat(dest.resolve("manifest.json")).doesNotExist()
+    }
+
+    @Test
     fun `unzipFile with isSqlMetadata extracts the basename under the destination`() {
         val zip = folder.newFile("sql.zip").toPath()
-        // Use the platform separator so the production substringAfterLast(File.separatorChar) flattens on both OSes.
-        val entry = listOf("nested", "dir", "meta.sct").joinToString(File.separator)
+        // A real zip separates folders with '/' on every platform, including Windows.
         ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
-            zos.putNextEntry(ZipEntry(entry))
+            zos.putNextEntry(ZipEntry("nested/dir/meta.sct"))
             zos.write("S".toByteArray())
             zos.closeEntry()
         }
         val dest = folder.newFolder("out").toPath()
 
         assertThat(unzipFile(zip, dest, isSqlMetadata = true)).isTrue()
-        assertThat(dest.resolve("meta.sct")).exists()
+        assertThat(dest.toFile().list()).containsExactly("meta.sct")
+    }
+
+    @Test
+    fun `unzipFile with isSqlMetadata flattens backslash entry names and skips backslash folder entries`() {
+        val zip = folder.newFile("sql-backslash.zip").toPath()
+        ZipOutputStream(FileOutputStream(zip.toFile())).use { zos ->
+            // ZipEntry.isDirectory checks only for a trailing '/', so this folder entry reaches the flattening step.
+            zos.putNextEntry(ZipEntry("nested\\dir\\"))
+            zos.closeEntry()
+            zos.putNextEntry(ZipEntry("nested\\dir\\meta.sct"))
+            zos.write("S".toByteArray())
+            zos.closeEntry()
+        }
+        val dest = folder.newFolder("out").toPath()
+
+        assertThat(unzipFile(zip, dest, isSqlMetadata = true)).isTrue()
+        assertThat(dest.toFile().list()).containsExactly("meta.sct")
     }
 
     @Test
@@ -192,6 +224,17 @@ class CodeTransformFileUtilsTest {
         val dest = folder.newFolder("sql")
 
         assertThat(extractSctMetadataFile(zip, dest)).isNull()
+        assertThat(dest.listFiles()).isEmpty()
+    }
+
+    @Test
+    fun `extractSctMetadataFile returns null for a file that is not a zip`() {
+        // The SQL metadata file chooser accepts any file, and ZipFile throws an IOException for one that is not a zip.
+        val notZip = folder.newFile("metadata.zip")
+        notZip.writeText("this is not a zip archive")
+        val dest = folder.newFolder("sql")
+
+        assertThat(extractSctMetadataFile(notZip.toPath(), dest)).isNull()
         assertThat(dest.listFiles()).isEmpty()
     }
 }
