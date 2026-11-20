@@ -16,8 +16,8 @@ class WebviewFunctionCallTest {
     private val mapper = jacksonObjectMapper()
 
     // A valid JS string-literal argument is ONE JSON string token and nothing else, so a strict parse must
-    // consume all of it. The trailing tokens a string breakout would introduce make this parse fail, which is
-    // what distinguishes inert data from injected code.
+    // consume all of it. The trailing tokens that a name which is not self-contained would introduce make this
+    // parse fail, which is what distinguishes inert data from executable code.
     private val strict = jacksonObjectMapper().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
     /**
@@ -33,7 +33,7 @@ class WebviewFunctionCallTest {
     /**
      * Oracle modelling how a JS engine reads the argument: starting at the opening quote `arg[0]`, find the
      * first UNESCAPED matching quote. The literal is self-contained — nothing after it can execute — only if
-     * that quote is the final character. A single-quote breakout is exactly the case where it is not.
+     * that quote is the final character. An unescaped matching quote inside the name is the case where it is not.
      */
     private fun isSelfContainedStringLiteral(arg: String): Boolean {
         if (arg.length < 2) return false
@@ -62,39 +62,39 @@ class WebviewFunctionCallTest {
     }
 
     @Test
-    fun `a single quote in a file name cannot break out of the literal`() {
-        val malicious = "/tmp/x');window.alert(document.cookie);//.png"
-        val arg = toJsStringLiteralArg(mapper, listOf(malicious))
-        // The payload is inert data inside one self-contained literal ...
+    fun `a single quote in a file name stays inside the literal`() {
+        val rawPath = "/tmp/x');fn(value);//.png"
+        val arg = toJsStringLiteralArg(mapper, listOf(rawPath))
+        // The name is inert data inside one self-contained literal ...
         assertThat(isSelfContainedStringLiteral(arg)).isTrue()
         // ... and the exact name still reaches the webview, so nothing is dropped or corrupted.
-        assertThat(decodeArg<List<String>>(arg)).containsExactly(malicious)
+        assertThat(decodeArg<List<String>>(arg)).containsExactly(rawPath)
     }
 
     @Test
-    fun `the previous single-quote-wrapped construction was not self-contained (red control)`() {
-        val malicious = "/tmp/x');window.alert(1);//.png"
-        // Reconstructs the pre-fix sink: wrapping the JSON text in single quotes.
-        val vulnerable = "'" + mapper.writeValueAsString(listOf(malicious)) + "'"
+    fun `the previous single-quote-wrapped construction was not self-contained (control)`() {
+        val rawPath = "/tmp/x');fn(1);//.png"
+        // Reconstructs the previous construction: wrapping the JSON text in single quotes.
+        val naiveLiteral = "'" + mapper.writeValueAsString(listOf(rawPath)) + "'"
         // Proves the oracle actually detects the defect this change removes.
-        assertThat(isSelfContainedStringLiteral(vulnerable)).isFalse()
+        assertThat(isSelfContainedStringLiteral(naiveLiteral)).isFalse()
     }
 
     @Test
     fun `double quotes and backslashes cannot terminate the literal`() {
-        val malicious = """/tmp/a"</script><img src=x onerror=alert(1)>\end.png"""
-        val arg = toJsStringLiteralArg(mapper, listOf(malicious))
+        val rawPath = """/tmp/a"</tag><elem a=x b=fn(1)>\end.png"""
+        val arg = toJsStringLiteralArg(mapper, listOf(rawPath))
         assertThat(isSelfContainedStringLiteral(arg)).isTrue()
-        assertThat(decodeArg<List<String>>(arg)).containsExactly(malicious)
+        assertThat(decodeArg<List<String>>(arg)).containsExactly(rawPath)
     }
 
     @Test
     fun `JS line terminators U+2028 and U+2029 are escaped`() {
-        val malicious = "/tmp/a\u2028\u2029b.png"
-        val arg = toJsStringLiteralArg(mapper, listOf(malicious))
+        val rawPath = "/tmp/a\u2028\u2029b.png"
+        val arg = toJsStringLiteralArg(mapper, listOf(rawPath))
         assertThat(arg).doesNotContain("\u2028").doesNotContain("\u2029")
         assertThat(arg).contains("\\u2028").contains("\\u2029")
-        assertThat(decodeArg<List<String>>(arg)).containsExactly(malicious)
+        assertThat(decodeArg<List<String>>(arg)).containsExactly(rawPath)
     }
 
     @Test
@@ -108,7 +108,7 @@ class WebviewFunctionCallTest {
     @Test
     fun `a dropped File with a quote in its name is encoded from its path`() {
         // Production passes List<File>; Jackson serializes a File to its absolute path.
-        val file = File("/tmp/x'y\";drop.png")
+        val file = File("/tmp/x'y\";name.png")
         val arg = toJsStringLiteralArg(mapper, listOf(file))
         assertThat(isSelfContainedStringLiteral(arg)).isTrue()
         assertThat(decodeArg<List<String>>(arg)).containsExactly(file.absolutePath)
@@ -125,11 +125,11 @@ class WebviewFunctionCallTest {
 
     @Test
     fun `newline and NUL control characters are escaped`() {
-        val malicious = "/tmp/a\n\r\u0000b.png"
-        val arg = toJsStringLiteralArg(mapper, listOf(malicious))
+        val rawPath = "/tmp/a\n\r\u0000b.png"
+        val arg = toJsStringLiteralArg(mapper, listOf(rawPath))
         assertThat(isSelfContainedStringLiteral(arg)).isTrue()
         assertThat(arg).doesNotContain("\n").doesNotContain("\r").doesNotContain("\u0000")
-        assertThat(decodeArg<List<String>>(arg)).containsExactly(malicious)
+        assertThat(decodeArg<List<String>>(arg)).containsExactly(rawPath)
     }
 
     @Test
