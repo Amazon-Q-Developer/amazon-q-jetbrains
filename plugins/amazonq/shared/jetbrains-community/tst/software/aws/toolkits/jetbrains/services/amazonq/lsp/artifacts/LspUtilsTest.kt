@@ -138,6 +138,30 @@ class LspUtilsTest {
     }
 
     @Test
+    fun `resolveZipEntryUnderRoot rejects a name that is not a valid path with the containment error code`(@TempDir tempDir: Path) {
+        // No platform accepts NUL in a path, so Paths.get throws InvalidPathException for this name.
+        val error = catchThrowable { resolveZipEntryUnderRoot(tempDir.resolve("target"), "a\u0000b.txt") }
+        assertThat(error).isInstanceOf(LspException::class.java)
+        assertThat(error.toString()).isEqualTo("LSP Error [UNZIP_ENTRY_OUTSIDE_DESTINATION]: Zip entry 'ab.txt' is not a valid path")
+        assertThat(error.cause).isNull()
+    }
+
+    @Test
+    fun `resolveZipEntryUnderRoot keeps line breaks and long names out of the exception message`(@TempDir tempDir: Path) {
+        // A forged log line plus padding. Windows rejects the control character as an invalid path, other
+        // platforms reject the traversal; both messages carry the same truncated, filtered name.
+        val entryName = "../a\nFORGED\u2028" + "x".repeat(500)
+        val error = catchThrowable { resolveZipEntryUnderRoot(tempDir.resolve("target"), entryName) }
+        assertThat(error).isInstanceOf(LspException::class.java)
+        assertThat(error.toString()).contains("[UNZIP_ENTRY_OUTSIDE_DESTINATION]")
+        assertThat(error.message)
+            .contains("'../aFORGED${"x".repeat(88)}'")
+            .doesNotContain("\n")
+            .doesNotContain("\u2028")
+            .doesNotContain("x".repeat(89))
+    }
+
+    @Test
     fun `resolveZipEntryUnderRoot rejects deep and leading-slash traversal`(@TempDir tempDir: Path) {
         val root = tempDir.resolve("target")
         assertThatThrownBy { resolveZipEntryUnderRoot(root, "../../../../../../etc/passwd") }
