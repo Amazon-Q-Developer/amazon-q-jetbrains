@@ -4,6 +4,7 @@
 package software.aws.toolkits.jetbrains.services.amazonq.toolwindow
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
@@ -11,7 +12,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 import java.io.File
 
-class DragAndDropJsPayloadTest {
+class WebviewFunctionCallTest {
     private val mapper = jacksonObjectMapper()
 
     // A valid JS string-literal argument is ONE JSON string token and nothing else, so a strict parse must
@@ -171,5 +172,51 @@ class DragAndDropJsPayloadTest {
             assertThatThrownBy { webviewFunctionCall(mapper, functionName, true) }
                 .isInstanceOf(IllegalArgumentException::class.java)
         }
+    }
+
+    @Test
+    fun `running a webview function call executes the encoded script and reports success`() {
+        val scripts = mutableListOf<String>()
+        val failures = mutableListOf<Exception>()
+
+        val issued = runWebviewFunctionCall(mapper, "setDragAndDropVisible", arrayOf<Any>(true), { scripts += it }, { failures += it })
+
+        assertThat(issued).isTrue()
+        assertThat(scripts).containsExactly("""window.setDragAndDropVisible("true")""")
+        assertThat(failures).isEmpty()
+    }
+
+    @Test
+    fun `running a webview function call reports failure when the script cannot be executed`() {
+        val executionError = IllegalStateException("browser is disposed")
+        val failures = mutableListOf<Exception>()
+
+        val issued = runWebviewFunctionCall(mapper, "resetTopBarClicked", emptyArray<Any>(), { throw executionError }, { failures += it })
+
+        assertThat(issued).isFalse()
+        assertThat(failures).containsExactly(executionError)
+    }
+
+    @Test
+    fun `running a webview function call propagates an invalid function name without executing anything`() {
+        val scripts = mutableListOf<String>()
+        val failures = mutableListOf<Exception>()
+
+        assertThatThrownBy { runWebviewFunctionCall(mapper, "window.foo", arrayOf<Any>(true), { scripts += it }, { failures += it }) }
+            .isInstanceOf(IllegalArgumentException::class.java)
+        assertThat(scripts).isEmpty()
+        assertThat(failures).isEmpty()
+    }
+
+    @Test
+    fun `running a webview function call propagates an argument that cannot be serialized without executing anything`() {
+        val scripts = mutableListOf<String>()
+        val failures = mutableListOf<Exception>()
+
+        // Jackson cannot serialize a plain Object because it has no properties (FAIL_ON_EMPTY_BEANS).
+        assertThatThrownBy { runWebviewFunctionCall(mapper, "handleNativeDrop", arrayOf(Any()), { scripts += it }, { failures += it }) }
+            .isInstanceOf(JsonMappingException::class.java)
+        assertThat(scripts).isEmpty()
+        assertThat(failures).isEmpty()
     }
 }

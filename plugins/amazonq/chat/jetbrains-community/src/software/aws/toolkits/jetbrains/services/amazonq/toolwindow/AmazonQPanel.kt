@@ -175,18 +175,19 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
 
                                             setDragAndDropOverlayVisible(browserInstance, false)
 
-                                            callWebviewFunction(browserInstance, "handleNativeDrop", validImages)
+                                            // True once the script is handed to the browser; the webview handles it asynchronously.
+                                            val dropIssued = callWebviewFunction(browserInstance, "handleNativeDrop", validImages)
 
                                             if (errorMessages.isNotEmpty()) {
                                                 callWebviewFunction(browserInstance, "handleNativeNotify", errorMessages)
                                             }
 
-                                            dtde.dropComplete(true)
+                                            dtde.dropComplete(dropIssued)
                                         } else {
                                             dtde.dropComplete(false)
                                         }
                                     } catch (e: Exception) {
-                                        LOG.error { "Failed to handle file drop operation: ${e.message}" }
+                                        LOG.error(e) { "Failed to handle file drop operation" }
                                         dtde.dropComplete(false)
                                     }
                                 }
@@ -283,14 +284,18 @@ class AmazonQPanel(val project: Project, private val scope: CoroutineScope) : Di
     }
 
     // This panel builds every webview script with webviewFunctionCall, so data always reaches the webview encoded.
-    private fun callWebviewFunction(browserInstance: Browser, functionName: String, vararg arguments: Any) {
-        try {
-            val cefBrowser = browserInstance.jcefBrowser.cefBrowser
-            cefBrowser.executeJavaScript(webviewFunctionCall(OBJECT_MAPPER, functionName, *arguments), cefBrowser.url, 0)
-        } catch (e: Exception) {
-            LOG.error { "Failed to call webview function $functionName: ${e.message}" }
-        }
-    }
+    // Returns false when the script could not be sent to the browser.
+    private fun callWebviewFunction(browserInstance: Browser, functionName: String, vararg arguments: Any): Boolean =
+        runWebviewFunctionCall(
+            OBJECT_MAPPER,
+            functionName,
+            arguments,
+            execute = { script ->
+                val cefBrowser = browserInstance.jcefBrowser.cefBrowser
+                cefBrowser.executeJavaScript(script, cefBrowser.url, 0)
+            },
+            onFailure = { e -> LOG.error(e) { "Failed to call webview function $functionName" } },
+        )
 
     private fun setDragAndDropOverlayVisible(browserInstance: Browser, visible: Boolean) {
         callWebviewFunction(browserInstance, "setDragAndDropVisible", visible)
