@@ -192,9 +192,9 @@ class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsigh
     @Test
     fun `mapToCodeScanIssues drops a finding whose path leaves the project`() {
         val outside = outsideFile().toNioPath()
-        val escapingPath = sessionConfigSpy.projectRoot.toNioPath().relativize(outside).toString().replace('\\', '/')
+        val outsidePath = sessionConfigSpy.projectRoot.toNioPath().relativize(outside).toString().replace('\\', '/')
 
-        val res = codeScanSessionSpy.mapToCodeScanIssues(listOf(findingAt(escapingPath)), project, "jobId")
+        val res = codeScanSessionSpy.mapToCodeScanIssues(listOf(findingAt(outsidePath)), project, "jobId")
 
         assertThat(res).isEmpty()
     }

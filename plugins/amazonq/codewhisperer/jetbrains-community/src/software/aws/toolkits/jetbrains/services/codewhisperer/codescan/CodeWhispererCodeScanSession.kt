@@ -396,9 +396,9 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
 
 /**
  * Resolves a code-scan finding's reported [filePath] against the project root and returns the
- * resolved path only when it stays strictly inside [projectRootPath]. Findings whose path escapes
- * the project root (for example via "..") resolve to null so a traversal cannot be mapped to a
- * file outside the project.
+ * resolved path only when it stays strictly inside [projectRootPath]. Findings whose path resolves
+ * outside the project root (for example via "..") resolve to null so such a path cannot be mapped to
+ * a file outside the project.
  */
 internal fun resolveScanFindingFile(projectRootPath: String, projectName: String, filePath: String): Path? {
     val root = Path.of(projectRootPath).toAbsolutePath().normalize()
@@ -409,7 +409,7 @@ internal fun resolveScanFindingFile(projectRootPath: String, projectName: String
 /**
  * True when [candidatePath] resolves to a real file strictly inside [rootPath], following symlinks
  * and "." / ".." via [Path.toRealPath]. A path that does not exist, resolves to the root itself, or
- * cannot be resolved returns false, so a traversal or a symlink that escapes the project root is
+ * cannot be resolved returns false, so a path or a symlink that resolves outside the project root is
  * never treated as being inside it.
  */
 internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Boolean =

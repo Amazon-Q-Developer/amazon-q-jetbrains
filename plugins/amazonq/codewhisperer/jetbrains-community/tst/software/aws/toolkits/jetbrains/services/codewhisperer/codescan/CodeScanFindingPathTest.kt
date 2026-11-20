@@ -48,25 +48,25 @@ class CodeScanFindingPathTest {
     }
 
     @Test
-    fun `rejects a path that escapes the root via dot-dot`() {
-        val maliciousPath = "$projectName/../../../etc/passwd"
+    fun `rejects a path that resolves outside the root via dot-dot`() {
+        val outsidePath = "$projectName/../../../outside/secret"
 
-        // Red control: the unchecked resolution the old code performed escaped the project root.
-        val naive = Path(root().toString(), maliciousPath.substringAfter(projectName)).toAbsolutePath().normalize()
+        // Control: the unchecked resolution the old code performed resolved outside the project root.
+        val naive = Path(root().toString(), outsidePath.substringAfter(projectName)).toAbsolutePath().normalize()
         assertThat(naive.startsWith(root())).isFalse()
 
-        // The hardened resolver refuses to map the escaping path to a file.
-        assertThat(resolveScanFindingFile(root().toString(), projectName, maliciousPath)).isNull()
+        // The hardened resolver refuses to map the out-of-root path to a file.
+        assertThat(resolveScanFindingFile(root().toString(), projectName, outsidePath)).isNull()
     }
 
     @Test
     fun `rejects a sibling directory that shares the root name prefix`() {
-        // "<root>/../<rootName>-evil/secret" normalizes to a sibling of the root. A component-wise
+        // "<root>/../<rootName>-sibling/secret" normalizes to a sibling of the root. A component-wise
         // containment check must reject it; a plain string-prefix check would wrongly accept it.
         val resolved = resolveScanFindingFile(
             root().toString(),
             projectName,
-            "$projectName/../${projectRoot.root.name}-evil/secret"
+            "$projectName/../${projectRoot.root.name}-sibling/secret"
         )
 
         assertThat(resolved).isNull()
@@ -101,14 +101,14 @@ class CodeScanFindingPathTest {
     }
 
     @Test
-    fun `isRealPathWithinRoot rejects a dot-dot path that escapes the root`() {
+    fun `isRealPathWithinRoot rejects a dot-dot path that resolves outside the root`() {
         val proj = projectRoot.newFolder("project").toPath()
         val outside = projectRoot.newFolder("outside").toPath()
         Files.writeString(outside.resolve("secret.txt"), "x")
 
         // proj/../outside/secret.txt resolves to a real file outside the project root.
-        val escaping = proj.resolve("..").resolve("outside").resolve("secret.txt").toString()
-        assertThat(isRealPathWithinRoot(proj.toString(), escaping)).isFalse()
+        val outsidePath = proj.resolve("..").resolve("outside").resolve("secret.txt").toString()
+        assertThat(isRealPathWithinRoot(proj.toString(), outsidePath)).isFalse()
     }
 
     @Test
@@ -132,7 +132,7 @@ class CodeScanFindingPathTest {
         val outside = projectRoot.newFolder("outside").toPath()
         val secret = outside.resolve("secret.txt")
         Files.writeString(secret, "x")
-        val link = proj.resolve("evil-link")
+        val link = proj.resolve("outside-link")
         try {
             Files.createSymbolicLink(link, secret)
         } catch (e: Exception) {
