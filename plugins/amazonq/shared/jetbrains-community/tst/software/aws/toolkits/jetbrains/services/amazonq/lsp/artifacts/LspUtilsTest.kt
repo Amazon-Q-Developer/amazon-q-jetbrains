@@ -214,6 +214,24 @@ class LspUtilsTest {
     }
 
     @Test
+    fun `extractZipFile passes on the containment error code for an entry name that is not a valid path`(@TempDir tempDir: Path) {
+        val source = tempDir.resolve("source").also { it.createDirectory() }
+        val target = tempDir.resolve("target").also { it.createDirectory() }
+        source.resolve("good.txt").writeText("good")
+
+        val sourceZip = tempDir.resolve("source.zip")
+        ZipOutputStream(Files.newOutputStream(sourceZip)).use { zip ->
+            zip.putNextEntry("a\u0000b.txt", source.resolve("good.txt"))
+        }
+
+        // The zip file system walks this name on every platform, so the containment check is what rejects it, and
+        // extractZipFile must pass that rejection on with its own error code instead of wrapping it as UNZIP_FAILED.
+        val error = catchThrowable { extractZipFile(sourceZip, target) }
+        assertThat(error).isInstanceOf(LspException::class.java)
+        assertThat(error.toString()).isEqualTo("LSP Error [UNZIP_ENTRY_OUTSIDE_DESTINATION]: Zip entry '/ab.txt' is not a valid path")
+    }
+
+    @Test
     fun `resolveZipEntryUnderRoot applies the platform meaning of a backslash`(@TempDir tempDir: Path) {
         // The zip file system keeps `\` as an ordinary character, so a walked entry can look like this.
         val root = tempDir.resolve("target")

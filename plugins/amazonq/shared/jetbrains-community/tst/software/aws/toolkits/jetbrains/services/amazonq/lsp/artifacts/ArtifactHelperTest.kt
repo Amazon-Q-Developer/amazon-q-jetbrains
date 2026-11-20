@@ -11,10 +11,17 @@ import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.unmockkAll
-import io.mockk.verify
+import io.mockk.unmockkObject
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.context.Context
+import io.opentelemetry.sdk.trace.ReadWriteSpan
+import io.opentelemetry.sdk.trace.ReadableSpan
+import io.opentelemetry.sdk.trace.SpanProcessor
+import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -22,9 +29,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
+import software.amazon.q.jetbrains.services.telemetry.otel.OTelService
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts.ArtifactManager.SupportedManifestVersionRange
 import software.aws.toolkits.jetbrains.services.cwc.controller.chat.telemetry.getStartUrl
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
 
 @ExtendWith(ApplicationExtension::class)
 class ArtifactHelperTest {
@@ -244,14 +253,50 @@ class ArtifactHelperTest {
         mockkStatic(::getStartUrl)
         every { getStartUrl(any()) } returns null
 
-        val result = runBlocking { spyArtifactHelper.tryDownloadLspArtifacts(mockProject, version, target) }
+        val spans = recordEndedSpans {
+            // The rejection still fails the install (null result, bundled fallback upstream).
+            assertThat(runBlocking { spyArtifactHelper.tryDownloadLspArtifacts(mockProject, version, target) }).isNull()
+        }
 
-        // The rejection still fails the install (null result, bundled fallback upstream), but it is now
-        // recorded distinctly instead of being swallowed into the generic DOWNLOAD_FAILED. download is stubbed,
-        // so recordArtifactExtractionFailure is the only caller of getStartUrl: one call per attempt proves the
-        // extraction-failure telemetry fires and that the retry count (maxDownloadAttempts = 3) is unchanged.
-        assertThat(result).isNull()
-        verify(exactly = 3) { getStartUrl(mockProject) }
+        // Each attempt (maxDownloadAttempts = 3) records a distinct setup event instead of only the generic DOWNLOAD_FAILED.
+        val setupEvents = spans.filter { it.attributes.get(SETUP_STAGE) != null }
+        assertThat(setupEvents).hasSize(3)
+        setupEvents.forEach { event ->
+            assertThat(event.attributes.get(SETUP_STAGE)).isEqualTo("getServer")
+            assertThat(event.attributes.get(AttributeKey.stringKey("result"))).isEqualTo("Failed")
+            assertThat(event.attributes.get(AttributeKey.stringKey("errorCode"))).isEqualTo("UNZIP_ENTRY_OUTSIDE_DESTINATION")
+            assertThat(event.attributes.get(AttributeKey.stringKey("reasonDesc"))).isNull()
+        }
+    }
+
+    // Sends the plugin's telemetry spans to a recorder while [block] runs and returns the spans that ended.
+    private fun recordEndedSpans(block: () -> Unit): List<SpanData> {
+        val ended = CopyOnWriteArrayList<SpanData>()
+        val recorder = object : SpanProcessor {
+            override fun onStart(parentContext: Context, span: ReadWriteSpan) {}
+
+            override fun isStartRequired() = false
+
+            override fun onEnd(span: ReadableSpan) {
+                ended.add(span.toSpanData())
+            }
+
+            override fun isEndRequired() = true
+        }
+        val otel = OTelService(listOf(recorder))
+        mockkObject(OTelService)
+        every { OTelService.getSdk() } returns otel.sdk
+        try {
+            block()
+        } finally {
+            unmockkObject(OTelService)
+            otel.dispose()
+        }
+        return ended
+    }
+
+    private companion object {
+        val SETUP_STAGE: AttributeKey<String> = AttributeKey.stringKey("languageServerSetupStage")
     }
 
     @Test
