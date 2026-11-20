@@ -127,9 +127,19 @@ class ArtifactHelper(private val lspArtifactsPath: Path = DEFAULT_ARTIFACT_PATH,
                 ) {
                     if (downloadLspArtifacts(project, temporaryDownloadPath, target) && !target.contents.isNullOrEmpty()) {
                         moveFilesFromSourceToDestination(temporaryDownloadPath, destinationPath)
-                        target.contents
-                            .mapNotNull { it.filename }
-                            .forEach { filename -> extractZipFile(destinationPath.resolve(filename), destinationPath) }
+                        try {
+                            target.contents
+                                .mapNotNull { it.filename }
+                                .forEach { filename -> extractZipFile(destinationPath.resolve(filename), destinationPath) }
+                        } catch (e: LspException) {
+                            // Extraction is where a malformed archive entry is rejected (for example one that
+                            // resolves outside the destination). Record it here so the failure is visible on its
+                            // own; otherwise the retry loop returns null and the only upstream signal is the
+                            // generic DOWNLOAD_FAILED. A telemetry failure must not hide the extraction error, and
+                            // the rethrow keeps the existing cleanup-and-retry path unchanged.
+                            runCatching { recordArtifactExtractionFailure(project, e) }.onFailure { e.addSuppressed(it) }
+                            throw e
+                        }
                         logger.info { "Successfully downloaded and moved LSP artifacts to $destinationPath" }
 
                         val thirdPartyLicenses = targetVersion.thirdPartyLicenses
@@ -157,6 +167,24 @@ class ArtifactHelper(private val lspArtifactsPath: Path = DEFAULT_ARTIFACT_PATH,
         }
         logger.error { "Failed to download LSP artifacts after $maxDownloadAttempts attempts" }
         return null
+    }
+
+    /**
+     * Records a telemetry event when artifact extraction throws, so an extraction failure is distinct from the
+     * generic [LspException.ErrorCode.DOWNLOAD_FAILED] that [tryDownloadLspArtifacts] otherwise returns. In
+     * particular a rejected zip entry ([LspException.ErrorCode.UNZIP_ENTRY_OUTSIDE_DESTINATION]) becomes
+     * visible instead of being flattened. No dedicated extraction setup stage exists, so the event reuses
+     * [LanguageServerSetupStage.GetServer] and carries the error code as the distinguishing attribute. Only the
+     * error code is attached, not the exception message, because an UNZIP_FAILED message can embed a local path.
+     */
+    private fun recordArtifactExtractionFailure(project: Project, exception: LspException) {
+        Telemetry.languageserver.setup.use { telemetry ->
+            telemetry.id("q")
+            telemetry.languageServerSetupStage(LanguageServerSetupStage.GetServer)
+            telemetry.metadata("credentialStartUrl", getStartUrl(project))
+            telemetry.metadata("errorCode", exception.errorCode.name)
+            telemetry.success(false)
+        }
     }
 
     @VisibleForTesting

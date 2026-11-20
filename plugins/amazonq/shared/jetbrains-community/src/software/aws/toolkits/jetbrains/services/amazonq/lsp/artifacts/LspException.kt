@@ -3,7 +3,7 @@
 
 package software.aws.toolkits.jetbrains.services.amazonq.lsp.artifacts
 
-class LspException(message: String, private val errorCode: ErrorCode, cause: Throwable? = null) : Exception(message, cause) {
+class LspException(message: String, val errorCode: ErrorCode, cause: Throwable? = null) : Exception(message, cause) {
 
     enum class ErrorCode {
         MANIFEST_FETCH_FAILED,
@@ -12,6 +12,7 @@ class LspException(message: String, private val errorCode: ErrorCode, cause: Thr
         TARGET_NOT_FOUND,
         NO_COMPATIBLE_LSP_VERSION,
         UNZIP_FAILED,
+        UNZIP_ENTRY_OUTSIDE_DESTINATION,
     }
 
     override fun toString(): String = buildString {
