@@ -18,6 +18,7 @@ import software.amazon.q.core.utils.exists
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.info
 import software.amazon.q.core.utils.putNextEntry
+import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.core.coroutines.getCoroutineBgContext
 import software.aws.toolkits.jetbrains.services.codemodernizer.CodeModernizerManager.Companion.LOG
 import software.aws.toolkits.jetbrains.services.codemodernizer.constants.HIL_ARTIFACT_DIR_NAME
@@ -41,10 +42,16 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.util.content
 import software.aws.toolkits.resources.message
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import kotlin.io.path.Path
+
+// Zip entry names separate folders with '/' on every platform; some Windows archivers write '\' instead.
+private const val ZIP_ENTRY_SEPARATOR = '/'
+private const val BACKSLASH_ENTRY_SEPARATOR = '\\'
 
 fun filterOnlyParentFiles(filePaths: Set<VirtualFile>): List<VirtualFile> {
     if (filePaths.isEmpty()) return emptyList()
@@ -139,35 +146,88 @@ fun parseBuildFile(buildFile: VirtualFile?): String? {
 }
 
 /**
+ * Resolves [entryName] under [destDir] and verifies it does not escape that directory. unzipFile extracts
+ * archives downloaded from the transformation service with java.util.zip.ZipFile, which does not reject
+ * parent-relative or absolute entry names, so a `..` (or absolute) entry would otherwise write outside
+ * [destDir] and could overwrite files the IDE can write. The resolved path is normalized and required to
+ * stay under the normalized destination; an entry that escapes throws and aborts the extraction.
+ */
+internal fun resolveZipEntryUnderRoot(destDir: Path, entryName: String): Path {
+    val root = destDir.toAbsolutePath().normalize()
+    // entryName comes from the archive; strip control characters and line separators and truncate it before it
+    // can reach logs or telemetry through an exception message.
+    val safeName = entryName.take(100).filter { !it.isISOControl() && it != '\u2028' && it != '\u2029' }
+    val destPath = try {
+        root.resolve(entryName).normalize()
+    } catch (e: InvalidPathException) {
+        throw IllegalArgumentException("Code Transform zip entry has an invalid name: $safeName")
+    }
+    require(destPath != root && destPath.startsWith(root)) {
+        "Code Transform zip entry resolves outside the extraction directory: $safeName"
+    }
+    return destPath
+}
+
+/**
  * Unzips a zip into a dir. Returns the true when successfully unzips the file pointed to by [zipFilePath] to [destDir]
+ *
+ * @throws IllegalArgumentException if an entry has an invalid name or resolves outside [destDir]. Every entry is
+ * checked before any is written, so nothing is extracted in that case.
  */
 fun unzipFile(zipFilePath: Path, destDir: Path, isSqlMetadata: Boolean = false, extractOnlySources: Boolean = false): Boolean {
     if (!zipFilePath.exists()) return false
     val zipFile = ZipFile(zipFilePath.toFile())
     zipFile.use { file ->
-        file.entries().asSequence()
+        val entriesToExtract = file.entries().asSequence()
             .filterNot { it.isDirectory }
-            .map { zipEntry ->
+            .mapNotNull { zipEntry ->
                 var fileName = zipEntry.name
                 if (extractOnlySources) {
                     // used to copy just the source code for client-side build
                     if (!fileName.startsWith("sources")) {
-                        return@map
+                        return@mapNotNull null
                     }
                 }
                 if (isSqlMetadata) {
                     // when manually compressing ZIP files, the files get unzipped under a subdirectory where we extract them to,
-                    // this change puts the files directly under the root of the target directory, which is what we want
-                    fileName = zipEntry.name.substringAfterLast(File.separatorChar)
+                    // this change puts the files directly under the root of the target directory, which is what we want.
+                    // Flatten on both entry separators, not on File.separatorChar, so the result is the same on every platform.
+                    fileName = zipEntry.name.substringAfterLast(ZIP_ENTRY_SEPARATOR).substringAfterLast(BACKSLASH_ENTRY_SEPARATOR)
+                    if (fileName.isEmpty()) {
+                        // a folder entry written with '\', which ZipEntry.isDirectory does not recognize
+                        return@mapNotNull null
+                    }
                 }
-                val destPath = destDir.resolve(fileName)
-                destPath.createParentDirectories()
-                FileOutputStream(destPath.toFile()).use { targetFile ->
-                    zipFile.getInputStream(zipEntry).copyTo(targetFile)
-                }
+                zipEntry to resolveZipEntryUnderRoot(destDir, fileName)
             }.toList()
+        entriesToExtract.forEach { (zipEntry, destPath) ->
+            destPath.createParentDirectories()
+            FileOutputStream(destPath.toFile()).use { targetFile ->
+                file.getInputStream(zipEntry).copyTo(targetFile)
+            }
+        }
     }
     return true
+}
+
+/**
+ * Extracts the SQL metadata zip at [zipPath] into [destDir] and returns its `.sct` file. Returns null when the zip has
+ * no `.sct` file, when [unzipFile] rejects one of its entries (nothing is extracted in that case), or when the file
+ * cannot be read as a zip.
+ */
+fun extractSctMetadataFile(zipPath: Path, destDir: File): File? {
+    try {
+        unzipFile(zipPath, destDir.toPath(), isSqlMetadata = true)
+    } catch (e: IllegalArgumentException) {
+        getLogger<CodeTransformChatController>().warn { "Could not extract the SQL metadata zip: ${e.message}" }
+        return null
+    } catch (e: IOException) {
+        // The user can select any file, for example one that is not a zip or a truncated zip. The exception message
+        // can contain a path built from an entry name, so log only the exception type.
+        getLogger<CodeTransformChatController>().warn { "Could not read the SQL metadata zip: ${e.javaClass.name}" }
+        return null
+    }
+    return destDir.listFiles { file -> file.name.endsWith(".sct") }?.firstOrNull()
 }
 
 suspend fun zipToPath(byteArrayList: List<ByteArray>, outputDirPath: Path? = null): Pair<Path, Int> {
