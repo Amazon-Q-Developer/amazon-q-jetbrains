@@ -24,10 +24,10 @@ class CodeScanFindingPathTest {
     fun `resolves a finding nested inside the project root`() {
         val resolved = resolveScanFindingFile(root().toString(), projectName, "$projectName/src/main/App.kt")
 
-        assertThat(resolved).isNotNull
+        val file = checkNotNull(resolved) { "The finding was not resolved" }
         // Path.startsWith / endsWith are component-wise and do not touch the filesystem.
-        assertThat(resolved!!.startsWith(root())).isTrue()
-        assertThat(resolved.endsWith(Path("src", "main", "App.kt"))).isTrue()
+        assertThat(file.startsWith(root())).isTrue()
+        assertThat(file.endsWith(Path("src", "main", "App.kt"))).isTrue()
     }
 
     @Test
@@ -36,8 +36,8 @@ class CodeScanFindingPathTest {
         // is still resolved relative to the project root.
         val resolved = resolveScanFindingFile(root().toString(), projectName, "src/App.kt")
 
-        assertThat(resolved).isNotNull
-        assertThat(resolved!!.startsWith(root())).isTrue()
+        val file = checkNotNull(resolved) { "The finding was not resolved" }
+        assertThat(file.startsWith(root())).isTrue()
     }
 
     @Test
