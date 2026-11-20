@@ -264,6 +264,14 @@ class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsigh
         assertThat(runReadAction { issue.document.text }).isEqualTo(content)
     }
 
+    @Test
+    fun `runCodeFixWorkflow does not upload a file outside the project`() = runTest {
+        val response = AmazonQCodeFixSession(project).runCodeFixWorkflow(issueFor(outsideFile()))
+
+        assertThat(response.getCodeFixJobResponse).isNull()
+        assertThat(response.failureResponse).isEqualTo("The code fix targets a file outside the project.")
+    }
+
     private fun outsideFile(content: String = "print('outside')\n"): VirtualFile {
         val path = outsideFolder.newFile("outside.py").toPath()
         Files.writeString(path, content)
