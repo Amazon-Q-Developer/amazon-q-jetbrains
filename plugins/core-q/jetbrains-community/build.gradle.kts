@@ -4,7 +4,6 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import software.aws.toolkits.gradle.intellij.IdeFlavor
-import software.aws.toolkits.gradle.intellij.IdeVersions
 import software.aws.toolkits.telemetry.generator.gradle.GenerateTelemetry
 
 plugins {
@@ -120,13 +119,6 @@ dependencies {
     testRuntimeOnly(project(":plugin-core-q:sdk-codegen"))
 
     intellijPlatform {
-        // Required for collaboration auth credentials in 2025.3+
-        val version = IdeVersions.ideProfile(project).ultimate.sdkVersion
-        if (version.startsWith("2025.3")) {
-            bundledModule("intellij.platform.collaborationTools.auth.base")
-            bundledModule("intellij.platform.collaborationTools.auth")
-        }
-
         // 2026.2 (262) split PatchReader/GenericPatchApplier out of vcs.core into intellij.platform.vcs.impl
         val profileName = providers.gradleProperty("ideProfileName").get()
         if (profileName >= "2026.2") {
