@@ -205,7 +205,7 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
     }
 
     fun ignoreSingleIssue(issue: CodeWhispererCodeScanIssue) {
-        if (!isIssueFileInsideProject(project, issue.file)) {
+        if (!isIssueFileAllowed(project, issue)) {
             LOG.warn { "Skipping ignore comment: the target file resolves outside the project" }
             notifyWarn(
                 "Ignore finding",
@@ -1049,6 +1049,9 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
  * @param title is shown in the code scan tree in the `CodeWhisperer Security Issues` tab.
  * @param description is shown in the tooltip of the scan node and also shown when the mouse
  * is hovered over the highlighted text in the editor.
+ * @param isReviewedFileOutsideProject is true when [file] is the file the user chose for a file review and that file is
+ * under none of the project content roots (see [isOutsideContentRoots]). Code-scan actions accept this one file without
+ * the project check; see [isIssueFileAllowed].
  */
 data class CodeWhispererCodeScanIssue(
     val project: Project,
@@ -1074,6 +1077,7 @@ data class CodeWhispererCodeScanIssue(
     var isVisible: Boolean = true,
     val autoDetected: Boolean = false,
     val scanJobId: String,
+    val isReviewedFileOutsideProject: Boolean = false,
 ) {
     override fun toString(): String = title
 

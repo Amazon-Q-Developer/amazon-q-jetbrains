@@ -211,14 +211,81 @@ class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsigh
     }
 
     @Test
-    fun `mapToCodeScanIssues drops a finding for a file outside the project content roots`() {
+    fun `mapToCodeScanIssues drops a finding outside the project content roots in a project review`() {
         val outside = outsideFile()
-        // A file scan of a file outside the project uses that file's folder as its root.
+        // Root the review at the file's folder, so only the content-root check can drop the finding.
         sessionConfigSpy.stub { onGeneric { sessionConfigSpy.projectRoot }.thenReturn(checkNotNull(outside.parent)) }
 
         val res = codeScanSessionSpy.mapToCodeScanIssues(listOf(findingAt(outside.name)), project, "jobId")
 
         assertThat(res).isEmpty()
+    }
+
+    @Test
+    fun `mapToCodeScanIssues keeps a finding on the reviewed file of a file review outside the project`() {
+        val reviewed = outsideFile()
+
+        // Automatic file reviews and file reviews started from chat map findings the same way.
+        for (initiatedByChat in listOf(false, true)) {
+            val res = fileReviewOf(reviewed, initiatedByChat)
+                .mapToCodeScanIssues(listOf(findingAt("${project.name}/${reviewed.name}")), project, "jobId")
+
+            assertThat(res).hasSize(1)
+            assertThat(res.single().file).isEqualTo(reviewed)
+            assertThat(res.single().isReviewedFileOutsideProject).isTrue()
+        }
+    }
+
+    @Test
+    fun `mapToCodeScanIssues keeps the project check for an outside selected file in project and agentic reviews`() {
+        val outside = outsideFile()
+
+        for (scope in listOf(CodeWhispererConstants.CodeAnalysisScope.PROJECT, CodeWhispererConstants.CodeAnalysisScope.AGENTIC)) {
+            val config = spy(CodeScanSessionConfig.create(outside, project, scope, false))
+            // Root the review at the file's folder, so only the review scope decides whether the finding is kept.
+            config.stub { onGeneric { config.projectRoot }.thenReturn(checkNotNull(outside.parent)) }
+            val session = CodeWhispererCodeScanSession(CodeScanSessionContext(project, config, scope))
+
+            val res = session.mapToCodeScanIssues(listOf(findingAt("${project.name}/${outside.name}")), project, "jobId")
+
+            assertThat(res).isEmpty()
+        }
+    }
+
+    @Test
+    fun `mapToCodeScanIssues drops a finding on a reviewed link inside the project that points outside it`() {
+        // Next to test.py, so the link itself is inside a content root while the file it points to is not.
+        val link = psifile.virtualFile.parent.toNioPath().resolve("reviewed-link.py")
+        createSymbolicLinkOrSkip(link, outsideFile().toNioPath())
+        val linkFile = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(link))
+        val review = fileReviewOf(linkFile)
+        val findingPath = link.relativeTo(review.sessionContext.sessionConfig.projectRoot.toNioPath()).toString().replace('\\', '/')
+
+        val res = review.mapToCodeScanIssues(listOf(findingAt(findingPath)), project, "jobId")
+
+        assertThat(res).isEmpty()
+    }
+
+    @Test
+    fun `mapToCodeScanIssues drops a finding on another file outside the project during a file review`() {
+        val reviewed = outsideFile()
+        val sibling = outsideFile(name = "sibling.py")
+
+        val res = fileReviewOf(reviewed).mapToCodeScanIssues(listOf(findingAt("${project.name}/${sibling.name}")), project, "jobId")
+
+        assertThat(res).isEmpty()
+    }
+
+    @Test
+    fun `mapToCodeScanIssues keeps the project check for the reviewed file of a file review inside the project`() {
+        val review = fileReviewOf(psifile.virtualFile)
+        val root = review.sessionContext.sessionConfig.projectRoot.toNioPath()
+        val findingPath = psifile.virtualFile.toNioPath().relativeTo(root).toString().replace('\\', '/')
+
+        val res = review.mapToCodeScanIssues(listOf(findingAt(findingPath)), project, "jobId")
+
+        assertThat(res).hasSize(1)
+        assertThat(res.single().isReviewedFileOutsideProject).isFalse()
     }
 
     @Test
@@ -272,11 +339,61 @@ class CodeWhispererCodeScanTest : CodeWhispererCodeScanTestBase(PythonCodeInsigh
         assertThat(response.failureResponse).isEqualTo("The code fix targets a file outside the project.")
     }
 
-    private fun outsideFile(content: String = "print('outside')\n"): VirtualFile {
-        val path = outsideFolder.newFile("outside.py").toPath()
+    @Test
+    fun `applySuggestedFix changes the reviewed file of a file review outside the project`() {
+        val issue = reviewedFileIssue(outsideFile("first line\nsecond line\nforth line"))
+        issue.suggestedFixes = listOf(ScanSuggestedFix("fix", "@@ -1,3 +1,3 @@\n first line\n-second line\n+third line\n forth line"))
+
+        runInEdtAndWait { applySuggestedFix(project, issue) }
+
+        assertThat(runReadAction { issue.document.text }).isEqualTo("first line\nthird line\nforth line")
+    }
+
+    @Test
+    fun `ignoreSingleIssue adds the ignore comment to the reviewed file of a file review outside the project`() = runTest {
+        val issue = reviewedFileIssue(outsideFile("first line\nsecond line\n"))
+        // A scan shows its issues in the results view before Ignore can be used, so show this one there first.
+        scanManagerSpy.testRenderResponseOnUIThread(listOf(issue), listOf(issue.file))
+
+        runInEdtAndWait {
+            scanManagerSpy.ignoreSingleIssue(issue)
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+        }
+
+        // The comment prefix comes from the language's commenter, so check the inserted line by its marker.
+        val text = runReadAction { issue.document.text }
+        assertThat(text.lines().first()).startsWith("#").contains(CodeWhispererConstants.amazonqIgnoreNextLine)
+        assertThat(text.substringAfter('\n')).isEqualTo("first line\nsecond line\n")
+    }
+
+    @Test
+    fun `runCodeFixWorkflow runs for the reviewed file of a file review outside the project`() = runTest {
+        mockClient.stub {
+            onGeneric { startCodeFixJob(any()) }.thenReturn(fakeStartCodeFixJobResponse)
+            onGeneric { getCodeFixJob(any()) }.thenReturn(fakeGetCodeFixJobResponse)
+        }
+
+        val response = AmazonQCodeFixSession(project).runCodeFixWorkflow(reviewedFileIssue(outsideFile()))
+
+        assertThat(response.failureResponse).isNull()
+        assertThat(response.getCodeFixJobResponse).isEqualTo(fakeGetCodeFixJobResponse)
+    }
+
+    private fun outsideFile(content: String = "print('outside')\n", name: String = "outside.py"): VirtualFile {
+        val path = outsideFolder.newFile(name).toPath()
         Files.writeString(path, content)
         return checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path))
     }
+
+    // createPayload sets the review root: the project root, or the file's folder for a file outside the project.
+    private fun fileReviewOf(file: VirtualFile, initiatedByChat: Boolean = false): CodeWhispererCodeScanSession {
+        val config = CodeScanSessionConfig.create(file, project, CodeWhispererConstants.CodeAnalysisScope.FILE, initiatedByChat)
+        config.createPayload().srcZip.delete()
+        return CodeWhispererCodeScanSession(CodeScanSessionContext(project, config, CodeWhispererConstants.CodeAnalysisScope.FILE))
+    }
+
+    private fun reviewedFileIssue(file: VirtualFile): CodeWhispererCodeScanIssue =
+        fileReviewOf(file).mapToCodeScanIssues(listOf(findingAt("${project.name}/${file.name}")), project, "jobId").single()
 
     private fun createSymbolicLinkOrSkip(link: Path, target: Path) {
         try {

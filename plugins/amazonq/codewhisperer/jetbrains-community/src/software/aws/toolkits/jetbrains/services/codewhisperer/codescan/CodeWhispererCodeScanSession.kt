@@ -55,6 +55,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhisperer
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererUtil.notifyErrorCodeWhispererUsageLimit
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererZipUploadManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.getTelemetryErrorMessage
+import software.aws.toolkits.jetbrains.services.codewhisperer.util.isWithin
 import software.aws.toolkits.resources.message
 import software.aws.toolkits.telemetry.CodewhispererLanguage
 import java.nio.file.Path
@@ -320,11 +321,16 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
             LOG.debug { "Total code review issues returned from service: ${scanRecommendations.size}" }
         }
         val projectRootPath = sessionContext.sessionConfig.projectRoot.path
+        // A file review can cover a file the user opened from outside the project: keep findings on that file. Every other
+        // file, including a link inside the project that points outside it, still needs the project check.
+        val reviewedFileOutsideProject = sessionContext.sessionConfig.getSelectedFile()
+            ?.takeIf { sessionContext.codeAnalysisScope == CodeWhispererConstants.CodeAnalysisScope.FILE }
+            ?.takeIf { isOutsideContentRoots(sessionContext.project, it) }
         return scanRecommendations.mapNotNull { recommendation ->
             val file = try {
                 resolveScanFindingFile(projectRootPath, sessionContext.project.name, recommendation.filePath)
                     ?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
-                    ?.takeIf { isIssueFileInsideProject(sessionContext.project, it) }
+                    ?.takeIf { it == reviewedFileOutsideProject || isIssueFileInsideProject(sessionContext.project, it) }
             } catch (e: Exception) {
                 LOG.debug { "Cannot find file at location ${recommendation.filePath}" }
                 null
@@ -359,7 +365,8 @@ class CodeWhispererCodeScanSession(val sessionContext: CodeScanSessionContext) {
                         codeSnippet = recommendation.codeSnippet,
                         isVisible = !isIssueIgnored,
                         autoDetected = isAutoScan(),
-                        scanJobId = jobId
+                        scanJobId = jobId,
+                        isReviewedFileOutsideProject = file == reviewedFileOutsideProject,
                     )
                 }
             } else {
@@ -424,13 +431,30 @@ internal fun isRealPathWithinRoot(rootPath: String, candidatePath: String): Bool
 /**
  * True when the real path of [file] (symlinks and "." / ".." resolved) is strictly inside the real path of one of
  * [project]'s content roots. Real paths are compared, so the result does not depend on whether the project or the
- * file is reached through a symlinked folder. Used for code-scan and agentic review findings, applySuggestedFix,
- * ignoreSingleIssue and the code-fix zip.
+ * file is reached through a symlinked folder. Used for code-scan and agentic review findings, and through
+ * [isIssueFileAllowed] for applySuggestedFix, ignoreSingleIssue and the code-fix zip.
  */
 fun isIssueFileInsideProject(project: Project, file: VirtualFile): Boolean {
     val contentRoots = runReadAction { ProjectRootManager.getInstance(project).contentRoots }
     return contentRoots.any { isRealPathWithinRoot(it.path, file.path) }
 }
+
+/**
+ * True when [file] is under none of [project]'s content roots, comparing paths as they appear without resolving
+ * symlinks. A link inside a content root is therefore never outside the project here, even when it points outside it,
+ * so [isIssueFileInsideProject] still decides for that link.
+ */
+internal fun isOutsideContentRoots(project: Project, file: VirtualFile): Boolean =
+    runReadAction { ProjectRootManager.getInstance(project).contentRoots }.none { file.isWithin(it) }
+
+/**
+ * True when a code-scan action may read or change [issue]'s file: the file is inside [project] (see
+ * [isIssueFileInsideProject]), or it is the file the user chose for a file review outside the project
+ * ([CodeWhispererCodeScanIssue.isReviewedFileOutsideProject]). Used by applySuggestedFix, ignoreSingleIssue and the
+ * code-fix zip.
+ */
+internal fun isIssueFileAllowed(project: Project, issue: CodeWhispererCodeScanIssue): Boolean =
+    issue.isReviewedFileOutsideProject || isIssueFileInsideProject(project, issue.file)
 
 sealed class CodeScanResponse {
     abstract val responseContext: CodeScanResponseContext

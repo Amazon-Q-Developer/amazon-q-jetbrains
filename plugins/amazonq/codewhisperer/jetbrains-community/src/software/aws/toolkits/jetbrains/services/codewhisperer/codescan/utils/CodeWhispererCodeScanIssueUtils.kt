@@ -43,7 +43,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhisp
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.context.CodeScanIssueDetailsDisplayType
-import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileInsideProject
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileAllowed
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.language.CodeWhispererProgrammingLanguage
@@ -389,9 +389,9 @@ fun sendCodeRemediationTelemetryToServiceApi(
 }
 
 fun applySuggestedFix(project: Project, issue: CodeWhispererCodeScanIssue) {
-    // Defense in depth: refuse to patch a file that is not inside the project's content roots once
-    // "..", "." and symlinks are resolved, regardless of which producer registered the issue.
-    if (!isIssueFileInsideProject(issue.project, issue.file)) {
+    // Defense in depth: patch only a file inside the project's content roots once "..", "." and symlinks are
+    // resolved, or the file the user chose for a file review.
+    if (!isIssueFileAllowed(issue.project, issue)) {
         LOG.warn { "Skipping Apply fix: the target file resolves outside the project" }
         notifyWarn(
             "Apply fix",

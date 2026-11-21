@@ -51,8 +51,8 @@ class AmazonQCodeFixSession(val project: Project) {
         try {
             currentCoroutineContext.ensureActive()
 
-            // Defense in depth: do not read/zip/upload a file that resolves outside the project.
-            if (!isIssueFileInsideProject(project, issue.file)) {
+            // Defense in depth: do not read/zip/upload a file outside the project, other than the file the user chose for a file review.
+            if (!isIssueFileAllowed(project, issue)) {
                 LOG.warn { "Skipping code fix: the target file resolves outside the project" }
                 return CodeFixResponse(
                     getCodeFixJobResponse = null,
