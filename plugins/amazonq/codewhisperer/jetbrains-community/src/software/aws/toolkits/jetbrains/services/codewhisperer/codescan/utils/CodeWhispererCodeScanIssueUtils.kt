@@ -30,6 +30,7 @@ import software.amazon.q.core.utils.convertMarkdownToHTML
 import software.amazon.q.core.utils.debug
 import software.amazon.q.core.utils.getLogger
 import software.amazon.q.core.utils.info
+import software.amazon.q.core.utils.warn
 import software.amazon.q.jetbrains.ToolkitPlaces
 import software.amazon.q.jetbrains.utils.applyPatch
 import software.amazon.q.jetbrains.utils.notifyError
@@ -42,6 +43,7 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhisp
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.context.CodeScanIssueDetailsDisplayType
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileAllowed
 import software.aws.toolkits.jetbrains.services.codewhisperer.credentials.CodeWhispererClientAdaptor
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.jetbrains.services.codewhisperer.language.CodeWhispererProgrammingLanguage
@@ -387,6 +389,17 @@ fun sendCodeRemediationTelemetryToServiceApi(
 }
 
 fun applySuggestedFix(project: Project, issue: CodeWhispererCodeScanIssue) {
+    // Defense in depth: patch only a file inside the project's content roots once "..", "." and symlinks are
+    // resolved, or the file the user chose for a file review.
+    if (!isIssueFileAllowed(issue.project, issue)) {
+        LOG.warn { "Skipping Apply fix: the target file resolves outside the project" }
+        notifyWarn(
+            "Apply fix",
+            "The suggested fix targets a file outside the project and was not applied.",
+            issue.project
+        )
+        return
+    }
     try {
         val manager = CodeWhispererCodeReferenceManager.getInstance(issue.project)
         WriteCommandAction.runWriteCommandAction(issue.project) {

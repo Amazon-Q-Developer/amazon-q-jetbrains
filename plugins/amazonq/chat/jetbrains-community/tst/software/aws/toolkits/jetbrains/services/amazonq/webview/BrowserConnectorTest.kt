@@ -10,9 +10,14 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.replaceService
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.mockito.Mockito.mockStatic
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
@@ -30,10 +35,16 @@ import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhisp
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.Description
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.Recommendation
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.SuggestedFix
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileInsideProject
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
 import software.aws.toolkits.jetbrains.settings.MeetQSettings
+import java.nio.file.Files
 
 class BrowserConnectorTest : AmazonQTestBase() {
+    @Rule
+    @JvmField
+    val tempFolder = TemporaryFolder()
+
     private lateinit var browserConnector: BrowserConnector
     private lateinit var mockCodeScanManager: CodeWhispererCodeScanManager
     private lateinit var mockLocalFileSystem: LocalFileSystem
@@ -154,55 +165,101 @@ class BrowserConnectorTest : AmazonQTestBase() {
             on { getLineEndOffset(0) } doReturn 10
         }
 
-        mockStatic(LocalFileSystem::class.java).use { localFileSystemMock ->
-            localFileSystemMock.`when`<LocalFileSystem> { LocalFileSystem.getInstance() }.thenReturn(mockLocalFileSystem)
-            whenever(mockLocalFileSystem.findFileByIoFile(any())) doReturn mockVirtualFile
+        // The light test project has no content root on disk, so stub the project check for the mocked file.
+        mockkStatic(::isIssueFileInsideProject)
+        try {
+            every { isIssueFileInsideProject(project, mockVirtualFile) } returns true
 
-            mockStatic(FileDocumentManager::class.java).use { fileDocumentManagerMock ->
-                fileDocumentManagerMock.`when`<FileDocumentManager> { FileDocumentManager.getInstance() } doReturn mockFileDocumentManager
-                whenever(mockFileDocumentManager.getDocument(mockVirtualFile)) doReturn mockDocument
-                whenever(mockCodeScanManager.isIgnoredIssue(any(), any(), any(), any())) doReturn false
+            mockStatic(LocalFileSystem::class.java).use { localFileSystemMock ->
+                localFileSystemMock.`when`<LocalFileSystem> { LocalFileSystem.getInstance() }.thenReturn(mockLocalFileSystem)
+                whenever(mockLocalFileSystem.findFileByIoFile(any())) doReturn mockVirtualFile
 
-                val issue = FlareCodeScanIssue(
-                    startLine = 1, endLine = 1, comment = "Test comment", title = "Test Issue",
-                    description = Description("Test description", "Test text"), detectorId = "test-detector",
-                    detectorName = "Test Detector", findingId = "test-finding-id", ruleId = "test-rule",
-                    relatedVulnerabilities = listOf("CVE-2023-1234"), severity = "HIGH",
-                    recommendation = Recommendation("Fix this", "https://example.com"),
-                    suggestedFixes = listOf(SuggestedFix("Fix code", "Fixed code")),
-                    scanJobId = "test-job-id", language = "kotlin", autoDetected = false,
-                    filePath = "/test/file.kt", findingContext = "test context"
-                )
+                mockStatic(FileDocumentManager::class.java).use { fileDocumentManagerMock ->
+                    fileDocumentManagerMock.`when`<FileDocumentManager> { FileDocumentManager.getInstance() } doReturn mockFileDocumentManager
+                    whenever(mockFileDocumentManager.getDocument(mockVirtualFile)) doReturn mockDocument
+                    whenever(mockCodeScanManager.isIgnoredIssue(any(), any(), any(), any())) doReturn false
 
-                val aggregatedIssue = AggregatedCodeScanIssue("/test/file.kt", listOf(issue))
-                val findingsMessage = """
-                {
-                    "additionalMessages": [
-                        {
-                            "messageId": "test_codeReviewFindings",
-                            "body": "${jacksonObjectMapper().writeValueAsString(listOf(aggregatedIssue)).replace("\"", "\\\"")}"
-                        },
-                        {
-                            "messageId": "other_message",
-                            "body": "other content"
-                        }
-                    ]
+                    val issue = FlareCodeScanIssue(
+                        startLine = 1, endLine = 1, comment = "Test comment", title = "Test Issue",
+                        description = Description("Test description", "Test text"), detectorId = "test-detector",
+                        detectorName = "Test Detector", findingId = "test-finding-id", ruleId = "test-rule",
+                        relatedVulnerabilities = listOf("CVE-2023-1234"), severity = "HIGH",
+                        recommendation = Recommendation("Fix this", "https://example.com"),
+                        suggestedFixes = listOf(SuggestedFix("Fix code", "Fixed code")),
+                        scanJobId = "test-job-id", language = "kotlin", autoDetected = false,
+                        filePath = "/test/file.kt", findingContext = "test context"
+                    )
+
+                    val aggregatedIssue = AggregatedCodeScanIssue("/test/file.kt", listOf(issue))
+                    val findingsMessage = """
+                    {
+                        "additionalMessages": [
+                            {
+                                "messageId": "test_codeReviewFindings",
+                                "body": "${jacksonObjectMapper().writeValueAsString(listOf(aggregatedIssue)).replace("\"", "\\\"")}"
+                            },
+                            {
+                                "messageId": "other_message",
+                                "body": "other content"
+                            }
+                        ]
+                    }
+                    """.trimIndent()
+
+                    browserConnector.parseFindingsMessages(findingsMessage)
+
+                    val issuesCaptor = argumentCaptor<List<CodeWhispererCodeScanIssue>>()
+                    verify(mockCodeScanManager).addOnDemandIssues(
+                        issuesCaptor.capture(),
+                        any(),
+                        eq(CodeWhispererConstants.CodeAnalysisScope.AGENTIC)
+                    )
+
+                    assertThat(issuesCaptor.firstValue).isNotEmpty()
+                    assertThat(issuesCaptor.firstValue[0].title).isEqualTo("Test Issue")
                 }
-                """.trimIndent()
-
-                browserConnector.parseFindingsMessages(findingsMessage)
-
-                val issuesCaptor = argumentCaptor<List<CodeWhispererCodeScanIssue>>()
-                verify(mockCodeScanManager).addOnDemandIssues(
-                    issuesCaptor.capture(),
-                    any(),
-                    eq(CodeWhispererConstants.CodeAnalysisScope.AGENTIC)
-                )
-
-                assertThat(issuesCaptor.firstValue.isNotEmpty())
-                assertThat(issuesCaptor.firstValue[0].title == "Test Issue")
             }
+        } finally {
+            unmockkStatic(::isIssueFileInsideProject)
         }
+    }
+
+    @Test
+    fun `parseFindingsMessages should skip files outside the project content roots`() {
+        val outsideFile = tempFolder.newFile("file.kt").toPath()
+        Files.writeString(outsideFile, "class Outside\n")
+        val filePath = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outsideFile)).path
+
+        val issue = FlareCodeScanIssue(
+            startLine = 1, endLine = 1, comment = null, title = "Outside Issue",
+            description = Description("Test description", "Test text"), detectorId = "test-detector",
+            detectorName = "Test Detector", findingId = "test-finding-id", ruleId = null,
+            relatedVulnerabilities = emptyList(), severity = "HIGH",
+            recommendation = Recommendation("Fix this", "https://example.com"), suggestedFixes = emptyList(),
+            scanJobId = "test-job-id", language = "kotlin", autoDetected = false,
+            filePath = filePath, findingContext = "test context"
+        )
+
+        val aggregatedIssue = AggregatedCodeScanIssue(filePath, listOf(issue))
+        val findingsMessage = """
+        {
+            "additionalMessages": [
+                {
+                    "messageId": "test_codeReviewFindings",
+                    "body": "${jacksonObjectMapper().writeValueAsString(listOf(aggregatedIssue)).replace("\"", "\\\"")}"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        browserConnector.parseFindingsMessages(findingsMessage)
+
+        // The file exists and has a document, so only the project check keeps it from being reported.
+        verify(mockCodeScanManager, never()).addOnDemandIssues(
+            any(),
+            any(),
+            eq(CodeWhispererConstants.CodeAnalysisScope.AGENTIC)
+        )
     }
 
     @Test

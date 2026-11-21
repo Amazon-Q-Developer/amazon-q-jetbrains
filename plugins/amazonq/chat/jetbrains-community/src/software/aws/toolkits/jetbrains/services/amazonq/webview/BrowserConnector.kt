@@ -113,6 +113,7 @@ import software.aws.toolkits.jetbrains.services.amazonqCodeScan.auth.isCodeScanA
 import software.aws.toolkits.jetbrains.services.codemodernizer.utils.isCodeTransformAvailable
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanIssue
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.CodeWhispererCodeScanManager
+import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.isIssueFileInsideProject
 import software.aws.toolkits.jetbrains.services.codewhisperer.customization.CodeWhispererModelConfigurator
 import software.aws.toolkits.jetbrains.services.codewhisperer.settings.CodeWhispererConfigurable
 import software.aws.toolkits.jetbrains.services.codewhisperer.util.CodeWhispererConstants
@@ -667,7 +668,7 @@ class BrowserConnector(
                         val file = LocalFileSystem.getInstance().findFileByIoFile(
                             Path.of(aggregatedIssue.filePath).toFile()
                         )
-                        if (file?.isDirectory == false) {
+                        if (file != null && !file.isDirectory && isIssueFileInsideProject(project, file)) {
                             scannedFiles.add(file)
                             runReadAction {
                                 FileDocumentManager.getInstance().getDocument(file)

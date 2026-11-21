@@ -70,6 +70,7 @@ import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.utils.isQConnected
 import software.amazon.q.jetbrains.utils.isQExpired
 import software.amazon.q.jetbrains.utils.isRunningOnRemoteBackend
+import software.amazon.q.jetbrains.utils.notifyWarn
 import software.aws.toolkits.jetbrains.ProblemsViewMutator
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.listeners.CodeWhispererCodeScanDocumentListener
 import software.aws.toolkits.jetbrains.services.codewhisperer.codescan.listeners.CodeWhispererCodeScanEditorMouseMotionListener
@@ -204,6 +205,15 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
     }
 
     fun ignoreSingleIssue(issue: CodeWhispererCodeScanIssue) {
+        if (!isIssueFileAllowed(project, issue)) {
+            LOG.warn { "Skipping ignore comment: the target file resolves outside the project" }
+            notifyWarn(
+                "Ignore finding",
+                "This finding targets a file outside the project and was not modified.",
+                project
+            )
+            return
+        }
         val document = issue.document
         var commentString: String? = null
         var insertOffset: Int? = null
@@ -1039,6 +1049,9 @@ class CodeWhispererCodeScanManager(val project: Project, private val defaultScop
  * @param title is shown in the code scan tree in the `CodeWhisperer Security Issues` tab.
  * @param description is shown in the tooltip of the scan node and also shown when the mouse
  * is hovered over the highlighted text in the editor.
+ * @param isReviewedFileOutsideProject is true when [file] is the file the user chose for a file review and that file is
+ * under none of the project content roots (see [isOutsideContentRoots]). Code-scan actions accept this one file without
+ * the project check; see [isIssueFileAllowed].
  */
 data class CodeWhispererCodeScanIssue(
     val project: Project,
@@ -1064,6 +1077,7 @@ data class CodeWhispererCodeScanIssue(
     var isVisible: Boolean = true,
     val autoDetected: Boolean = false,
     val scanJobId: String,
+    val isReviewedFileOutsideProject: Boolean = false,
 ) {
     override fun toString(): String = title
 
